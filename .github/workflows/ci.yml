@@ -8,28 +8,28 @@ on:
     branches: [ main ]
 
 jobs:
-  lint:
-    name: Lint
+  build:
+    name: Build and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: exit 1 # {todo}
-
-  test:
-    name: Test
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - run: exit 1 # {todo}
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      - run: ./gradlew build
 
   publish:
     name: Publish new version
-    needs: test
+    needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '11'
       - run: exit 1 # {todo}
 
   release:
