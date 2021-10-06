@@ -1,8 +1,8 @@
+import io.gitlab.arturbosch.detekt.Detekt
+import io.gitlab.arturbosch.detekt.DetektPlugin
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import io.gitlab.arturbosch.detekt.report.ReportMergeTask
-import io.gitlab.arturbosch.detekt.DetektPlugin
-import io.gitlab.arturbosch.detekt.Detekt
-import java.io.FileFilter
+import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 
 group = "doist"
 version = "1.0-SNAPSHOT"
@@ -23,22 +23,25 @@ val generateDetektReport by tasks.registering(ReportMergeTask::class) {
 }
 
 subprojects {
-    apply(plugin = "io.gitlab.arturbosch.detekt")
-    configure<DetektExtension> {
-        buildUponDefaultConfig = true
-        source = files(*projectDir.resolve("src").listFiles(FileFilter { it.isDirectory }).orEmpty())
-        parallel = true
-        reports.sarif.enabled = true
-    }
-    dependencies {
-        val detektPlugins by configurations
-        detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
-    }
-    plugins.withType(DetektPlugin::class) {
-        tasks.withType(Detekt::class) detekt@{
-            finalizedBy(generateDetektReport)
-            generateDetektReport.configure {
-                input.from(this@detekt.sarifReportFile)
+    afterEvaluate {
+        apply(plugin = "io.gitlab.arturbosch.detekt")
+        configure<DetektExtension> {
+            val kotlinExtension = extensions.getByName("kotlin") as KotlinProjectExtension
+            buildUponDefaultConfig = true
+            source = files(kotlinExtension.sourceSets.flatMap { it.kotlin.srcDirs })
+            parallel = true
+            reports.sarif.enabled = true
+        }
+        dependencies {
+            val detektPlugins by configurations.getting
+            detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
+        }
+        plugins.withType(DetektPlugin::class) {
+            tasks.withType(Detekt::class) detekt@{
+                finalizedBy(generateDetektReport)
+                generateDetektReport.configure {
+                    input.from(this@detekt.sarifReportFile)
+                }
             }
         }
     }
