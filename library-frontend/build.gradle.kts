@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform")
+    id(libs.plugins.kotlin.multiplatform.get().pluginId)
 }
 
 kotlin {
@@ -38,19 +38,19 @@ kotlin {
     sourceSets {
         val commonTest by getting {
             dependencies {
-                implementation(kotlin("test"))
+                implementation(libs.kotlin.test.base)
             }
         }
 
         val jvmTest by getting {
             dependencies {
-                implementation(kotlin("test-junit"))
+                implementation(libs.kotlin.test.jvm)
             }
         }
 
         val jsTest by getting {
             dependencies {
-                implementation(kotlin("test-js"))
+                implementation(libs.kotlin.test.js)
             }
         }
     }

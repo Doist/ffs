@@ -8,8 +8,8 @@ group = "doist"
 version = "1.0-SNAPSHOT"
 
 plugins {
-    kotlin("multiplatform") version "1.5.31" apply false
-    id("io.gitlab.arturbosch.detekt") version "1.18.1" apply false
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.detekt) apply false
 }
 
 allprojects {
@@ -24,7 +24,7 @@ val generateDetektReport by tasks.registering(ReportMergeTask::class) {
 
 subprojects {
     afterEvaluate {
-        apply(plugin = "io.gitlab.arturbosch.detekt")
+        apply(plugin = libs.plugins.detekt.get().pluginId)
         configure<DetektExtension> {
             val kotlinExtension = extensions.getByName("kotlin") as KotlinProjectExtension
             buildUponDefaultConfig = true
@@ -34,7 +34,7 @@ subprojects {
         }
         dependencies {
             val detektPlugins by configurations.getting
-            detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.18.1")
+            detektPlugins(libs.detekt.formatting)
         }
         plugins.withType(DetektPlugin::class) {
             tasks.withType(Detekt::class) detekt@{

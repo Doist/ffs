@@ -1,0 +1,32 @@
+[versions]
+kotlin = "1.5.31"
+detekt = "1.18.1"
+ktor = "1.6.4"
+logback = "1.2.6"
+kotlin-react = "17.0.2-pre.252-kotlin-1.5.31"
+kotlin-react-router-dom = "5.2.0-pre.252-kotlin-1.5.31"
+kotlin-redux = "4.1.1-pre.252-kotlin-1.5.31"
+kotlin-react-redux = "7.2.4-pre.252-kotlin-1.5.31"
+
+[libraries]
+kotlin-test-base = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlin-test-jvm = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+kotlin-test-js = { module = "org.jetbrains.kotlin:kotlin-test-js", version.ref = "kotlin" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+kotlin-react = { module = "org.jetbrains.kotlin-wrappers:kotlin-react", version.ref = "kotlin-react" }
+kotlin-react-dom = { module = "org.jetbrains.kotlin-wrappers:kotlin-react-dom", version.ref = "kotlin-react"}
+kotlin-react-router-dom = { module = "org.jetbrains.kotlin-wrappers:kotlin-react-router-dom", version.ref = "kotlin-react-router-dom"}
+kotlin-redux = { module = "org.jetbrains.kotlin-wrappers:kotlin-redux", version.ref = "kotlin-redux" }
+kotlin-react-redux = { module = "org.jetbrains.kotlin-wrappers:kotlin-react-redux", version.ref = "kotlin-react-redux" }
+
+[bundles]
+kotlin-react = ["kotlin-react", "kotlin-react-dom", "kotlin-react-router-dom", "kotlin-redux", "kotlin-react-redux"]
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-js = { id = "org.jetbrains.kotlin.js", version.ref = "kotlin" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

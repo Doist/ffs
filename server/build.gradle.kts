@@ -1,16 +1,16 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm")
+    id(libs.plugins.kotlin.jvm.get().pluginId)
     application
 }
 
 dependencies {
-    implementation("io.ktor:ktor-server-cio:1.6.4")
-    implementation("ch.qos.logback:logback-classic:1.2.6")
+    implementation(libs.ktor.server.cio)
+    implementation(libs.logback.classic)
 
-    testImplementation(kotlin("test"))
-    testImplementation("io.ktor:ktor-server-test-host:1.6.4")
+    testImplementation(libs.kotlin.test.jvm)
+    testImplementation(libs.ktor.server.test.host)
 }
 
 application {
