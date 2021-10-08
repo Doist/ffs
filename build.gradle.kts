@@ -10,6 +10,8 @@ version = "1.0-SNAPSHOT"
 plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.sqldelight) apply false
+    alias(libs.plugins.kotlin.power.assert) apply false
 }
 
 allprojects {

@@ -1,0 +1,36 @@
+import kotlinx.datetime.Instant;
+
+CREATE TABLE organization (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    created_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER organizationUpdateUpdatedAt
+AFTER UPDATE ON organization
+BEGIN
+    UPDATE organization
+    SET updated_at = CURRENT_TIMESTAMP
+    WHERE id = old.id;
+END;
+
+insert:
+INSERT INTO organization(name)
+VALUES (?);
+
+selectAll:
+SELECT * FROM organization;
+
+select:
+SELECT * FROM organization
+WHERE id = ?;
+
+update:
+UPDATE organization
+SET name = ?
+WHERE id = ?;
+
+delete:
+DELETE FROM organization
+WHERE id = ?;

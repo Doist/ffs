@@ -1,0 +1,43 @@
+import kotlinx.datetime.Instant;
+
+CREATE TABLE project (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    organization_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    created_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(organization_id) REFERENCES organization(id),
+    UNIQUE(name,organization_id)
+);
+
+CREATE TRIGGER projectUpdateUpdatedAt
+AFTER UPDATE ON project
+BEGIN
+    UPDATE project
+    SET updated_at = CURRENT_TIMESTAMP
+    WHERE id = old.id;
+END;
+
+CREATE INDEX projectOrganizationId
+ON project(organization_id);
+
+insert:
+INSERT INTO project(organization_id,name)
+VALUES (?,?);
+
+selectByOrganization:
+SELECT * FROM project
+WHERE organization_id = ?;
+
+select:
+SELECT * FROM project
+WHERE id = ?;
+
+update:
+UPDATE project
+SET name = ?
+WHERE id = ?;
+
+delete:
+DELETE FROM project
+WHERE id = ?;

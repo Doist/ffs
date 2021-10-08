@@ -1,0 +1,44 @@
+import kotlinx.datetime.Instant;
+
+CREATE TABLE flag (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    rule TEXT NOT NULL,
+    created_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(project_id) REFERENCES project(id),
+    UNIQUE(name,project_id)
+);
+
+CREATE TRIGGER flagUpdateUpdatedAt
+AFTER UPDATE ON flag
+BEGIN
+    UPDATE flag
+    SET updated_at = CURRENT_TIMESTAMP
+    WHERE id = old.id;
+END;
+
+CREATE INDEX flagProjectId
+ON flag(project_id);
+
+insert:
+INSERT INTO flag(project_id,name,rule)
+VALUES (?,?,?);
+
+selectByProject:
+SELECT * FROM flag
+WHERE project_id = ?;
+
+select:
+SELECT * FROM flag
+WHERE id = ?;
+
+updateRule:
+UPDATE flag
+SET rule = ?
+WHERE id = ?;
+
+delete:
+DELETE FROM flag
+WHERE id = ?;
