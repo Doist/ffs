@@ -1,0 +1,35 @@
+formatting:
+
+  # Match ktlint's default rules (100-char max line length).
+  ImportOrdering:
+    active: true # was false
+  Indentation:
+    active: true # was false
+  MaximumLineLength:
+    maxLineLength: 100 # was 120
+    ignoreBackTickedIdentifier: true # was false
+  ParameterListWrapping:
+    maxLineLength: 100 # was 120
+
+  # Match ktlint's experimental rules (100-char max line length).
+  AnnotationOnSeparateLine:
+    active: true # was false
+  AnnotationSpacing:
+    active: false # was false
+  ArgumentListWrapping:
+    active: false # was false
+    maxLineLength: 100 # was 120
+  EnumEntryNameCase:
+    active: true # was false
+  NoEmptyFirstLineInMethodBlock:
+    active: true # was false
+  SpacingAroundAngleBrackets:
+    active: true # was false
+  SpacingAroundDoubleColon:
+    active: false # was false
+  SpacingAroundUnaryOperator:
+    active: true # was false
+  SpacingBetweenDeclarationsWithAnnotations:
+    active: true # was false
+  SpacingBetweenDeclarationsWithComments:
+    active: true # was false
