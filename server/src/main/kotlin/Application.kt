@@ -5,6 +5,7 @@ import io.ktor.application.Application
 import io.ktor.application.install
 import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
+import io.ktor.features.DefaultHeaders
 import io.ktor.serialization.json
 import io.ktor.server.cio.EngineMain
 import kotlinx.serialization.json.Json
@@ -21,6 +22,7 @@ fun Application.module() {
 
     // Install and configure plugins.
     install(CallLogging)
+    install(DefaultHeaders)
     install(ContentNegotiation) {
         json(
             Json {
