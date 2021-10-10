@@ -1,6 +1,7 @@
 package doist.ffs
 
 import doist.ffs.routes.organizationRoutes
+import doist.ffs.routes.projectRoutes
 import io.ktor.application.Application
 import io.ktor.application.install
 import io.ktor.features.CallLogging
@@ -29,6 +30,7 @@ fun Application.module() {
                 isLenient = true
                 serializersModule = SerializersModule {
                     contextual(OrganizationSerializer)
+                    contextual(ProjectSerializer)
                 }
             }
         )
@@ -36,4 +38,5 @@ fun Application.module() {
 
     // Setup routes.
     organizationRoutes()
+    projectRoutes()
 }

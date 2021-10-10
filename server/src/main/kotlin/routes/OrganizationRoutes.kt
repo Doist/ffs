@@ -29,6 +29,9 @@ fun Application.organizationRoutes() {
     }
 }
 
+const val PATH_ORGANIZATIONS = "/organizations"
+const val PATH_ORGANIZATION = "/organizations/{id}"
+
 /**
  * Create a new organization.
  *
@@ -38,16 +41,15 @@ fun Application.organizationRoutes() {
  * | --------- | -------- | ------------------------- |
  * | `name`    | Yes      | Name of the organization. |
  */
-fun Route.routeCreateOrganization() = post("/organizations") {
-    val parameters = call.receiveParameters()
-    val name: String by parameters
+fun Route.routeCreateOrganization() = post(PATH_ORGANIZATIONS) {
+    val name: String by call.receiveParameters()
     val id = withDatabase { db ->
         db.capturingLastInsertId {
             db.organizationQueries.insert(name)
         }
     }
     call.run {
-        response.header(HttpHeaders.Location, "/organizations/$id")
+        response.header(HttpHeaders.Location, PATH_ORGANIZATION.replace("{id}", id.toString()))
         respond(HttpStatusCode.Created)
     }
 }
@@ -57,7 +59,7 @@ fun Route.routeCreateOrganization() = post("/organizations") {
  *
  * On success, responds `200 OK` with a JSON array containing all organizations.
  */
-fun Route.routeGetOrganizations() = get("/organizations") {
+fun Route.routeGetOrganizations() = get(PATH_ORGANIZATIONS) {
     val organizations = withDatabase { db ->
         db.organizationQueries.selectAll().executeAsList()
     }
@@ -74,7 +76,7 @@ fun Route.routeGetOrganizations() = get("/organizations") {
  * | `id`      | Yes      | ID of the organization. |
  */
 @OptIn(ExperimentalSerializationApi::class)
-fun Route.routeGetOrganization() = get("/organizations/{id}") {
+fun Route.routeGetOrganization() = get(PATH_ORGANIZATION) {
     val id: Long by call.parameters
     val organization = withDatabase { db ->
         db.organizationQueries.select(id = id).executeAsOneOrNull()
@@ -85,14 +87,14 @@ fun Route.routeGetOrganization() = get("/organizations/{id}") {
 /**
  * Update an organization.
  *
- * On success, responds `200 OK` with an empty body..
+ * On success, responds `200 OK` with an empty body.
  *
  * | Parameter | Required | Description               |
  * | --------- | -------- | ------------------------- |
  * | `id`      | Yes      | ID of the organization.   |
  * | `name`    | No       | Name of the organization. |
  */
-fun Route.routeUpdateOrganization() = put("/organizations/{id}") {
+fun Route.routeUpdateOrganization() = put(PATH_ORGANIZATION) {
     val id: Long by call.parameters
     val name: String? by call.receiveParameters()
     withDatabase { db ->
@@ -112,7 +114,7 @@ fun Route.routeUpdateOrganization() = put("/organizations/{id}") {
  * | --------- | -------- | ------------------------- |
  * | `id`      | Yes      | ID of the organization.   |
  */
-fun Route.routeDeleteOrganization() = delete("/organizations/{id}") {
+fun Route.routeDeleteOrganization() = delete(PATH_ORGANIZATION) {
     val id: Long by call.parameters
     withDatabase { db ->
         db.organizationQueries.delete(id = id)
