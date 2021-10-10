@@ -3,9 +3,9 @@ package doist.ffs
 import com.squareup.sqldelight.ColumnAdapter
 import com.squareup.sqldelight.db.SqlDriver
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
-import doist.ffs.data.Flag
-import doist.ffs.data.Organization
-import doist.ffs.data.Project
+import doist.ffs.db.Flag
+import doist.ffs.db.Organization
+import doist.ffs.db.Project
 import kotlinx.datetime.Instant
 import java.util.logging.Logger
 

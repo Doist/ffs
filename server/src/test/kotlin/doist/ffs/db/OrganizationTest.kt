@@ -1,4 +1,4 @@
-package doist.ffs.data
+package doist.ffs.db
 
 import com.squareup.sqldelight.db.SqlDriver
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
