@@ -9,7 +9,14 @@ import doist.ffs.db.Project
 import kotlinx.datetime.Instant
 import java.util.logging.Logger
 
-val defaultDriver = JdbcSqliteDriver("jdbc:sqlite:ffs.sqlite3")
+var defaultDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+
+/**
+ * Sets the default database file path. When blank, an in-memory database is used.
+ */
+fun setDefaultDatabasePath(path: String) {
+    defaultDriver = JdbcSqliteDriver("${JdbcSqliteDriver.IN_MEMORY}$path")
+}
 
 /**
  * Returns a [Database] instance for [driver].

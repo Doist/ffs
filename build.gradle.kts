@@ -9,6 +9,7 @@ version = "1.0-SNAPSHOT"
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.sqldelight) apply false
     alias(libs.plugins.kotlin.power.assert) apply false
@@ -28,8 +29,8 @@ subprojects {
     afterEvaluate {
         apply(plugin = libs.plugins.detekt.get().pluginId)
         configure<DetektExtension> {
-            val kotlinExtension = extensions.getByName("kotlin") as KotlinProjectExtension
             buildUponDefaultConfig = true
+            val kotlinExtension = extensions.getByName("kotlin") as KotlinProjectExtension
             source = files(kotlinExtension.sourceSets.flatMap { it.kotlin.srcDirs })
             parallel = true
             reports.sarif.enabled = true
