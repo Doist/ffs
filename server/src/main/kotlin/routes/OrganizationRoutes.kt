@@ -1,6 +1,7 @@
 package doist.ffs.routes
 
 import doist.ffs.capturingLastInsertId
+import doist.ffs.organizations
 import doist.ffs.withDatabase
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -45,7 +46,7 @@ fun Route.routeCreateOrganization() = post(PATH_ORGANIZATIONS) {
     val name: String by call.receiveParameters()
     val id = withDatabase { db ->
         db.capturingLastInsertId {
-            db.organizationQueries.insert(name)
+            db.organizations.insert(name)
         }
     }
     call.run {
@@ -61,7 +62,7 @@ fun Route.routeCreateOrganization() = post(PATH_ORGANIZATIONS) {
  */
 fun Route.routeGetOrganizations() = get(PATH_ORGANIZATIONS) {
     val organizations = withDatabase { db ->
-        db.organizationQueries.selectAll().executeAsList()
+        db.organizations.selectAll().executeAsList()
     }
     call.respond(HttpStatusCode.OK, organizations)
 }
@@ -79,7 +80,7 @@ fun Route.routeGetOrganizations() = get(PATH_ORGANIZATIONS) {
 fun Route.routeGetOrganization() = get(PATH_ORGANIZATION) {
     val id: Long by call.parameters
     val organization = withDatabase { db ->
-        db.organizationQueries.select(id = id).executeAsOneOrNull()
+        db.organizations.select(id = id).executeAsOneOrNull()
     } ?: throw NotFoundException()
     call.respond(HttpStatusCode.OK, organization)
 }
@@ -98,9 +99,9 @@ fun Route.routeUpdateOrganization() = put(PATH_ORGANIZATION) {
     val id: Long by call.parameters
     val name: String? by call.receiveParameters()
     withDatabase { db ->
-        val organization = db.organizationQueries.select(id = id).executeAsOneOrNull()
+        val organization = db.organizations.select(id = id).executeAsOneOrNull()
             ?: throw NotFoundException()
-        db.organizationQueries.update(id = id, name = name ?: organization.name)
+        db.organizations.update(id = id, name = name ?: organization.name)
     }
     call.respond(HttpStatusCode.NoContent)
 }
@@ -117,7 +118,7 @@ fun Route.routeUpdateOrganization() = put(PATH_ORGANIZATION) {
 fun Route.routeDeleteOrganization() = delete(PATH_ORGANIZATION) {
     val id: Long by call.parameters
     withDatabase { db ->
-        db.organizationQueries.delete(id = id)
+        db.organizations.delete(id = id)
     }
     call.respond(HttpStatusCode.NoContent)
 }

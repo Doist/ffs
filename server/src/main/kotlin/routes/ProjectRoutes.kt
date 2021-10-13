@@ -3,6 +3,7 @@
 package doist.ffs.routes
 
 import doist.ffs.capturingLastInsertId
+import doist.ffs.projects
 import doist.ffs.withDatabase
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -50,7 +51,7 @@ fun Route.routeCreateProject() = post(PATH_PROJECTS) {
     val name: String by params
     val id = withDatabase { db ->
         db.capturingLastInsertId {
-            db.projectQueries.insert(organization_id = organization_id, name = name)
+            db.projects.insert(organization_id = organization_id, name = name)
         }
     }
     call.run {
@@ -71,7 +72,7 @@ fun Route.routeCreateProject() = post(PATH_PROJECTS) {
 fun Route.routeGetProjects() = get(PATH_PROJECTS) {
     val organization_id: Long by call.request.queryParameters
     val projects = withDatabase { db ->
-        db.projectQueries.selectByOrganization(organization_id).executeAsList()
+        db.projects.selectByOrganization(organization_id).executeAsList()
     }
     call.respond(HttpStatusCode.OK, projects)
 }
@@ -89,7 +90,7 @@ fun Route.routeGetProjects() = get(PATH_PROJECTS) {
 fun Route.routeGetProject() = get(PATH_PROJECT) {
     val id: Long by call.parameters
     val organization = withDatabase { db ->
-        db.projectQueries.select(id = id).executeAsOneOrNull()
+        db.projects.select(id = id).executeAsOneOrNull()
     } ?: throw NotFoundException()
     call.respond(HttpStatusCode.OK, organization)
 }
@@ -108,9 +109,9 @@ fun Route.routeUpdateProject() = put(PATH_PROJECT) {
     val id: Long by call.parameters
     val name: String? by call.receiveParameters()
     withDatabase { db ->
-        val project = db.projectQueries.select(id = id).executeAsOneOrNull()
+        val project = db.projects.select(id = id).executeAsOneOrNull()
             ?: throw NotFoundException()
-        db.projectQueries.update(id = id, name = name ?: project.name)
+        db.projects.update(id = id, name = name ?: project.name)
     }
     call.respond(HttpStatusCode.NoContent)
 }
@@ -127,7 +128,7 @@ fun Route.routeUpdateProject() = put(PATH_PROJECT) {
 fun Route.routeDeleteProject() = delete(PATH_PROJECT) {
     val id: Long by call.parameters
     withDatabase { db ->
-        db.projectQueries.delete(id = id)
+        db.projects.delete(id = id)
     }
     call.respond(HttpStatusCode.NoContent)
 }

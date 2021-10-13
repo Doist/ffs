@@ -9,7 +9,9 @@ import doist.ffs.db.Project
 import kotlinx.datetime.Instant
 import java.util.logging.Logger
 
-var defaultDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+val Database.organizations get() = organizationQueries
+val Database.projects get() = projectQueries
+val Database.flags get() = flagQueries
 
 /**
  * Sets the default database file path. When blank, an in-memory database is used.
@@ -35,9 +37,9 @@ fun getDatabase(driver: SqlDriver = defaultDriver): Database {
 /**
  * Runs [block] with [Database] as its argument.
  */
-inline fun <T> withDatabase(
+fun <T> withDatabase(
     driver: SqlDriver = defaultDriver,
-    crossinline block: (database: Database) -> T
+    block: (database: Database) -> T
 ): T = driver.use {
     return block(getDatabase(it))
 }
@@ -50,6 +52,8 @@ fun Database.capturingLastInsertId(block: Database.() -> Unit) =
         block()
         internalQueries.lastInsertId().executeAsOne()
     }
+
+private var defaultDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
 
 private val log = Logger.getLogger("sqldelight")
 

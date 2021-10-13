@@ -4,6 +4,8 @@ import com.squareup.sqldelight.db.SqlDriver
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import doist.ffs.capturingLastInsertId
 import doist.ffs.getDatabase
+import doist.ffs.organizations
+import doist.ffs.projects
 import doist.ffs.withDatabase
 import kotlin.test.Test
 import kotlin.test.assertFails
@@ -15,7 +17,7 @@ internal class ProjectTest {
             val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
             val database = getDatabase(driver)
             organizationId = database.capturingLastInsertId {
-                organizationQueries.insert(name = "test-name")
+                organizations.insert(name = "test-name")
             }
             return driver
         }
@@ -23,9 +25,9 @@ internal class ProjectTest {
     @Test
     fun testInsertValid(): Unit = withDatabase(testDriver) { db ->
         val name = "test-name"
-        db.projectQueries.apply {
+        db.projects.apply {
             insert(organization_id = organizationId, name = name)
-            val project = db.projectQueries.selectByOrganization(organizationId).executeAsList()[0]
+            val project = db.projects.selectByOrganization(organizationId).executeAsList()[0]
             assert(project.organization_id == organizationId)
             assert(project.name == name)
         }
@@ -34,10 +36,10 @@ internal class ProjectTest {
     @Test
     fun testInsertDuplicatedName(): Unit = withDatabase(testDriver) { db ->
         val name = "test-name"
-        db.projectQueries.apply {
+        db.projects.apply {
             insert(organization_id = organizationId, name = name)
             assertFails {
-                db.projectQueries.insert(organization_id = organizationId, name = name)
+                db.projects.insert(organization_id = organizationId, name = name)
             }
         }
     }
@@ -45,11 +47,11 @@ internal class ProjectTest {
     @Test
     fun testSelectByOrganization(): Unit = withDatabase(testDriver) { db ->
         val namePrefix = "test-name-"
-        db.projectQueries.apply {
+        db.projects.apply {
             for (i in 0..9) {
                 insert(organization_id = organizationId, name = "$namePrefix-$i")
             }
-            val projects = db.projectQueries.selectByOrganization(organizationId).executeAsList()
+            val projects = db.projects.selectByOrganization(organizationId).executeAsList()
             assert(projects.size == 10)
             projects.forEachIndexed { index, project ->
                 assert(project.name.startsWith(namePrefix))
@@ -62,9 +64,9 @@ internal class ProjectTest {
     fun testSelect(): Unit = withDatabase(testDriver) { db ->
         val name = "test-name"
         val id = db.capturingLastInsertId {
-            projectQueries.insert(organization_id = organizationId, name = name)
+            projects.insert(organization_id = organizationId, name = name)
         }
-        val project = db.projectQueries.select(id).executeAsOne()
+        val project = db.projects.select(id).executeAsOne()
         assert(project.organization_id == organizationId)
         assert(project.name == name)
     }
@@ -74,10 +76,10 @@ internal class ProjectTest {
         val oldName = "old-test-name"
         val newName = "new-test-name"
         val id = db.capturingLastInsertId {
-            projectQueries.insert(organization_id = organizationId, name = oldName)
+            projects.insert(organization_id = organizationId, name = oldName)
         }
-        db.projectQueries.update(id = id, name = newName)
-        val project = db.projectQueries.select(id).executeAsOne()
+        db.projects.update(id = id, name = newName)
+        val project = db.projects.select(id).executeAsOne()
         assert(project.name == newName)
     }
 
@@ -85,10 +87,10 @@ internal class ProjectTest {
     fun testDelete(): Unit = withDatabase(testDriver) { db ->
         val name = "test-name"
         val id = db.capturingLastInsertId {
-            projectQueries.insert(organization_id = organizationId, name = name)
+            projects.insert(organization_id = organizationId, name = name)
         }
-        db.projectQueries.delete(id)
-        val project = db.projectQueries.select(id).executeAsOneOrNull()
+        db.projects.delete(id)
+        val project = db.projects.select(id).executeAsOneOrNull()
         assert(project == null)
     }
 }

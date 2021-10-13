@@ -3,6 +3,7 @@ package doist.ffs.routes
 import doist.ffs.ProjectSerializer
 import doist.ffs.capturingLastInsertId
 import doist.ffs.module
+import doist.ffs.organizations
 import doist.ffs.withDatabase
 import io.ktor.server.testing.withTestApplication
 import kotlin.test.Test
@@ -19,7 +20,7 @@ class ProjectRoutesTest {
 
             // Setup an organization to own projects in testing.
             val organizationId = withDatabase { db ->
-                db.capturingLastInsertId { db.organizationQueries.insert("test-organization") }
+                db.capturingLastInsertId { db.organizations.insert("test-organization") }
             }
 
             val pathProjectsForOrganization = "$PATH_PROJECTS?organization_id=$organizationId"
@@ -54,7 +55,7 @@ class ProjectRoutesTest {
             assertResourceCount(pathProjectsForOrganization, ProjectSerializer, 0)
 
             // Clenaup test organization.
-            withDatabase { db -> db.organizationQueries.delete(organizationId) }
+            withDatabase { db -> db.organizations.delete(organizationId) }
         }
     }
 }
