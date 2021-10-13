@@ -81,7 +81,7 @@ internal class FlagTest {
         val id = db.capturingLastInsertId {
             flags.insert(project_id = projectId, name = name, rule = oldRule)
         }
-        db.flags.updateRule(id = id, rule = newRule)
+        db.flags.update(id = id, name = name, rule = newRule)
         val project = db.flags.select(id).executeAsOne()
         assert(project.rule == newRule)
     }

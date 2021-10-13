@@ -34,9 +34,9 @@ select:
 SELECT * FROM flag
 WHERE id = ?;
 
-updateRule:
+update:
 UPDATE flag
-SET rule = ?
+SET name = ?, rule = ?
 WHERE id = ?;
 
 delete:

@@ -1,5 +1,6 @@
 package doist.ffs
 
+import doist.ffs.routes.flagRoutes
 import doist.ffs.routes.organizationRoutes
 import doist.ffs.routes.projectRoutes
 import io.ktor.application.Application
@@ -31,6 +32,7 @@ fun Application.module() {
                 serializersModule = SerializersModule {
                     contextual(OrganizationSerializer)
                     contextual(ProjectSerializer)
+                    contextual(FlagSerializer)
                 }
             }
         )
@@ -39,4 +41,5 @@ fun Application.module() {
     // Setup routes.
     organizationRoutes()
     projectRoutes()
+    flagRoutes()
 }
