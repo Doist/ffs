@@ -6,7 +6,7 @@ CREATE TABLE project (
     name TEXT NOT NULL,
     created_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(organization_id) REFERENCES organization(id),
+    FOREIGN KEY(organization_id) REFERENCES organization(id) ON DELETE CASCADE,
     UNIQUE(name, organization_id)
 );
 

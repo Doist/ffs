@@ -23,6 +23,7 @@ fun setDefaultDatabasePath(path: String) {
  */
 fun getDatabase(driver: SqlDriver = defaultDriver): Database {
     migrateIfNeeded(driver)
+    driver.execute(null, "PRAGMA foreign_keys=ON", 0)
     return Database(
         driver = driver,
         organizationAdapter = Organization.Adapter(instantAdapter, instantAdapter),
