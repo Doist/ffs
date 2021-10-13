@@ -1,5 +1,5 @@
 rootProject.name = "ffs"
 
-include(":core", ":server", ":library-frontend", ":library-backend", ":dashboard")
+include(":ffs-shared", ":ffs-server", ":ffs-library-frontend", ":ffs-library-backend", ":ffs-dashboard")
 
 enableFeaturePreview("VERSION_CATALOGS")
