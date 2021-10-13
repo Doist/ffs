@@ -10,7 +10,7 @@ CREATE TABLE project (
     UNIQUE(name, organization_id)
 );
 
-CREATE TRIGGER projectUpdateUpdatedAt
+CREATE TRIGGER trigger_porject_updated_at
 AFTER UPDATE ON project
 BEGIN
     UPDATE project
@@ -18,7 +18,7 @@ BEGIN
     WHERE id = old.id;
 END;
 
-CREATE INDEX projectOrganizationId
+CREATE INDEX index_project_organization_id
 ON project(organization_id);
 
 insert:

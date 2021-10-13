@@ -7,7 +7,7 @@ CREATE TABLE organization (
     updated_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER organizationUpdateUpdatedAt
+CREATE TRIGGER trigger_organization_updated_at
 AFTER UPDATE ON organization
 BEGIN
     UPDATE organization

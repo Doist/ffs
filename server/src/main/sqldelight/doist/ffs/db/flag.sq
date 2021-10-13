@@ -11,7 +11,7 @@ CREATE TABLE flag (
     UNIQUE(name, project_id)
 );
 
-CREATE TRIGGER flagUpdateUpdatedAt
+CREATE TRIGGER trigger_flag_updated_at
 AFTER UPDATE ON flag
 BEGIN
     UPDATE flag
@@ -19,7 +19,7 @@ BEGIN
     WHERE id = old.id;
 END;
 
-CREATE INDEX flagProjectId
+CREATE INDEX index_flag_project_id
 ON flag(project_id);
 
 insert:
