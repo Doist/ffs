@@ -47,7 +47,7 @@ inline fun <T> withDatabase(
 fun Database.capturingLastInsertId(block: Database.() -> Unit) =
     transactionWithResult<Long> {
         block()
-        generalQueries.lastInsertId().executeAsOne()
+        internalQueries.lastInsertId().executeAsOne()
     }
 
 private val log = Logger.getLogger("sqldelight")
