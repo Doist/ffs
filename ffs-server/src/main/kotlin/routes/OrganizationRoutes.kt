@@ -17,6 +17,7 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.put
 import io.ktor.routing.routing
+import io.ktor.util.getOrFail
 import io.ktor.util.getValue
 import kotlinx.serialization.ExperimentalSerializationApi
 
@@ -43,7 +44,7 @@ const val PATH_ORGANIZATION = "/organizations/{id}"
  * | `name`    | Yes      | Name of the organization. |
  */
 fun Route.routeCreateOrganization() = post(PATH_ORGANIZATIONS) {
-    val name: String by call.receiveParameters()
+    val name = call.receiveParameters().getOrFail("name")
     val id = withDatabase { db ->
         db.capturingLastInsertId {
             db.organizations.insert(name)
@@ -78,7 +79,7 @@ fun Route.routeGetOrganizations() = get(PATH_ORGANIZATIONS) {
  */
 @OptIn(ExperimentalSerializationApi::class)
 fun Route.routeGetOrganization() = get(PATH_ORGANIZATION) {
-    val id: Long by call.parameters
+    val id = call.parameters.getOrFail<Long>("id")
     val organization = withDatabase { db ->
         db.organizations.select(id = id).executeAsOneOrNull()
     } ?: throw NotFoundException()
@@ -96,8 +97,8 @@ fun Route.routeGetOrganization() = get(PATH_ORGANIZATION) {
  * | `name`    | No       | Name of the organization. |
  */
 fun Route.routeUpdateOrganization() = put(PATH_ORGANIZATION) {
-    val id: Long by call.parameters
-    val name: String? by call.receiveParameters()
+    val id = call.parameters.getOrFail<Long>("id")
+    val name = call.receiveParameters()["name"]
     withDatabase { db ->
         val organization = db.organizations.select(id = id).executeAsOneOrNull()
             ?: throw NotFoundException()
@@ -111,12 +112,12 @@ fun Route.routeUpdateOrganization() = put(PATH_ORGANIZATION) {
  *
  * On success, responds `201 Created` with an empty body.
  *
- * | Parameter | Required | Description               |
- * | --------- | -------- | ------------------------- |
- * | `id`      | Yes      | ID of the organization.   |
+ * | Parameter | Required | Description             |
+ * | --------- | -------- | ----------------------- |
+ * | `id`      | Yes      | ID of the organization. |
  */
 fun Route.routeDeleteOrganization() = delete(PATH_ORGANIZATION) {
-    val id: Long by call.parameters
+    val id = call.parameters.getOrFail<Long>("id")
     withDatabase { db ->
         db.organizations.delete(id = id)
     }

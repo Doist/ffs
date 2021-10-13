@@ -19,6 +19,7 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.put
 import io.ktor.routing.routing
+import io.ktor.util.getOrFail
 import io.ktor.util.getValue
 import kotlinx.serialization.ExperimentalSerializationApi
 
@@ -40,18 +41,18 @@ const val PATH_PROJECT = "/project/{id}"
  *
  * On success, responds `201 Created` with an empty body.
  *
- * | Parameter         | Required | Description               |
- * | ----------------- | -------- | ------------------------- |
- * | `organization_id` | Yes      | ID of the organization.   |
- * | `name`            | Yes      | Name of the project.      |
+ * | Parameter         | Required | Description             |
+ * | ----------------- | -------- | ----------------------- |
+ * | `organization_id` | Yes      | ID of the organization. |
+ * | `name`            | Yes      | Name of the project.    |
  */
 fun Route.routeCreateProject() = post(PATH_PROJECTS) {
     val params = call.receiveParameters()
-    val organization_id: Long by params
-    val name: String by params
+    val organizationId = params.getOrFail<Long>("organization_id")
+    val name = params.getOrFail("name")
     val id = withDatabase { db ->
         db.capturingLastInsertId {
-            db.projects.insert(organization_id = organization_id, name = name)
+            db.projects.insert(organization_id = organizationId, name = name)
         }
     }
     call.run {
@@ -65,14 +66,14 @@ fun Route.routeCreateProject() = post(PATH_PROJECTS) {
  *
  * On success, responds `200 OK` with a JSON array containing all projects for the organization.
  *
- * | Parameter         | Required | Description               |
- * | ----------------- | -------- | ------------------------- |
- * | `organization_id` | Yes      | ID of the organization.   |
+ * | Parameter         | Required | Description             |
+ * | ----------------- | -------- | ----------------------- |
+ * | `organization_id` | Yes      | ID of the organization. |
  */
 fun Route.routeGetProjects() = get(PATH_PROJECTS) {
-    val organization_id: Long by call.request.queryParameters
+    val organizationId = call.request.queryParameters.getOrFail<Long>("organization_id")
     val projects = withDatabase { db ->
-        db.projects.selectByOrganization(organization_id).executeAsList()
+        db.projects.selectByOrganization(organizationId).executeAsList()
     }
     call.respond(HttpStatusCode.OK, projects)
 }
@@ -88,7 +89,7 @@ fun Route.routeGetProjects() = get(PATH_PROJECTS) {
  */
 @OptIn(ExperimentalSerializationApi::class)
 fun Route.routeGetProject() = get(PATH_PROJECT) {
-    val id: Long by call.parameters
+    val id = call.parameters.getOrFail<Long>("id")
     val organization = withDatabase { db ->
         db.projects.select(id = id).executeAsOneOrNull()
     } ?: throw NotFoundException()
@@ -106,11 +107,10 @@ fun Route.routeGetProject() = get(PATH_PROJECT) {
  * | `name`    | No       | Name of the project. |
  */
 fun Route.routeUpdateProject() = put(PATH_PROJECT) {
-    val id: Long by call.parameters
-    val name: String? by call.receiveParameters()
+    val id = call.parameters.getOrFail<Long>("id")
+    val name = call.receiveParameters()["name"]
     withDatabase { db ->
-        val project = db.projects.select(id = id).executeAsOneOrNull()
-            ?: throw NotFoundException()
+        val project = db.projects.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
         db.projects.update(id = id, name = name ?: project.name)
     }
     call.respond(HttpStatusCode.NoContent)
@@ -121,12 +121,12 @@ fun Route.routeUpdateProject() = put(PATH_PROJECT) {
  *
  * On success, responds `201 Created` with an empty body.
  *
- * | Parameter | Required | Description          |
- * | --------- | -------- | -------------------- |
- * | `id`      | Yes      | ID of the porject.   |
+ * | Parameter | Required | Description        |
+ * | --------- | -------- | ------------------ |
+ * | `id`      | Yes      | ID of the project. |
  */
 fun Route.routeDeleteProject() = delete(PATH_PROJECT) {
-    val id: Long by call.parameters
+    val id = call.parameters.getOrFail<Long>("id")
     withDatabase { db ->
         db.projects.delete(id = id)
     }
