@@ -7,7 +7,7 @@ CREATE TABLE project (
     created_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(organization_id) REFERENCES organization(id),
-    UNIQUE(name,organization_id)
+    UNIQUE(name, organization_id)
 );
 
 CREATE TRIGGER projectUpdateUpdatedAt
@@ -22,7 +22,7 @@ CREATE INDEX projectOrganizationId
 ON project(organization_id);
 
 insert:
-INSERT INTO project(organization_id,name)
+INSERT INTO project(organization_id, name)
 VALUES (?,?);
 
 selectByOrganization:
