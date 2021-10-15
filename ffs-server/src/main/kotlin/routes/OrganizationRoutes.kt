@@ -18,7 +18,6 @@ import io.ktor.routing.post
 import io.ktor.routing.put
 import io.ktor.routing.routing
 import io.ktor.util.getOrFail
-import io.ktor.util.getValue
 import kotlinx.serialization.ExperimentalSerializationApi
 
 fun Application.organizationRoutes() {
@@ -33,6 +32,9 @@ fun Application.organizationRoutes() {
 
 const val PATH_ORGANIZATIONS = "/organizations"
 const val PATH_ORGANIZATION = "/organizations/{id}"
+
+@Suppress("FunctionName")
+fun PATH_ORGANIZATION(id: Any) = PATH_ORGANIZATION.replace("{id}", id.toString())
 
 /**
  * Create a new organization.
@@ -51,7 +53,7 @@ fun Route.routeCreateOrganization() = post(PATH_ORGANIZATIONS) {
         }
     }
     call.run {
-        response.header(HttpHeaders.Location, PATH_ORGANIZATION.replace("{id}", id.toString()))
+        response.header(HttpHeaders.Location, PATH_ORGANIZATION(id))
         respond(HttpStatusCode.Created)
     }
 }

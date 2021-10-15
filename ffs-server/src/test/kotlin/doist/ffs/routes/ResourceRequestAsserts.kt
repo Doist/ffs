@@ -44,13 +44,15 @@ fun TestApplicationEngine.assertResourceCreates(
     }
 }!!
 
-fun <T> TestApplicationEngine.assertResourceAtPath(
+fun <T> TestApplicationEngine.assertResource(
     path: String,
-    deserializer: KSerializer<T>
+    deserializer: KSerializer<T>,
+    block: (T) -> Unit = {}
 ) = with(handleRequest(HttpMethod.Get, path)) {
     assert(response.status() == HttpStatusCode.OK)
     assert(response.contentType().match(ContentType.Application.Json))
-    Json.decodeFromString(deserializer, response.content!!)
+    val resource = Json.decodeFromString(deserializer, response.content!!)
+    block(resource)
 }
 
 fun TestApplicationEngine.assertResourceUpdates(path: String, args: List<Pair<String, String?>>) {
@@ -69,6 +71,6 @@ fun TestApplicationEngine.assertResourceUpdates(path: String, args: List<Pair<St
 
 fun TestApplicationEngine.assertResourceDeletes(path: String) {
     with(handleRequest(HttpMethod.Delete, path)) {
-        assert(response.status() == io.ktor.http.HttpStatusCode.NoContent)
+        assert(response.status() == HttpStatusCode.NoContent)
     }
 }

@@ -20,7 +20,6 @@ import io.ktor.routing.post
 import io.ktor.routing.put
 import io.ktor.routing.routing
 import io.ktor.util.getOrFail
-import io.ktor.util.getValue
 import kotlinx.serialization.ExperimentalSerializationApi
 
 fun Application.flagRoutes() {
@@ -35,6 +34,9 @@ fun Application.flagRoutes() {
 
 const val PATH_FLAGS = "/flags"
 const val PATH_FLAG = "/flag/{id}"
+
+@Suppress("FunctionName")
+fun PATH_FLAG(id: Any) = PATH_FLAG.replace("{id}", id.toString())
 
 /**
  * Create a new flag.
@@ -58,7 +60,7 @@ fun Route.routeCreateFlag() = post(PATH_FLAGS) {
         }
     }
     call.run {
-        response.header(HttpHeaders.Location, PATH_FLAG.replace("{id}", id.toString()))
+        response.header(HttpHeaders.Location, PATH_FLAG(id))
         respond(HttpStatusCode.Created)
     }
 }

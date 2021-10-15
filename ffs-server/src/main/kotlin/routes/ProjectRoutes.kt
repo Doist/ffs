@@ -20,7 +20,6 @@ import io.ktor.routing.post
 import io.ktor.routing.put
 import io.ktor.routing.routing
 import io.ktor.util.getOrFail
-import io.ktor.util.getValue
 import kotlinx.serialization.ExperimentalSerializationApi
 
 fun Application.projectRoutes() {
@@ -35,6 +34,9 @@ fun Application.projectRoutes() {
 
 const val PATH_PROJECTS = "/projects"
 const val PATH_PROJECT = "/project/{id}"
+
+@Suppress("FunctionName")
+fun PATH_PROJECT(id: Any) = PATH_PROJECT.replace("{id}", id.toString())
 
 /**
  * Create a new project.
@@ -56,7 +58,7 @@ fun Route.routeCreateProject() = post(PATH_PROJECTS) {
         }
     }
     call.run {
-        response.header(HttpHeaders.Location, PATH_PROJECT.replace("{id}", id.toString()))
+        response.header(HttpHeaders.Location, PATH_PROJECT(id))
         respond(HttpStatusCode.Created)
     }
 }
