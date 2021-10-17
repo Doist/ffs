@@ -1,11 +1,11 @@
 package doist.ffs.routes
 
 import doist.ffs.FlagSerializer
-import doist.ffs.capturingLastInsertId
-import doist.ffs.flags
-import doist.ffs.organizations
-import doist.ffs.projects
-import doist.ffs.withDatabase
+import doist.ffs.ext.capturingLastInsertId
+import doist.ffs.ext.database
+import doist.ffs.ext.flags
+import doist.ffs.ext.organizations
+import doist.ffs.ext.projects
 import kotlin.test.Test
 
 class FlagRoutesTest {
@@ -16,12 +16,10 @@ class FlagRoutesTest {
             PATH_FLAGS,
             listOf("project_id" to projectId.toString(), "name" to NAME, "rule" to RULE)
         )
-        withDatabase { db ->
-            val projects = db.flags.selectByProject(projectId).executeAsList()
-            assert(projects.size == 1)
-            assert(projects[0].name == NAME)
-            assert(projects[0].rule == RULE)
-        }
+        val projects = database.flags.selectByProject(projectId).executeAsList()
+        assert(projects.size == 1)
+        assert(projects[0].name == NAME)
+        assert(projects[0].rule == RULE)
     }
 
     @Test
@@ -39,10 +37,8 @@ class FlagRoutesTest {
         val projectId = createProject()
         val pathFlagsForProject = "$PATH_FLAGS?project_id=$projectId"
         assertResourceCount(pathFlagsForProject, FlagSerializer, 0)
-        val id = withDatabase { db ->
-            db.capturingLastInsertId {
-                flags.insert(project_id = projectId, name = NAME, rule = RULE)
-            }
+        val id = database.capturingLastInsertId {
+            flags.insert(project_id = projectId, name = NAME, rule = RULE)
         }
         assertResourceCount(pathFlagsForProject, FlagSerializer, 1)
         assertResource(PATH_FLAG(id), FlagSerializer) { flag ->
@@ -51,66 +47,52 @@ class FlagRoutesTest {
             assert(flag.name == NAME)
             assert(flag.rule == RULE)
         }
-        withDatabase { db ->
-            db.flags.delete(id)
-        }
+        database.flags.delete(id)
         assertResourceCount(pathFlagsForProject, FlagSerializer, 0)
     }
 
     @Test
     fun testFlagUpdate() = withTestApplication {
         val projectId = createProject()
-        val id = withDatabase { db ->
-            db.capturingLastInsertId {
-                flags.insert(project_id = projectId, name = NAME, rule = RULE)
-            }
+        val id = database.capturingLastInsertId {
+            flags.insert(project_id = projectId, name = NAME, rule = RULE)
         }
         assertResourceUpdates(PATH_FLAG(id), listOf("name" to NAME_UPDATED))
-        withDatabase { db ->
-            val project = db.flags.select(id).executeAsOne()
-            assert(project.id == id)
-            assert(project.project_id == projectId)
-            assert(project.name == NAME_UPDATED)
-            assert(project.rule == RULE)
-        }
+        var project = database.flags.select(id).executeAsOne()
+        assert(project.id == id)
+        assert(project.project_id == projectId)
+        assert(project.name == NAME_UPDATED)
+        assert(project.rule == RULE)
         assertResourceUpdates(PATH_FLAG(id), listOf("rule" to RULE_UPDATED))
-        withDatabase { db ->
-            val project = db.flags.select(id).executeAsOne()
-            assert(project.id == id)
-            assert(project.project_id == projectId)
-            assert(project.name == NAME_UPDATED)
-            assert(project.rule == RULE_UPDATED)
-        }
+        project = database.flags.select(id).executeAsOne()
+        assert(project.id == id)
+        assert(project.project_id == projectId)
+        assert(project.name == NAME_UPDATED)
+        assert(project.rule == RULE_UPDATED)
         assertResourceUpdates(PATH_FLAG(id), listOf("name" to NAME, "rule" to RULE))
-        withDatabase { db ->
-            val project = db.flags.select(id).executeAsOne()
-            assert(project.id == id)
-            assert(project.project_id == projectId)
-            assert(project.name == NAME)
-            assert(project.rule == RULE)
-        }
+        project = database.flags.select(id).executeAsOne()
+        assert(project.id == id)
+        assert(project.project_id == projectId)
+        assert(project.name == NAME)
+        assert(project.rule == RULE)
     }
 
     @Test
     fun testFlagDelete() = withTestApplication {
         val projectId = createProject()
-        val id = withDatabase { db ->
-            db.capturingLastInsertId {
-                flags.insert(project_id = projectId, name = NAME, rule = RULE)
-            }
+        val id = database.capturingLastInsertId {
+            flags.insert(project_id = projectId, name = NAME, rule = RULE)
         }
         assertResourceDeletes(PATH_FLAG(id))
-        withDatabase { db ->
-            val flag = db.flags.select(id).executeAsOneOrNull()
-            assert(flag == null)
-        }
+        val flag = database.flags.select(id).executeAsOneOrNull()
+        assert(flag == null)
     }
 
-    private fun createProject(): Long = withDatabase { db ->
-        val organizationId = db.capturingLastInsertId {
-            db.organizations.insert(name = "test-organization")
+    private fun createProject(): Long {
+        val organizationId = database.capturingLastInsertId {
+            organizations.insert(name = "test-organization")
         }
-        db.capturingLastInsertId {
+        return database.capturingLastInsertId {
             projects.insert(organization_id = organizationId, name = "test-project")
         }
     }

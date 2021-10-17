@@ -2,9 +2,9 @@
 
 package doist.ffs.routes
 
-import doist.ffs.capturingLastInsertId
-import doist.ffs.projects
-import doist.ffs.withDatabase
+import doist.ffs.ext.capturingLastInsertId
+import doist.ffs.ext.database
+import doist.ffs.ext.projects
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.features.NotFoundException
@@ -52,10 +52,8 @@ fun Route.routeCreateProject() = post(PATH_PROJECTS) {
     val params = call.receiveParameters()
     val organizationId = params.getOrFail<Long>("organization_id")
     val name = params.getOrFail("name")
-    val id = withDatabase { db ->
-        db.capturingLastInsertId {
-            db.projects.insert(organization_id = organizationId, name = name)
-        }
+    val id = database.capturingLastInsertId {
+        projects.insert(organization_id = organizationId, name = name)
     }
     call.run {
         response.header(HttpHeaders.Location, PATH_PROJECT(id))
@@ -74,9 +72,8 @@ fun Route.routeCreateProject() = post(PATH_PROJECTS) {
  */
 fun Route.routeGetProjects() = get(PATH_PROJECTS) {
     val organizationId = call.request.queryParameters.getOrFail<Long>("organization_id")
-    val projects = withDatabase { db ->
-        db.projects.selectByOrganization(organizationId).executeAsList()
-    }
+    val projects =
+        database.projects.selectByOrganization(organizationId).executeAsList()
     call.respond(HttpStatusCode.OK, projects)
 }
 
@@ -92,9 +89,8 @@ fun Route.routeGetProjects() = get(PATH_PROJECTS) {
 @OptIn(ExperimentalSerializationApi::class)
 fun Route.routeGetProject() = get(PATH_PROJECT) {
     val id = call.parameters.getOrFail<Long>("id")
-    val organization = withDatabase { db ->
-        db.projects.select(id = id).executeAsOneOrNull()
-    } ?: throw NotFoundException()
+    val organization =
+        database.projects.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
     call.respond(HttpStatusCode.OK, organization)
 }
 
@@ -111,9 +107,9 @@ fun Route.routeGetProject() = get(PATH_PROJECT) {
 fun Route.routeUpdateProject() = put(PATH_PROJECT) {
     val id = call.parameters.getOrFail<Long>("id")
     val name = call.receiveParameters()["name"]
-    withDatabase { db ->
-        val project = db.projects.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
-        db.projects.update(id = id, name = name ?: project.name)
+    database.projects.run {
+        val project = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+        update(id = id, name = name ?: project.name)
     }
     call.respond(HttpStatusCode.NoContent)
 }
@@ -129,8 +125,6 @@ fun Route.routeUpdateProject() = put(PATH_PROJECT) {
  */
 fun Route.routeDeleteProject() = delete(PATH_PROJECT) {
     val id = call.parameters.getOrFail<Long>("id")
-    withDatabase { db ->
-        db.projects.delete(id = id)
-    }
+    database.projects.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
 }

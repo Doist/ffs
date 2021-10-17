@@ -1,5 +1,8 @@
 package doist.ffs
 
+import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
+import doist.ffs.ext.database
+import doist.ffs.ext.driver
 import doist.ffs.routes.flagRoutes
 import doist.ffs.routes.organizationRoutes
 import doist.ffs.routes.projectRoutes
@@ -19,7 +22,7 @@ fun main(args: Array<String>): Unit = EngineMain.main(args)
 fun Application.module() {
     // Parse environment.
     environment.config.propertyOrNull("database.path")?.let {
-        setDefaultDatabasePath(it.getString())
+        database.driver = JdbcSqliteDriver("jdbc:sqlite:${it.getString()}")
     }
 
     // Install and configure plugins.

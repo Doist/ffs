@@ -1,59 +1,53 @@
 package doist.ffs.db
 
-import com.squareup.sqldelight.db.SqlDriver
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
-import doist.ffs.capturingLastInsertId
-import doist.ffs.flags
-import doist.ffs.getDatabase
-import doist.ffs.organizations
-import doist.ffs.projects
-import doist.ffs.withDatabase
+import doist.ffs.ext.Database
+import doist.ffs.ext.capturingLastInsertId
+import doist.ffs.ext.flags
+import doist.ffs.ext.organizations
+import doist.ffs.ext.projects
 import kotlin.test.Test
 import kotlin.test.assertFails
 
 internal class FlagTest {
     private var projectId: Long = -1
-    private val testDriver: SqlDriver
-        get() {
-            val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-            val database = getDatabase(driver)
-            val organizationId = database.capturingLastInsertId {
-                organizations.insert(name = "test-name")
-            }
-            projectId = database.capturingLastInsertId {
-                projects.insert(organization_id = organizationId, name = "test-name")
-            }
-            return driver
+    private val testDatabase = Database(JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)).apply {
+        val organizationId = capturingLastInsertId {
+            organizations.insert(name = "test-name")
         }
+        projectId = capturingLastInsertId {
+            projects.insert(organization_id = organizationId, name = "test-name")
+        }
+    }
 
     @Test
-    fun testInsertValid(): Unit = withDatabase(testDriver) { db ->
+    fun testInsertValid(): Unit = testDatabase.flags.run {
         val name = "test-name"
         val rule = "true"
-        db.flags.insert(project_id = projectId, name = name, rule = rule)
-        val flag = db.flags.selectByProject(projectId).executeAsList()[0]
+        insert(project_id = projectId, name = name, rule = rule)
+        val flag = selectByProject(projectId).executeAsList()[0]
         assert(flag.project_id == projectId)
         assert(flag.name == name)
     }
 
     @Test
-    fun testInsertDuplicatedName(): Unit = withDatabase(testDriver) { db ->
+    fun testInsertDuplicatedName(): Unit = testDatabase.flags.run {
         val name = "test-name"
         val rule = "true"
-        db.flags.insert(project_id = projectId, name = name, rule = rule)
+        insert(project_id = projectId, name = name, rule = rule)
         assertFails {
-            db.flags.insert(project_id = projectId, name = name, rule = rule)
+            insert(project_id = projectId, name = name, rule = rule)
         }
     }
 
     @Test
-    fun testSelectByOrganization(): Unit = withDatabase(testDriver) { db ->
+    fun testSelectByOrganization(): Unit = testDatabase.flags.run {
         val namePrefix = "test-name-"
         val rule = "true"
         for (i in 0..9) {
-            db.flags.insert(project_id = projectId, name = "$namePrefix-$i", rule = rule)
+            insert(project_id = projectId, name = "$namePrefix-$i", rule = rule)
         }
-        val flags = db.flags.selectByProject(projectId).executeAsList()
+        val flags = selectByProject(projectId).executeAsList()
         assert(flags.size == 10)
         flags.forEachIndexed { index, flag ->
             assert(flag.name.startsWith(namePrefix))
@@ -62,39 +56,39 @@ internal class FlagTest {
     }
 
     @Test
-    fun testSelect(): Unit = withDatabase(testDriver) { db ->
+    fun testSelect(): Unit = testDatabase.flags.run {
         val name = "test-name"
         val rule = "true"
-        val id = db.capturingLastInsertId {
-            flags.insert(project_id = projectId, name = name, rule = rule)
+        val id = testDatabase.capturingLastInsertId {
+            insert(project_id = projectId, name = name, rule = rule)
         }
-        val flag = db.flags.select(id).executeAsOne()
+        val flag = select(id).executeAsOne()
         assert(flag.project_id == projectId)
         assert(flag.name == name)
     }
 
     @Test
-    fun testUpdateRule(): Unit = withDatabase(testDriver) { db ->
+    fun testUpdateRule(): Unit = testDatabase.flags.run {
         val name = "test-name"
         val oldRule = "true"
         val newRule = "false"
-        val id = db.capturingLastInsertId {
-            flags.insert(project_id = projectId, name = name, rule = oldRule)
+        val id = testDatabase.capturingLastInsertId {
+            insert(project_id = projectId, name = name, rule = oldRule)
         }
-        db.flags.update(id = id, name = name, rule = newRule)
-        val project = db.flags.select(id).executeAsOne()
+        update(id = id, name = name, rule = newRule)
+        val project = select(id).executeAsOne()
         assert(project.rule == newRule)
     }
 
     @Test
-    fun testDelete(): Unit = withDatabase(testDriver) { db ->
+    fun testDelete(): Unit = testDatabase.flags.run {
         val name = "test-name"
         val rule = "true"
-        val id = db.capturingLastInsertId {
-            flags.insert(project_id = projectId, name = name, rule = rule)
+        val id = testDatabase.capturingLastInsertId {
+            insert(project_id = projectId, name = name, rule = rule)
         }
-        db.flags.delete(id)
-        val project = db.flags.select(id).executeAsOneOrNull()
+        delete(id)
+        val project = select(id).executeAsOneOrNull()
         assert(project == null)
     }
 }

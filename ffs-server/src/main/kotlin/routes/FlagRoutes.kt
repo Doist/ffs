@@ -2,9 +2,9 @@
 
 package doist.ffs.routes
 
-import doist.ffs.capturingLastInsertId
-import doist.ffs.flags
-import doist.ffs.withDatabase
+import doist.ffs.ext.capturingLastInsertId
+import doist.ffs.ext.database
+import doist.ffs.ext.flags
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.features.NotFoundException
@@ -54,10 +54,8 @@ fun Route.routeCreateFlag() = post(PATH_FLAGS) {
     val projectId = params.getOrFail<Long>("project_id")
     val name = params.getOrFail("name")
     val rule = params.getOrFail("rule")
-    val id = withDatabase { db ->
-        db.capturingLastInsertId {
-            db.flags.insert(project_id = projectId, name = name, rule = rule)
-        }
+    val id = database.capturingLastInsertId {
+        flags.insert(project_id = projectId, name = name, rule = rule)
     }
     call.run {
         response.header(HttpHeaders.Location, PATH_FLAG(id))
@@ -76,9 +74,7 @@ fun Route.routeCreateFlag() = post(PATH_FLAGS) {
  */
 fun Route.routeGetFlags() = get(PATH_FLAGS) {
     val projectId = call.request.queryParameters.getOrFail<Long>("project_id")
-    val flags = withDatabase { db ->
-        db.flags.selectByProject(projectId).executeAsList()
-    }
+    val flags = database.flags.selectByProject(projectId).executeAsList()
     call.respond(HttpStatusCode.OK, flags)
 }
 
@@ -94,9 +90,7 @@ fun Route.routeGetFlags() = get(PATH_FLAGS) {
 @OptIn(ExperimentalSerializationApi::class)
 fun Route.routeGetFlag() = get(PATH_FLAG) {
     val id = call.parameters.getOrFail<Long>("id")
-    val project = withDatabase { db ->
-        db.flags.select(id = id).executeAsOneOrNull()
-    } ?: throw NotFoundException()
+    val project = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
     call.respond(HttpStatusCode.OK, project)
 }
 
@@ -116,9 +110,9 @@ fun Route.routeUpdateFlag() = put(PATH_FLAG) {
     val params = call.receiveParameters()
     val name = params["name"]
     val rule = params["rule"]
-    withDatabase { db ->
-        val flag = db.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
-        db.flags.update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
+    database.flags.run {
+        val flag = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+        update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
     }
     call.respond(HttpStatusCode.NoContent)
 }
@@ -134,8 +128,6 @@ fun Route.routeUpdateFlag() = put(PATH_FLAG) {
  */
 fun Route.routeDeleteFlag() = delete(PATH_FLAG) {
     val id = call.parameters.getOrFail<Long>("id")
-    withDatabase { db ->
-        db.flags.delete(id = id)
-    }
+    database.flags.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
 }

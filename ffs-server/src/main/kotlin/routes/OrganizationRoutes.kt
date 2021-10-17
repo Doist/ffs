@@ -1,8 +1,8 @@
 package doist.ffs.routes
 
-import doist.ffs.capturingLastInsertId
-import doist.ffs.organizations
-import doist.ffs.withDatabase
+import doist.ffs.ext.capturingLastInsertId
+import doist.ffs.ext.database
+import doist.ffs.ext.organizations
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.features.NotFoundException
@@ -47,10 +47,8 @@ fun PATH_ORGANIZATION(id: Any) = PATH_ORGANIZATION.replace("{id}", id.toString()
  */
 fun Route.routeCreateOrganization() = post(PATH_ORGANIZATIONS) {
     val name = call.receiveParameters().getOrFail("name")
-    val id = withDatabase { db ->
-        db.capturingLastInsertId {
-            db.organizations.insert(name)
-        }
+    val id = database.capturingLastInsertId {
+        organizations.insert(name)
     }
     call.run {
         response.header(HttpHeaders.Location, PATH_ORGANIZATION(id))
@@ -64,9 +62,7 @@ fun Route.routeCreateOrganization() = post(PATH_ORGANIZATIONS) {
  * On success, responds `200 OK` with a JSON array containing all organizations.
  */
 fun Route.routeGetOrganizations() = get(PATH_ORGANIZATIONS) {
-    val organizations = withDatabase { db ->
-        db.organizations.selectAll().executeAsList()
-    }
+    val organizations = database.organizations.selectAll().executeAsList()
     call.respond(HttpStatusCode.OK, organizations)
 }
 
@@ -82,9 +78,8 @@ fun Route.routeGetOrganizations() = get(PATH_ORGANIZATIONS) {
 @OptIn(ExperimentalSerializationApi::class)
 fun Route.routeGetOrganization() = get(PATH_ORGANIZATION) {
     val id = call.parameters.getOrFail<Long>("id")
-    val organization = withDatabase { db ->
-        db.organizations.select(id = id).executeAsOneOrNull()
-    } ?: throw NotFoundException()
+    val organization =
+        database.organizations.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
     call.respond(HttpStatusCode.OK, organization)
 }
 
@@ -101,10 +96,9 @@ fun Route.routeGetOrganization() = get(PATH_ORGANIZATION) {
 fun Route.routeUpdateOrganization() = put(PATH_ORGANIZATION) {
     val id = call.parameters.getOrFail<Long>("id")
     val name = call.receiveParameters()["name"]
-    withDatabase { db ->
-        val organization = db.organizations.select(id = id).executeAsOneOrNull()
-            ?: throw NotFoundException()
-        db.organizations.update(id = id, name = name ?: organization.name)
+    database.organizations.run {
+        val organization = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+        update(id = id, name = name ?: organization.name)
     }
     call.respond(HttpStatusCode.NoContent)
 }
@@ -120,8 +114,6 @@ fun Route.routeUpdateOrganization() = put(PATH_ORGANIZATION) {
  */
 fun Route.routeDeleteOrganization() = delete(PATH_ORGANIZATION) {
     val id = call.parameters.getOrFail<Long>("id")
-    withDatabase { db ->
-        db.organizations.delete(id = id)
-    }
+    database.organizations.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
 }

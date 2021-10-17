@@ -1,41 +1,39 @@
 package doist.ffs.db
 
-import com.squareup.sqldelight.db.SqlDriver
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
-import doist.ffs.capturingLastInsertId
-import doist.ffs.organizations
-import doist.ffs.withDatabase
+import doist.ffs.ext.Database
+import doist.ffs.ext.capturingLastInsertId
+import doist.ffs.ext.organizations
 import kotlin.test.Test
 import kotlin.test.assertFails
 
 internal class OrganizationTest {
-    private val testDriver: SqlDriver
-        get() = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+    private val testDatabase = Database(JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY))
 
     @Test
-    fun testInsertValid(): Unit = withDatabase(testDriver) { db ->
+    fun testInsertValid(): Unit = testDatabase.organizations.run {
         val name = "test-organization"
-        db.organizations.insert(name = name)
-        val organization = db.organizations.selectAll().executeAsList()[0]
+        insert(name = name)
+        val organization = selectAll().executeAsList()[0]
         assert(organization.name == name)
     }
 
     @Test
-    fun testInsertDuplicatedName(): Unit = withDatabase(testDriver) { db ->
+    fun testInsertDuplicatedName(): Unit = testDatabase.organizations.run {
         val name = "test-organization"
-        db.organizations.insert(name = name)
+        insert(name = name)
         assertFails {
-            db.organizations.insert(name = name)
+            insert(name = name)
         }
     }
 
     @Test
-    fun testSelectAll(): Unit = withDatabase(testDriver) { db ->
+    fun testSelectAll(): Unit = testDatabase.organizations.run {
         val namePrefix = "test-organization-"
         for (i in 0..9) {
-            db.organizations.insert(name = "$namePrefix-$i")
+            insert(name = "$namePrefix-$i")
         }
-        val organizations = db.organizations.selectAll().executeAsList()
+        val organizations = selectAll().executeAsList()
         assert(organizations.size == 10)
         organizations.forEachIndexed { index, organization ->
             assert(organization.name.startsWith(namePrefix))
@@ -48,35 +46,35 @@ internal class OrganizationTest {
     }
 
     @Test
-    fun testSelect(): Unit = withDatabase(testDriver) { db ->
+    fun testSelect(): Unit = testDatabase.organizations.run {
         val name = "test-organization"
-        val id = db.capturingLastInsertId {
-            organizations.insert(name = name)
+        val id = testDatabase.capturingLastInsertId {
+            insert(name = name)
         }
-        val organization = db.organizations.select(id).executeAsOne()
+        val organization = select(id).executeAsOne()
         assert(organization.name == name)
     }
 
     @Test
-    fun testUpdateName(): Unit = withDatabase(testDriver) { db ->
+    fun testUpdateName(): Unit = testDatabase.organizations.run {
         val oldName = "old-test-organization"
         val newName = "new-test-organization"
-        val id = db.capturingLastInsertId {
-            organizations.insert(name = oldName)
+        val id = testDatabase.capturingLastInsertId {
+            insert(name = oldName)
         }
-        db.organizations.update(id = id, name = newName)
-        val organization = db.organizations.select(id).executeAsOne()
+        update(id = id, name = newName)
+        val organization = select(id).executeAsOne()
         assert(organization.name == newName)
     }
 
     @Test
-    fun testDelete(): Unit = withDatabase(testDriver) { db ->
+    fun testDelete(): Unit = testDatabase.organizations.run {
         val name = "test-organization"
-        val id = db.capturingLastInsertId {
-            organizations.insert(name = name)
+        val id = testDatabase.capturingLastInsertId {
+            insert(name = name)
         }
-        db.organizations.delete(id)
-        val organization = db.organizations.select(id).executeAsOneOrNull()
+        delete(id)
+        val organization = select(id).executeAsOneOrNull()
         assert(organization == null)
     }
 }
