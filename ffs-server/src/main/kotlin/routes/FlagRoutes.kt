@@ -2,18 +2,27 @@
 
 package doist.ffs.routes
 
+import com.squareup.sqldelight.runtime.coroutines.asFlow
+import com.squareup.sqldelight.runtime.coroutines.mapToList
+import doist.ffs.db.Flag
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags
 import doist.ffs.plugins.database
+import doist.ffs.serialization.json
 import io.ktor.application.Application
 import io.ktor.application.application
 import io.ktor.application.call
 import io.ktor.features.NotFoundException
+import io.ktor.http.CacheControl
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.request.accept
 import io.ktor.request.receiveParameters
+import io.ktor.response.cacheControl
 import io.ktor.response.header
 import io.ktor.response.respond
+import io.ktor.response.respondTextWriter
 import io.ktor.routing.Route
 import io.ktor.routing.delete
 import io.ktor.routing.get
@@ -21,6 +30,9 @@ import io.ktor.routing.post
 import io.ktor.routing.put
 import io.ktor.routing.routing
 import io.ktor.util.getOrFail
+import kotlinx.coroutines.flow.collect
+import kotlinx.datetime.Instant
+import kotlinx.serialization.encodeToString
 
 fun Application.flagRoutes() {
     routing {
@@ -37,6 +49,9 @@ const val PATH_FLAG = "/flag/{id}"
 
 @Suppress("FunctionName")
 fun PATH_FLAG(id: Any) = PATH_FLAG.replace("{id}", id.toString())
+
+const val SSE_FIELD_PREFIX_DATA = "data: "
+const val SSE_FIELD_PREFIX_ID = "id: "
 
 /**
  * Create a new flag.
@@ -72,10 +87,31 @@ fun Route.routeCreateFlag() = post(PATH_FLAGS) {
  * | ----------------- | -------- | ------------------ |
  * | `project_id`      | Yes      | ID of the project. |
  */
+@Suppress("BlockingMethodInNonBlockingContext")
 fun Route.routeGetFlags() = get(PATH_FLAGS) {
     val projectId = call.request.queryParameters.getOrFail<Long>("project_id")
-    val flags = application.database.flags.selectByProject(projectId).executeAsList()
-    call.respond(HttpStatusCode.OK, flags)
+    val query = application.database.flags.selectByProject(projectId)
+    val sse = call.request.accept()?.let { ContentType.Text.EventStream.match(it) } ?: false
+    if (sse) {
+        call.response.cacheControl(CacheControl.NoCache(null))
+        @Suppress("BlockingMethodInNonBlockingContext")
+        var lastUpdatedAt = Instant.DISTANT_PAST
+        call.respondTextWriter {
+            query.asFlow().mapToList().collect { flags: List<Flag> ->
+                val updatedFlags = flags.filter { it.updated_at > lastUpdatedAt }
+                write("$SSE_FIELD_PREFIX_DATA${json.encodeToString(updatedFlags)}\n")
+
+                updatedFlags.map(Flag::updated_at).maxOrNull()?.let { lastUpdatedAt = it }
+                write("$SSE_FIELD_PREFIX_ID${lastUpdatedAt}\n")
+
+                write("\n")
+                flush()
+            }
+        }
+    } else {
+        val flags = query.executeAsList()
+        call.respond(HttpStatusCode.OK, flags)
+    }
 }
 
 /**

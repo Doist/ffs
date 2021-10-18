@@ -12,6 +12,7 @@ dependencies {
     implementation(libs.bundles.ktor.server)
 
     implementation(libs.sqldelight.driver.sqlite)
+    implementation(libs.sqldelight.coroutines.extensions)
     implementation(libs.kotlinx.datetime)
 
     testImplementation(libs.kotlin.test.base)
