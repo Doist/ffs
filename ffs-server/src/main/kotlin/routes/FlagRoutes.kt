@@ -3,9 +3,10 @@
 package doist.ffs.routes
 
 import doist.ffs.db.capturingLastInsertId
-import doist.ffs.db.database
 import doist.ffs.db.flags
+import doist.ffs.plugins.database
 import io.ktor.application.Application
+import io.ktor.application.application
 import io.ktor.application.call
 import io.ktor.features.NotFoundException
 import io.ktor.http.HttpHeaders
@@ -53,7 +54,7 @@ fun Route.routeCreateFlag() = post(PATH_FLAGS) {
     val projectId = params.getOrFail<Long>("project_id")
     val name = params.getOrFail("name")
     val rule = params.getOrFail("rule")
-    val id = database.capturingLastInsertId {
+    val id = application.database.capturingLastInsertId {
         flags.insert(project_id = projectId, name = name, rule = rule)
     }
     call.run {
@@ -73,7 +74,7 @@ fun Route.routeCreateFlag() = post(PATH_FLAGS) {
  */
 fun Route.routeGetFlags() = get(PATH_FLAGS) {
     val projectId = call.request.queryParameters.getOrFail<Long>("project_id")
-    val flags = database.flags.selectByProject(projectId).executeAsList()
+    val flags = application.database.flags.selectByProject(projectId).executeAsList()
     call.respond(HttpStatusCode.OK, flags)
 }
 
@@ -88,7 +89,8 @@ fun Route.routeGetFlags() = get(PATH_FLAGS) {
  */
 fun Route.routeGetFlag() = get(PATH_FLAG) {
     val id = call.parameters.getOrFail<Long>("id")
-    val project = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+    val project = application.database.flags.select(id = id).executeAsOneOrNull()
+        ?: throw NotFoundException()
     call.respond(HttpStatusCode.OK, project)
 }
 
@@ -108,7 +110,7 @@ fun Route.routeUpdateFlag() = put(PATH_FLAG) {
     val params = call.receiveParameters()
     val name = params["name"]
     val rule = params["rule"]
-    database.flags.run {
+    application.database.flags.run {
         val flag = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
         update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
     }
@@ -126,6 +128,6 @@ fun Route.routeUpdateFlag() = put(PATH_FLAG) {
  */
 fun Route.routeDeleteFlag() = delete(PATH_FLAG) {
     val id = call.parameters.getOrFail<Long>("id")
-    database.flags.delete(id = id)
+    application.database.flags.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
 }

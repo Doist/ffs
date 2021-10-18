@@ -2,9 +2,9 @@ package doist.ffs.db
 
 import com.squareup.sqldelight.ColumnAdapter
 import com.squareup.sqldelight.db.SqlDriver
-import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import doist.ffs.Database
 import kotlinx.datetime.Instant
+import org.slf4j.Logger
 
 val Database.organizations get() = organizationQueries
 val Database.projects get() = projectQueries
@@ -22,16 +22,18 @@ fun Database.capturingLastInsertId(block: Database.() -> Unit) =
 /**
  * Initializes a [Database] instance for [driver].
  */
-fun Database(driver: SqlDriver): Database {
+fun Database(driver: SqlDriver, log: Logger? = null): Database {
     // Create or migrate database.
     val oldVersion =
         driver.executeQuery(null, "PRAGMA user_version", 0)
             .takeIf { it.next() }?.getLong(0)?.toInt() ?: 0
     val newVersion = Database.Schema.version
     if (oldVersion == 0) {
+        log?.info("Creating database version $newVersion")
         Database.Schema.create(driver)
         driver.execute(null, "PRAGMA user_version=$newVersion", 0)
     } else if (oldVersion < newVersion) {
+        log?.info("Migrating database from version $oldVersion to $newVersion")
         Database.Schema.migrate(driver, oldVersion, newVersion)
         driver.execute(null, "PRAGMA user_version=$newVersion", 0)
     }
@@ -50,20 +52,3 @@ private val instantAdapter = object : ColumnAdapter<Instant, Long> {
     override fun decode(databaseValue: Long) = Instant.fromEpochSeconds(databaseValue, 0)
     override fun encode(value: Instant) = value.epochSeconds
 }
-
-/**
- * Database file path. When blank, an in-memory database is used.
- */
-private var databaseDriver: SqlDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-var Database.driver: SqlDriver
-    get() = databaseDriver
-    set(value) {
-        databaseDriver = value
-        database = Database(databaseDriver)
-    }
-
-/**
- * Singleton [Database] object.
- */
-var database: Database = Database(databaseDriver)
-    private set

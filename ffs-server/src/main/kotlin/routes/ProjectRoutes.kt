@@ -3,9 +3,10 @@
 package doist.ffs.routes
 
 import doist.ffs.db.capturingLastInsertId
-import doist.ffs.db.database
 import doist.ffs.db.projects
+import doist.ffs.plugins.database
 import io.ktor.application.Application
+import io.ktor.application.application
 import io.ktor.application.call
 import io.ktor.features.NotFoundException
 import io.ktor.http.HttpHeaders
@@ -51,7 +52,7 @@ fun Route.routeCreateProject() = post(PATH_PROJECTS) {
     val params = call.receiveParameters()
     val organizationId = params.getOrFail<Long>("organization_id")
     val name = params.getOrFail("name")
-    val id = database.capturingLastInsertId {
+    val id = application.database.capturingLastInsertId {
         projects.insert(organization_id = organizationId, name = name)
     }
     call.run {
@@ -72,7 +73,7 @@ fun Route.routeCreateProject() = post(PATH_PROJECTS) {
 fun Route.routeGetProjects() = get(PATH_PROJECTS) {
     val organizationId = call.request.queryParameters.getOrFail<Long>("organization_id")
     val projects =
-        database.projects.selectByOrganization(organizationId).executeAsList()
+        application.database.projects.selectByOrganization(organizationId).executeAsList()
     call.respond(HttpStatusCode.OK, projects)
 }
 
@@ -87,9 +88,9 @@ fun Route.routeGetProjects() = get(PATH_PROJECTS) {
  */
 fun Route.routeGetProject() = get(PATH_PROJECT) {
     val id = call.parameters.getOrFail<Long>("id")
-    val organization =
-        database.projects.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
-    call.respond(HttpStatusCode.OK, organization)
+    val project = application.database.projects.select(id = id).executeAsOneOrNull()
+        ?: throw NotFoundException()
+    call.respond(HttpStatusCode.OK, project)
 }
 
 /**
@@ -105,7 +106,7 @@ fun Route.routeGetProject() = get(PATH_PROJECT) {
 fun Route.routeUpdateProject() = put(PATH_PROJECT) {
     val id = call.parameters.getOrFail<Long>("id")
     val name = call.receiveParameters()["name"]
-    database.projects.run {
+    application.database.projects.run {
         val project = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
         update(id = id, name = name ?: project.name)
     }
@@ -123,6 +124,6 @@ fun Route.routeUpdateProject() = put(PATH_PROJECT) {
  */
 fun Route.routeDeleteProject() = delete(PATH_PROJECT) {
     val id = call.parameters.getOrFail<Long>("id")
-    database.projects.delete(id = id)
+    application.database.projects.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
 }

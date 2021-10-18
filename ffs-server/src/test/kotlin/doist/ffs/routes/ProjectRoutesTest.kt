@@ -1,28 +1,32 @@
 package doist.ffs.routes
 
-import doist.ffs.db.capturingLastInsertId
-import doist.ffs.db.database
 import doist.ffs.db.Project
+import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.organizations
 import doist.ffs.db.projects
+import doist.ffs.module
+import doist.ffs.plugins.database
+import io.ktor.application.Application
+import io.ktor.server.testing.withTestApplication
 import kotlin.test.Test
 
 class ProjectRoutesTest {
     @Test
-    fun testProjectCreate() = withTestApplication {
-        val organizationId = createOrganization()
+    fun testProjectCreate() = withTestApplication(Application::module) {
+        val organizationId = createOrganization(application)
         assertResourceCreates(
             PATH_PROJECTS,
             listOf("organization_id" to organizationId.toString(), "name" to NAME)
         )
-        val organizations = database.projects.selectByOrganization(organizationId).executeAsList()
+        val organizations =
+            application.database.projects.selectByOrganization(organizationId).executeAsList()
         assert(organizations.size == 1)
         assert(organizations[0].name == NAME)
     }
 
     @Test
-    fun testProjectCreateLocation() = withTestApplication {
-        val organizationId = createOrganization()
+    fun testProjectCreateLocation() = withTestApplication(Application::module) {
+        val organizationId = createOrganization(application)
         val location = assertResourceCreates(
             PATH_PROJECTS,
             listOf("organization_id" to organizationId.toString(), "name" to NAME)
@@ -31,11 +35,11 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testProjectRead() = withTestApplication {
-        val organizationId = createOrganization()
+    fun testProjectRead() = withTestApplication(Application::module) {
+        val organizationId = createOrganization(application)
         val pathProjectsForOrganization = "$PATH_PROJECTS?organization_id=$organizationId"
         assertResourceCount<Project>(pathProjectsForOrganization, 0)
-        val id = database.capturingLastInsertId {
+        val id = application.database.capturingLastInsertId {
             projects.insert(organization_id = organizationId, name = NAME)
         }
         assertResourceCount<Project>(pathProjectsForOrganization, 1)
@@ -43,38 +47,39 @@ class ProjectRoutesTest {
             assert(project.id == id)
             assert(project.organization_id == organizationId)
             assert(project.name == NAME)
-            database.projects.delete(id)
+            application.database.projects.delete(id)
             assertResourceCount<Project>(pathProjectsForOrganization, 0)
         }
     }
 
     @Test
-    fun testProjectUpdate() = withTestApplication {
-        val organizationId = createOrganization()
-        val id = database.capturingLastInsertId {
+    fun testProjectUpdate() = withTestApplication(Application::module) {
+        val organizationId = createOrganization(application)
+        val id = application.database.capturingLastInsertId {
             projects.insert(organization_id = organizationId, name = NAME)
         }
         assertResourceUpdates(PATH_PROJECT(id), listOf("name" to NAME_UPDATED))
-        val project = database.projects.select(id).executeAsOne()
+        val project = application.database.projects.select(id).executeAsOne()
         assert(project.id == id)
         assert(project.organization_id == organizationId)
         assert(project.name == NAME_UPDATED)
     }
 
     @Test
-    fun testProjectDelete() = withTestApplication {
-        val organizationId = createOrganization()
-        val id = database.capturingLastInsertId {
+    fun testProjectDelete() = withTestApplication(Application::module) {
+        val organizationId = createOrganization(application)
+        val id = application.database.capturingLastInsertId {
             projects.insert(organization_id = organizationId, name = NAME)
         }
         assertResourceDeletes(PATH_PROJECT(id))
-        val project = database.projects.select(id).executeAsOneOrNull()
+        val project = application.database.projects.select(id).executeAsOneOrNull()
         assert(project == null)
     }
 
-    private fun createOrganization(): Long = database.capturingLastInsertId {
-        organizations.insert(name = "test-organization")
-    }
+    private fun createOrganization(application: Application): Long =
+        application.database.capturingLastInsertId {
+            organizations.insert(name = "test-organization")
+        }
 
     companion object {
         private const val NAME = "old-test-project"
