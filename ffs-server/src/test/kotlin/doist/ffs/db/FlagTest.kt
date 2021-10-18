@@ -17,30 +17,26 @@ internal class FlagTest {
 
     @Test
     fun testInsertValid(): Unit = testDatabase.flags.run {
-        val name = "test-name"
-        val rule = "true"
-        insert(project_id = projectId, name = name, rule = rule)
+        insert(project_id = projectId, name = NAME, rule = RULE)
         val flag = selectByProject(projectId).executeAsList()[0]
         assert(flag.project_id == projectId)
-        assert(flag.name == name)
+        assert(flag.name == NAME)
+        assert(flag.rule == RULE)
     }
 
     @Test
     fun testInsertDuplicatedName(): Unit = testDatabase.flags.run {
-        val name = "test-name"
-        val rule = "true"
-        insert(project_id = projectId, name = name, rule = rule)
+        insert(project_id = projectId, name = NAME, rule = RULE)
         assertFails {
-            insert(project_id = projectId, name = name, rule = rule)
+            insert(project_id = projectId, name = NAME, rule = RULE)
         }
     }
 
     @Test
     fun testSelectByOrganization(): Unit = testDatabase.flags.run {
-        val namePrefix = "test-name-"
-        val rule = "true"
+        val namePrefix = "$NAME-"
         for (i in 0..9) {
-            insert(project_id = projectId, name = "$namePrefix-$i", rule = rule)
+            insert(project_id = projectId, name = "$namePrefix-$i", rule = RULE)
         }
         val flags = selectByProject(projectId).executeAsList()
         assert(flags.size == 10)
@@ -52,38 +48,49 @@ internal class FlagTest {
 
     @Test
     fun testSelect(): Unit = testDatabase.flags.run {
-        val name = "test-name"
-        val rule = "true"
         val id = testDatabase.capturingLastInsertId {
-            insert(project_id = projectId, name = name, rule = rule)
+            insert(project_id = projectId, name = NAME, rule = RULE)
         }
         val flag = select(id).executeAsOne()
         assert(flag.project_id == projectId)
-        assert(flag.name == name)
+        assert(flag.name == NAME)
+        assert(flag.rule == RULE)
+    }
+
+    @Test
+    fun testUpdateName(): Unit = testDatabase.flags.run {
+        val id = testDatabase.capturingLastInsertId {
+            insert(project_id = projectId, name = NAME, rule = RULE)
+        }
+        update(id = id, name = NAME_UPDATED, rule = RULE)
+        val project = select(id).executeAsOne()
+        assert(project.name == NAME_UPDATED)
     }
 
     @Test
     fun testUpdateRule(): Unit = testDatabase.flags.run {
-        val name = "test-name"
-        val oldRule = "true"
-        val newRule = "false"
         val id = testDatabase.capturingLastInsertId {
-            insert(project_id = projectId, name = name, rule = oldRule)
+            insert(project_id = projectId, name = NAME, rule = RULE)
         }
-        update(id = id, name = name, rule = newRule)
+        update(id = id, name = NAME, rule = RULE_UPDATED)
         val project = select(id).executeAsOne()
-        assert(project.rule == newRule)
+        assert(project.rule == RULE_UPDATED)
     }
 
     @Test
     fun testDelete(): Unit = testDatabase.flags.run {
-        val name = "test-name"
-        val rule = "true"
         val id = testDatabase.capturingLastInsertId {
-            insert(project_id = projectId, name = name, rule = rule)
+            insert(project_id = projectId, name = NAME, rule = RULE)
         }
         delete(id)
         val project = select(id).executeAsOneOrNull()
         assert(project == null)
+    }
+
+    companion object {
+        private const val NAME = "old-test-project"
+        private const val NAME_UPDATED = "new-test-project"
+        private const val RULE = "1"
+        private const val RULE_UPDATED = "0"
     }
 }

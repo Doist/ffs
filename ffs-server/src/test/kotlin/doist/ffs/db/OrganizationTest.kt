@@ -9,24 +9,22 @@ internal class OrganizationTest {
 
     @Test
     fun testInsertValid(): Unit = testDatabase.organizations.run {
-        val name = "test-organization"
-        insert(name = name)
+        insert(name = NAME)
         val organization = selectAll().executeAsList()[0]
-        assert(organization.name == name)
+        assert(organization.name == NAME)
     }
 
     @Test
     fun testInsertDuplicatedName(): Unit = testDatabase.organizations.run {
-        val name = "test-organization"
-        insert(name = name)
+        insert(name = NAME)
         assertFails {
-            insert(name = name)
+            insert(name = NAME)
         }
     }
 
     @Test
     fun testSelectAll(): Unit = testDatabase.organizations.run {
-        val namePrefix = "test-organization-"
+        val namePrefix = "$NAME-"
         for (i in 0..9) {
             insert(name = "$namePrefix-$i")
         }
@@ -44,34 +42,35 @@ internal class OrganizationTest {
 
     @Test
     fun testSelect(): Unit = testDatabase.organizations.run {
-        val name = "test-organization"
         val id = testDatabase.capturingLastInsertId {
-            insert(name = name)
+            insert(name = NAME)
         }
         val organization = select(id).executeAsOne()
-        assert(organization.name == name)
+        assert(organization.name == NAME)
     }
 
     @Test
     fun testUpdateName(): Unit = testDatabase.organizations.run {
-        val oldName = "old-test-organization"
-        val newName = "new-test-organization"
         val id = testDatabase.capturingLastInsertId {
-            insert(name = oldName)
+            insert(name = NAME)
         }
-        update(id = id, name = newName)
+        update(id = id, name = NAME_UPDATED)
         val organization = select(id).executeAsOne()
-        assert(organization.name == newName)
+        assert(organization.name == NAME_UPDATED)
     }
 
     @Test
     fun testDelete(): Unit = testDatabase.organizations.run {
-        val name = "test-organization"
         val id = testDatabase.capturingLastInsertId {
-            insert(name = name)
+            insert(name = NAME)
         }
         delete(id)
         val organization = select(id).executeAsOneOrNull()
         assert(organization == null)
+    }
+
+    companion object {
+        private const val NAME = "old-test-organization"
+        private const val NAME_UPDATED = "new-test-organization"
     }
 }
