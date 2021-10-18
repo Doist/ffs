@@ -1,10 +1,6 @@
 package doist.ffs.db
 
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
-import doist.ffs.ext.Database
-import doist.ffs.ext.capturingLastInsertId
-import doist.ffs.ext.organizations
-import doist.ffs.ext.projects
 import kotlin.test.Test
 import kotlin.test.assertFails
 

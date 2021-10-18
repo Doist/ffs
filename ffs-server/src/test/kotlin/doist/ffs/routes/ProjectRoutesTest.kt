@@ -1,10 +1,11 @@
 package doist.ffs.routes
 
 import doist.ffs.ProjectSerializer
-import doist.ffs.ext.capturingLastInsertId
-import doist.ffs.ext.database
-import doist.ffs.ext.organizations
-import doist.ffs.ext.projects
+import doist.ffs.db.capturingLastInsertId
+import doist.ffs.db.database
+import doist.ffs.db.Project
+import doist.ffs.db.organizations
+import doist.ffs.db.projects
 import kotlin.test.Test
 
 class ProjectRoutesTest {

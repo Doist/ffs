@@ -1,8 +1,8 @@
 package doist.ffs.routes
 
-import doist.ffs.ext.capturingLastInsertId
-import doist.ffs.ext.database
-import doist.ffs.ext.organizations
+import doist.ffs.db.capturingLastInsertId
+import doist.ffs.db.database
+import doist.ffs.db.organizations
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.features.NotFoundException

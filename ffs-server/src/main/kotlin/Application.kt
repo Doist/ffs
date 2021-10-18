@@ -1,8 +1,8 @@
 package doist.ffs
 
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
-import doist.ffs.ext.database
-import doist.ffs.ext.driver
+import doist.ffs.db.database
+import doist.ffs.db.driver
 import doist.ffs.routes.flagRoutes
 import doist.ffs.routes.organizationRoutes
 import doist.ffs.routes.projectRoutes

@@ -1,11 +1,14 @@
 package doist.ffs.routes
 
 import doist.ffs.FlagSerializer
-import doist.ffs.ext.capturingLastInsertId
-import doist.ffs.ext.database
-import doist.ffs.ext.flags
-import doist.ffs.ext.organizations
-import doist.ffs.ext.projects
+import doist.ffs.capturingLastInsertId
+import doist.ffs.database
+import doist.ffs.db.capturingLastInsertId
+import doist.ffs.db.database
+import doist.ffs.db.Flag
+import doist.ffs.db.flags
+import doist.ffs.db.organizations
+import doist.ffs.db.projects
 import kotlin.test.Test
 
 class FlagRoutesTest {

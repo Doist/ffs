@@ -1,12 +1,9 @@
-package doist.ffs.ext
+package doist.ffs.db
 
 import com.squareup.sqldelight.ColumnAdapter
 import com.squareup.sqldelight.db.SqlDriver
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import doist.ffs.Database
-import doist.ffs.db.Flag
-import doist.ffs.db.Organization
-import doist.ffs.db.Project
 import kotlinx.datetime.Instant
 
 val Database.organizations get() = organizationQueries

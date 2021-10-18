@@ -1,9 +1,10 @@
 package doist.ffs.routes
 
 import doist.ffs.OrganizationSerializer
-import doist.ffs.ext.capturingLastInsertId
-import doist.ffs.ext.database
-import doist.ffs.ext.organizations
+import doist.ffs.db.capturingLastInsertId
+import doist.ffs.db.database
+import doist.ffs.db.Organization
+import doist.ffs.db.organizations
 import kotlin.test.Test
 
 class OrganizationRoutesTest {
