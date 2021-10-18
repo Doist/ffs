@@ -1,8 +1,5 @@
 package doist.ffs.routes
 
-import doist.ffs.FlagSerializer
-import doist.ffs.capturingLastInsertId
-import doist.ffs.database
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.database
 import doist.ffs.db.Flag
@@ -32,26 +29,26 @@ class FlagRoutesTest {
             PATH_FLAGS,
             listOf("project_id" to projectId.toString(), "name" to NAME, "rule" to RULE)
         )
-        assertResource(location, FlagSerializer)
+        assertResource<Flag>(location)
     }
 
     @Test
     fun testFlagRead() = withTestApplication {
         val projectId = createProject()
         val pathFlagsForProject = "$PATH_FLAGS?project_id=$projectId"
-        assertResourceCount(pathFlagsForProject, FlagSerializer, 0)
+        assertResourceCount<Flag>(pathFlagsForProject, 0)
         val id = database.capturingLastInsertId {
             flags.insert(project_id = projectId, name = NAME, rule = RULE)
         }
-        assertResourceCount(pathFlagsForProject, FlagSerializer, 1)
-        assertResource(PATH_FLAG(id), FlagSerializer) { flag ->
+        assertResourceCount<Flag>(pathFlagsForProject, 1)
+        assertResource<Flag>(PATH_FLAG(id)) { flag ->
             assert(flag.id == id)
             assert(flag.project_id == projectId)
             assert(flag.name == NAME)
             assert(flag.rule == RULE)
         }
         database.flags.delete(id)
-        assertResourceCount(pathFlagsForProject, FlagSerializer, 0)
+        assertResourceCount<Flag>(pathFlagsForProject, 0)
     }
 
     @Test

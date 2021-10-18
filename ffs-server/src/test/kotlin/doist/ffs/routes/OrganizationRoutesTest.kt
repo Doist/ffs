@@ -1,9 +1,8 @@
 package doist.ffs.routes
 
-import doist.ffs.OrganizationSerializer
+import doist.ffs.db.Organization
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.database
-import doist.ffs.db.Organization
 import doist.ffs.db.organizations
 import kotlin.test.Test
 
@@ -19,22 +18,22 @@ class OrganizationRoutesTest {
     @Test
     fun testOrganizationCreateLocation() = withTestApplication {
         val location = assertResourceCreates(PATH_ORGANIZATIONS, listOf("name" to NAME))
-        assertResource(location, OrganizationSerializer)
+        assertResource<Organization>(location)
     }
 
     @Test
     fun testOrganizationRead() = withTestApplication {
-        assertResourceCount(PATH_ORGANIZATIONS, OrganizationSerializer, 0)
+        assertResourceCount<Organization>(PATH_ORGANIZATIONS, 0)
         val id = database.capturingLastInsertId {
             organizations.insert(name = NAME)
         }
-        assertResourceCount(PATH_ORGANIZATIONS, OrganizationSerializer, 1)
-        assertResource(PATH_ORGANIZATION(id), OrganizationSerializer) { organization ->
+        assertResourceCount<Organization>(PATH_ORGANIZATIONS, 1)
+        assertResource<Organization>(PATH_ORGANIZATION(id)) { organization ->
             assert(organization.id == id)
             assert(organization.name == NAME)
         }
         database.organizations.delete(id)
-        assertResourceCount(PATH_ORGANIZATIONS, OrganizationSerializer, 0)
+        assertResourceCount<Organization>(PATH_ORGANIZATIONS, 0)
     }
 
     @Test

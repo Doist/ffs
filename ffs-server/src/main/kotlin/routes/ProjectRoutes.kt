@@ -20,7 +20,6 @@ import io.ktor.routing.post
 import io.ktor.routing.put
 import io.ktor.routing.routing
 import io.ktor.util.getOrFail
-import kotlinx.serialization.ExperimentalSerializationApi
 
 fun Application.projectRoutes() {
     routing {
@@ -86,7 +85,6 @@ fun Route.routeGetProjects() = get(PATH_PROJECTS) {
  * | --------- | -------- | ------------------ |
  * | `id`      | Yes      | ID of the project. |
  */
-@OptIn(ExperimentalSerializationApi::class)
 fun Route.routeGetProject() = get(PATH_PROJECT) {
     val id = call.parameters.getOrFail<Long>("id")
     val organization =

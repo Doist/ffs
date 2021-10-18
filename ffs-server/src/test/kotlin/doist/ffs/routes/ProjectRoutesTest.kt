@@ -1,6 +1,5 @@
 package doist.ffs.routes
 
-import doist.ffs.ProjectSerializer
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.database
 import doist.ffs.db.Project
@@ -28,24 +27,24 @@ class ProjectRoutesTest {
             PATH_PROJECTS,
             listOf("organization_id" to organizationId.toString(), "name" to NAME)
         )
-        assertResource(location, ProjectSerializer)
+        assertResource<Project>(location)
     }
 
     @Test
     fun testProjectRead() = withTestApplication {
         val organizationId = createOrganization()
         val pathProjectsForOrganization = "$PATH_PROJECTS?organization_id=$organizationId"
-        assertResourceCount(pathProjectsForOrganization, ProjectSerializer, 0)
+        assertResourceCount<Project>(pathProjectsForOrganization, 0)
         val id = database.capturingLastInsertId {
             projects.insert(organization_id = organizationId, name = NAME)
         }
-        assertResourceCount(pathProjectsForOrganization, ProjectSerializer, 1)
-        assertResource(PATH_PROJECT(id), ProjectSerializer) { project ->
+        assertResourceCount<Project>(pathProjectsForOrganization, 1)
+        assertResource<Project>(PATH_PROJECT(id)) { project ->
             assert(project.id == id)
             assert(project.organization_id == organizationId)
             assert(project.name == NAME)
             database.projects.delete(id)
-            assertResourceCount(pathProjectsForOrganization, ProjectSerializer, 0)
+            assertResourceCount<Project>(pathProjectsForOrganization, 0)
         }
     }
 

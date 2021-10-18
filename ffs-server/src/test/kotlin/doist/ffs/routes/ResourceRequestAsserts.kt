@@ -1,5 +1,8 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package doist.ffs.routes
 
+import doist.ffs.serialization.json
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -9,24 +12,21 @@ import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.contentType
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.decodeFromString
 
-fun <T> TestApplicationEngine.assertResourceCount(
+inline fun <reified T> TestApplicationEngine.assertResourceCount(
     path: String,
-    deserializer: KSerializer<T>,
     size: Int
 ) {
     with(handleRequest(HttpMethod.Get, path)) {
         assert(response.status() == HttpStatusCode.OK)
         assert(response.contentType().match(ContentType.Application.Json))
-        val organizations = Json.decodeFromString(ListSerializer(deserializer), response.content!!)
-        assert(organizations.size == size)
+        val resources = json.decodeFromString<List<T>>(response.content!!)
+        assert(resources.size == size)
     }
 }
 
-fun TestApplicationEngine.assertResourceCreates(
+inline fun TestApplicationEngine.assertResourceCreates(
     path: String,
     args: List<Pair<String, String?>>
 ) = with(
@@ -44,18 +44,20 @@ fun TestApplicationEngine.assertResourceCreates(
     }
 }!!
 
-fun <T> TestApplicationEngine.assertResource(
+inline fun <reified T> TestApplicationEngine.assertResource(
     path: String,
-    deserializer: KSerializer<T>,
     block: (T) -> Unit = {}
 ) = with(handleRequest(HttpMethod.Get, path)) {
     assert(response.status() == HttpStatusCode.OK)
     assert(response.contentType().match(ContentType.Application.Json))
-    val resource = Json.decodeFromString(deserializer, response.content!!)
+    val resource = json.decodeFromString<T>(response.content!!)
     block(resource)
 }
 
-fun TestApplicationEngine.assertResourceUpdates(path: String, args: List<Pair<String, String?>>) {
+inline fun TestApplicationEngine.assertResourceUpdates(
+    path: String,
+    args: List<Pair<String, String?>>
+) {
     with(
         handleRequest(HttpMethod.Put, path) {
             addHeader(
@@ -69,7 +71,7 @@ fun TestApplicationEngine.assertResourceUpdates(path: String, args: List<Pair<St
     }
 }
 
-fun TestApplicationEngine.assertResourceDeletes(path: String) {
+inline fun TestApplicationEngine.assertResourceDeletes(path: String) {
     with(handleRequest(HttpMethod.Delete, path)) {
         assert(response.status() == HttpStatusCode.NoContent)
     }

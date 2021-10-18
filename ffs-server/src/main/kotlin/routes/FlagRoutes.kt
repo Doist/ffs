@@ -20,7 +20,6 @@ import io.ktor.routing.post
 import io.ktor.routing.put
 import io.ktor.routing.routing
 import io.ktor.util.getOrFail
-import kotlinx.serialization.ExperimentalSerializationApi
 
 fun Application.flagRoutes() {
     routing {
@@ -87,7 +86,6 @@ fun Route.routeGetFlags() = get(PATH_FLAGS) {
  * | --------- | -------- | --------------- |
  * | `id`      | Yes      | ID of the flag. |
  */
-@OptIn(ExperimentalSerializationApi::class)
 fun Route.routeGetFlag() = get(PATH_FLAG) {
     val id = call.parameters.getOrFail<Long>("id")
     val project = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()

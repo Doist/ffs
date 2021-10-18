@@ -18,7 +18,6 @@ import io.ktor.routing.post
 import io.ktor.routing.put
 import io.ktor.routing.routing
 import io.ktor.util.getOrFail
-import kotlinx.serialization.ExperimentalSerializationApi
 
 fun Application.organizationRoutes() {
     routing {
@@ -75,7 +74,6 @@ fun Route.routeGetOrganizations() = get(PATH_ORGANIZATIONS) {
  * | --------- | -------- | ----------------------- |
  * | `id`      | Yes      | ID of the organization. |
  */
-@OptIn(ExperimentalSerializationApi::class)
 fun Route.routeGetOrganization() = get(PATH_ORGANIZATION) {
     val id = call.parameters.getOrFail<Long>("id")
     val organization =
