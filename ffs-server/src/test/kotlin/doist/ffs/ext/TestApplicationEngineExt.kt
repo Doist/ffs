@@ -31,14 +31,14 @@ fun TestApplicationEngine.handleSse(
         bodyChannel = ByteChannel(true)
     }
 
-    launch(Dispatchers.IO) {
+    launch(call.coroutineContext) {
         // Execute server side.
         pipeline.execute(call)
     }
 
-    runBlocking(Dispatchers.IO) {
         // websocketChannel is just responseChannel internally.
         var responseChannel = call.response.websocketChannel()
+    runBlocking(call.coroutineContext) {
         // responseChannelDeferred is internal, so we wait like this.
         // Ref: https://github.com/ktorio/ktor/blob/c5877a22c91fd693ea6dcd0b4e1924f05d3b6825/ktor-server/ktor-server-test-host/jvm/src/io/ktor/server/testing/TestApplicationEngine.kt#L225-L230
         while (responseChannel == null) {
