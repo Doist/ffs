@@ -26,7 +26,6 @@ import kotlin.math.pow
 import kotlin.reflect.KClassifier
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.typeOf
-import kotlin.text.toFloat as stringToFloat
 
 /**
  * Evaluates the given [formula] resulting in unit interval [0, 1], the frequency of returning true.
@@ -46,9 +45,9 @@ import kotlin.text.toFloat as stringToFloat
  */
 fun eval(formula: String, env: Map<String, Any>): Float {
     return when (val result = RuleGrammar.parseToEnd(formula).eval(env)) {
-        is Number -> result.toFloat()
-        is String -> result.stringToFloat()
         is Boolean -> if (result) 1f else 0f
+        is Number -> result.toFloat()
+        is String -> result.runCatching { toFloat() }.recoverCatching { 0f }.getOrThrow()
         else -> 0f
     }
 }
@@ -59,8 +58,6 @@ fun eval(formula: String, env: Map<String, Any>): Float {
 @Suppress("PrivatePropertyName", "ObjectPropertyName", "DANGEROUS_CHARACTERS")
 private object RuleGrammar : Grammar<RuleExpr<*>>() {
     //region Tokens
-    private val equals by literalToken("=")
-
     private val trueLiteral by literalToken("true")
     private val falseLiteral by literalToken("false")
 
@@ -114,24 +111,22 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
     }
 
     private val array =
-        skip(lB) and separatedTerms(parser(::expression), comma, true) and skip(rB) map {
+        skip(lB) and separatedTerms(parser(::rootParser), comma, true) and skip(rB) map {
             RuleExpr.ArrayExpr(it)
         }
 
     private val function =
         id and skip(lP) and separatedTerms(
-            parser(::expression),
+            parser(::rootParser),
             comma,
             true
         ) and skip(rP) map { (id, args) ->
             RuleExpr.FunctionExpr(id.text, args)
         }
-
-    private val expression: Parser<RuleExpr<*>> =
-        boolean or number or string or envValue or array or function
     //endregion
 
-    override val rootParser = number or (skip(equals) and expression)
+    override val rootParser: Parser<RuleExpr<*>> =
+        boolean or number or string or envValue or array or function
 }
 
 /**
