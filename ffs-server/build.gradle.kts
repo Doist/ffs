@@ -6,7 +6,10 @@ plugins {
     id(libs.plugins.sqldelight.get().pluginId)
     application
     id(libs.plugins.kotlin.power.assert.get().pluginId)
+    id(libs.plugins.kotlinx.benchmark.get().pluginId)
 }
+
+sourceSets.create("benchmark")
 
 dependencies {
     implementation(libs.bundles.ktor.server)
@@ -19,6 +22,11 @@ dependencies {
 
     testImplementation(libs.kotlin.test.base)
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.kotlinx.benchmark.runtime)
+
+    val benchmarkImplementation by configurations.getting
+    benchmarkImplementation(sourceSets.main.get().let { it.output + it.compileClasspath })
+    benchmarkImplementation(libs.kotlinx.benchmark.runtime)
 }
 
 application {
@@ -41,5 +49,19 @@ kotlin.sourceSets.all {
 sqldelight {
     database("Database") {
         packageName = "doist.ffs"
+    }
+}
+
+benchmark {
+    configurations.named("main") {
+        warmups = 2
+        iterations = 3
+        iterationTime = 5
+        reportFormat = "csv"
+        advanced("nativeGCAfterIteration", "true")
+    }
+
+    targets {
+        register("benchmark")
     }
 }

@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.sqldelight) apply false
     alias(libs.plugins.kotlin.power.assert) apply false
+    alias(libs.plugins.kotlinx.benchmark) apply false
 }
 
 allprojects {
