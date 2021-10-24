@@ -421,10 +421,17 @@ private sealed class RuleExpr<T> {
             }
 
             // Instantiate by spreading `args`, if a constructor matches argument count.
+            // Optimize common cases since `toTypedArray` copies, and so does *spreading.
             val argCount = args.size
             `class`.constructors.find { it.parameters.size == argCount }?.let {
-                @Suppress("SpreadOperator")
-                return it.call(*args.toTypedArray())
+                @Suppress("SpreadOperator", "MagicNumber")
+                return when (argCount) {
+                    0 -> it.call()
+                    1 -> it.call(args[0])
+                    2 -> it.call(args[0], args[1])
+                    3 -> it.call(args[0], args[1], args[2])
+                    else -> it.call(*args.toTypedArray())
+                }
             }
 
             // Instantiate with `args` directly, if a constructor takes a list of expressions.
