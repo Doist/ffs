@@ -10,6 +10,7 @@ kotlin-react-router-dom = "5.2.0-pre.252-kotlin-1.5.31"
 kotlin-redux = "4.1.1-pre.252-kotlin-1.5.31"
 kotlin-react-redux = "7.2.4-pre.252-kotlin-1.5.31"
 kotlin-power-assert = "0.10.0"
+better-parse = "0.4.2"
 
 [libraries]
 kotlin-test-base = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -29,6 +30,7 @@ kotlin-react-dom = { module = "org.jetbrains.kotlin-wrappers:kotlin-react-dom", 
 kotlin-react-router-dom = { module = "org.jetbrains.kotlin-wrappers:kotlin-react-router-dom", version.ref = "kotlin-react-router-dom"}
 kotlin-redux = { module = "org.jetbrains.kotlin-wrappers:kotlin-redux", version.ref = "kotlin-redux" }
 kotlin-react-redux = { module = "org.jetbrains.kotlin-wrappers:kotlin-react-redux", version.ref = "kotlin-react-redux" }
+better-parse = { module = "com.github.h0tk3y.betterParse:better-parse", version.ref = "better-parse" }
 
 [bundles]
 ktor-server = ["ktor-server-core", "ktor-server-cio", "logback-classic", "ktor-serialization"]

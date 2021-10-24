@@ -13,6 +13,7 @@ import io.ktor.features.CallLogging
 import io.ktor.features.Compression
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.DefaultHeaders
+import io.ktor.http.ContentType
 import io.ktor.serialization.json
 import io.ktor.server.cio.EngineMain
 

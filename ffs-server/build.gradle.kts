@@ -15,6 +15,8 @@ dependencies {
     implementation(libs.sqldelight.coroutines.extensions)
     implementation(libs.kotlinx.datetime)
 
+    implementation(libs.better.parse)
+
     testImplementation(libs.kotlin.test.base)
     testImplementation(libs.ktor.server.test.host)
 }
