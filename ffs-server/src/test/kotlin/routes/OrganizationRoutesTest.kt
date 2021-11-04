@@ -5,7 +5,7 @@ import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.organizations
 import doist.ffs.module
 import doist.ffs.plugins.database
-import io.ktor.application.Application
+import io.ktor.server.application.Application
 import io.ktor.server.testing.withTestApplication
 import kotlin.test.Test
 

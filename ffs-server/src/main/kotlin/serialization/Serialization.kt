@@ -1,11 +1,8 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package doist.ffs.serialization
 
 import doist.ffs.db.Flag
 import doist.ffs.db.Organization
 import doist.ffs.db.Project
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule

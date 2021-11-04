@@ -2,19 +2,19 @@ package doist.ffs.plugins
 
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import doist.ffs.db.Database
-import io.ktor.application.Application
-import io.ktor.application.ApplicationEvents
-import io.ktor.application.ApplicationFeature
-import io.ktor.application.ApplicationStopped
-import io.ktor.application.feature
-import io.ktor.application.log
+import io.ktor.events.Events
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationPlugin
+import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.log
+import io.ktor.server.application.plugin
 import io.ktor.util.AttributeKey
 import org.slf4j.Logger
 
 /**
  * Plugin that opens a database connection on application start, and
  */
-class Database(log: Logger, monitor: ApplicationEvents, configuration: Configuration) {
+class Database(log: Logger, monitor: Events, configuration: Configuration) {
     var instance: doist.ffs.Database = Database(configuration.driver, log)
 
     init {
@@ -27,7 +27,7 @@ class Database(log: Logger, monitor: ApplicationEvents, configuration: Configura
         var driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
     }
 
-    companion object Feature : ApplicationFeature<Application, Configuration, Database> {
+    companion object Plugin : ApplicationPlugin<Application, Configuration, Database> {
         override val key = AttributeKey<Database>("Database")
 
         override fun install(pipeline: Application, configure: Configuration.() -> Unit): Database {
@@ -41,4 +41,4 @@ class Database(log: Logger, monitor: ApplicationEvents, configuration: Configura
 }
 
 val Application.database: doist.ffs.Database
-    get() = feature(Database).instance
+    get() = plugin(Database).instance

@@ -9,7 +9,7 @@ import doist.ffs.ext.handleSse
 import doist.ffs.module
 import doist.ffs.plugins.database
 import doist.ffs.serialization.json
-import io.ktor.application.Application
+import io.ktor.server.application.Application
 import io.ktor.server.testing.withTestApplication
 import io.ktor.utils.io.readUTF8Line
 import kotlinx.serialization.decodeFromString

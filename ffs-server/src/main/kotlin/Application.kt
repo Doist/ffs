@@ -7,15 +7,15 @@ import doist.ffs.routes.organizationRoutes
 import doist.ffs.routes.projectRoutes
 import doist.ffs.serialization.FlowConverter
 import doist.ffs.serialization.json
-import io.ktor.application.Application
-import io.ktor.application.install
-import io.ktor.features.CallLogging
-import io.ktor.features.Compression
-import io.ktor.features.ContentNegotiation
-import io.ktor.features.DefaultHeaders
 import io.ktor.http.ContentType
-import io.ktor.serialization.json
+import io.ktor.serialization.kotlinx.serialization
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
 import io.ktor.server.cio.EngineMain
+import io.ktor.server.plugins.CallLogging
+import io.ktor.server.plugins.Compression
+import io.ktor.server.plugins.ContentNegotiation
+import io.ktor.server.plugins.DefaultHeaders
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
@@ -27,7 +27,7 @@ fun Application.module() {
     install(CallLogging)
     install(DefaultHeaders)
     install(ContentNegotiation) {
-        json(json)
+        serialization(ContentType.Application.Json, json)
         register(ContentType.Text.EventStream, FlowConverter())
     }
     install(Compression)
