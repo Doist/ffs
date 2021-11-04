@@ -8,14 +8,16 @@ group = "doist"
 version = "1.0-SNAPSHOT"
 
 plugins {
+    // Plugins for all subprojects.
+    alias(libs.plugins.kotlinx.kover)
+    alias(libs.plugins.kotlin.power.assert) apply false // Applied below.
+    alias(libs.plugins.detekt) apply false // Applied and configured below.
+
+    // Plugins for some subprojects.
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.kotlin.serialization) apply false
-    alias(libs.plugins.detekt) apply false
     alias(libs.plugins.sqldelight) apply false
-    alias(libs.plugins.kotlin.power.assert) apply false
     alias(libs.plugins.kotlinx.benchmark) apply false
-
-    alias(libs.plugins.kotlinx.kover)
 }
 
 allprojects {
@@ -33,6 +35,12 @@ val generateDetektReport by tasks.registering(ReportMergeTask::class) {
 
 subprojects {
     afterEvaluate {
+        // Apply kotlin-power-assert in all subprojects.
+        // Build targets must be set before this happens.
+        apply(plugin = libs.plugins.kotlin.power.assert.get().pluginId)
+
+        // Apply and configure detekt in all subprojects.
+        // Allows fetching source sets dynamically and having dedicated tasks for each.
         apply(plugin = libs.plugins.detekt.get().pluginId)
         configure<DetektExtension> {
             buildUponDefaultConfig = true

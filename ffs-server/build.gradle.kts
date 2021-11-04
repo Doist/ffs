@@ -5,7 +5,6 @@ plugins {
     id(libs.plugins.kotlin.serialization.get().pluginId)
     id(libs.plugins.sqldelight.get().pluginId)
     application
-    id(libs.plugins.kotlin.power.assert.get().pluginId)
     id(libs.plugins.kotlinx.benchmark.get().pluginId)
 }
 
