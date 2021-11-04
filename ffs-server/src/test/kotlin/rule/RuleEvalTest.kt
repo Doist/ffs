@@ -151,11 +151,16 @@ class RuleEvalTest {
     @Test
     fun testArithmetic() {
         assert(eval("""plus(1, 2)""") == 3f)
+        assert(eval("""plus(1.0, 2.0)""") == 3f)
         assert(eval("""minus(3, 4)""") == -1f)
+        assert(eval("""minus(3.0, 4.0)""") == -1f)
         assert(eval("""times(5, 6)""") == 30f)
+        assert(eval("""times(5.0, 6.0)""") == 30f)
         assert(eval("""div(7, 8)""") == 0.875f)
+        assert(eval("""div(7.0, 8.0)""") == 0.875f)
         assert(eval("""div(8, 8)""") == 1f)
         assert(eval("""rem(7, 8)""") == 7f)
+        assert(eval("""rem(7.0, 8.0)""") == 7f)
 
         assertThrows<ClassCastException> { eval("""plus(true, false)""") }
         assertThrows<ClassCastException> { eval("""plus([1], [2])""") }
