@@ -55,7 +55,6 @@ fun eval(formula: String, env: Map<String, Any>): Float {
 /**
  * Grammar for rules, resembling spreadsheet formulas, combining values and formulas arbitrarily.
  */
-@Suppress("PrivatePropertyName", "ObjectPropertyName", "DANGEROUS_CHARACTERS")
 private object RuleGrammar : Grammar<RuleExpr<*>>() {
     //region Tokens
     private val trueLiteral by literalToken("true")
@@ -84,9 +83,9 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
     //endregion
 
     //region Parsers
-    private val tru = trueLiteral asJust RuleExpr.BooleanExpr(true)
-    private val fals = falseLiteral asJust RuleExpr.BooleanExpr(false)
-    private val boolean = tru or fals
+    private val trueExpr = trueLiteral asJust RuleExpr.BooleanExpr(true)
+    private val falseExpr = falseLiteral asJust RuleExpr.BooleanExpr(false)
+    private val boolean = trueExpr or falseExpr
 
     private val double =
         optional(minus) and optional(digits) and skip(dot) and digits map { (minus, int, dec) ->
@@ -147,7 +146,6 @@ private sealed class RuleExpr<T> {
         override fun eval(env: Map<String, Any>) = value.substring(1, value.lastIndex)
     }
 
-    @Suppress("UNCHECKED_CAST")
     data class EnvExpr(val nameVal: RuleExpr<String>) : RuleExpr<Any>() {
         override fun eval(env: Map<String, Any>): Any {
             return when (val value = env[nameVal.eval(env)]) {
@@ -164,7 +162,6 @@ private sealed class RuleExpr<T> {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     data class ArrayExpr(
         val list: List<RuleExpr<*>>
     ) : RuleExpr<List<*>>() {
@@ -406,19 +403,19 @@ private sealed class RuleExpr<T> {
         @Suppress("FunctionName", "ReturnCount")
         fun FunctionExpr(id: String, args: List<RuleExpr<*>>): FunctionExpr<*> {
             // Find function expression class for `id`.
-            val `class` = FunctionExpr::class.sealedSubclasses.find {
+            val cls = FunctionExpr::class.sealedSubclasses.find {
                 id.equals(it.simpleName, ignoreCase = true)
             } ?: throw IllegalArgumentException("Unsupported function \"$id\"")
 
             // Use its object instance, if it's an object.
-            `class`.objectInstance?.let {
+            cls.objectInstance?.let {
                 return it
             }
 
             // Instantiate by spreading `args`, if a constructor matches argument count.
             // Optimize common cases since `toTypedArray` copies, and so does *spreading.
             val argCount = args.size
-            `class`.constructors.find { it.parameters.size == argCount }?.let {
+            cls.constructors.find { it.parameters.size == argCount }?.let {
                 @Suppress("SpreadOperator", "MagicNumber")
                 return when (argCount) {
                     0 -> it.call()
@@ -430,7 +427,7 @@ private sealed class RuleExpr<T> {
             }
 
             // Instantiate with `args` directly, if a constructor takes a list of expressions.
-            `class`.primaryConstructor?.let {
+            cls.primaryConstructor?.let {
                 val params = it.parameters
                 if (params.size != 1) return@let
                 val type = params[0].type
