@@ -43,7 +43,7 @@ import kotlin.reflect.typeOf
  * @see RuleGrammar
  * @see RuleExpr
  */
-fun eval(formula: String, env: Map<String, Any>): Float {
+fun eval(formula: String, env: KMap<String, Any>): Float {
     return when (val result = RuleGrammar.parseToEnd(formula).eval(env)) {
         is Boolean -> if (result) 1f else 0f
         is Number -> result.toFloat()
@@ -132,22 +132,22 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
  * Rule expressions to be evaluated.
  */
 private sealed class RuleExpr<T> {
-    abstract fun eval(env: Map<String, Any>): T
+    abstract fun eval(env: KMap<String, Any>): T
 
     data class NumberExpr(val value: Number) : RuleExpr<Number>() {
-        override fun eval(env: Map<String, Any>) = value
+        override fun eval(env: KMap<String, Any>) = value
     }
 
     data class BooleanExpr(val value: Boolean) : RuleExpr<Boolean>() {
-        override fun eval(env: Map<String, Any>) = value
+        override fun eval(env: KMap<String, Any>) = value
     }
 
     data class StringExpr(val value: String) : RuleExpr<String>() {
-        override fun eval(env: Map<String, Any>) = value.substring(1, value.lastIndex)
+        override fun eval(env: KMap<String, Any>) = value.substring(1, value.lastIndex)
     }
 
     data class EnvExpr(val nameVal: RuleExpr<String>) : RuleExpr<Any>() {
-        override fun eval(env: Map<String, Any>): Any {
+        override fun eval(env: KMap<String, Any>): Any {
             return when (val value = env[nameVal.eval(env)]) {
                 // Coerce number types to Long and Double.
                 is Byte -> value.toLong()
@@ -165,7 +165,7 @@ private sealed class RuleExpr<T> {
     data class ArrayExpr(
         val list: List<RuleExpr<*>>
     ) : RuleExpr<List<*>>() {
-        override fun eval(env: Map<String, Any>): List<*> = list.map { it.eval(env) }
+        override fun eval(env: KMap<String, Any>): List<*> = list.map { it.eval(env) }
     }
 
     /**
@@ -178,45 +178,45 @@ private sealed class RuleExpr<T> {
             val value1: Any,
             val value2: Any
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: Map<String, Any>) = value1 == value2
+            override fun eval(env: KMap<String, Any>) = value1 == value2
         }
 
         data class Gt(
             val value1: RuleExpr<Comparable<Any>>,
             val value2: RuleExpr<Comparable<Any>>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: Map<String, Any>) = value1.eval(env) > value2.eval(env)
+            override fun eval(env: KMap<String, Any>) = value1.eval(env) > value2.eval(env)
         }
 
         data class Gte(
             val value1: RuleExpr<Comparable<Any>>,
             val value2: RuleExpr<Comparable<Any>>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: Map<String, Any>) = value1.eval(env) >= value2.eval(env)
+            override fun eval(env: KMap<String, Any>) = value1.eval(env) >= value2.eval(env)
         }
 
         data class Lt(
             val value1: RuleExpr<Comparable<Any>>,
             val value2: RuleExpr<Comparable<Any>>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: Map<String, Any>) = value1.eval(env) < value2.eval(env)
+            override fun eval(env: KMap<String, Any>) = value1.eval(env) < value2.eval(env)
         }
 
         data class Lte(
             val value1: RuleExpr<Comparable<Any>>,
             val value2: RuleExpr<Comparable<Any>>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: Map<String, Any>) = value1.eval(env) <= value2.eval(env)
+            override fun eval(env: KMap<String, Any>) = value1.eval(env) <= value2.eval(env)
         }
         //endregion
 
         //region Dates.
         object Now : FunctionExpr<Long>() {
-            override fun eval(env: Map<String, Any>) = Clock.System.now().epochSeconds
+            override fun eval(env: KMap<String, Any>) = Clock.System.now().epochSeconds
         }
 
         data class Datetime(val value: RuleExpr<String>) : FunctionExpr<Long>() {
-            override fun eval(env: Map<String, Any>): Long {
+            override fun eval(env: KMap<String, Any>): Long {
                 val value = value.eval(env)
                 val instant = runCatching {
                     value.toInstant()
@@ -235,7 +235,7 @@ private sealed class RuleExpr<T> {
             val regex: RuleExpr<String>,
             val value: RuleExpr<String>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: Map<String, Any>) =
+            override fun eval(env: KMap<String, Any>) =
                 regex.eval(env).toRegex().matches(value.eval(env))
         }
         //endregion
@@ -245,7 +245,7 @@ private sealed class RuleExpr<T> {
             val list: RuleExpr<List<T>>,
             val value: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: Map<String, Any>) = list.eval(env).contains(value.eval(env))
+            override fun eval(env: KMap<String, Any>) = list.eval(env).contains(value.eval(env))
         }
         //endregion
 
@@ -253,19 +253,19 @@ private sealed class RuleExpr<T> {
         data class Not(
             val value: RuleExpr<Boolean>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: Map<String, Any>) = !value.eval(env)
+            override fun eval(env: KMap<String, Any>) = !value.eval(env)
         }
 
         data class And(
             val values: List<RuleExpr<Boolean>>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: Map<String, Any>) = values.all { it.eval(env) }
+            override fun eval(env: KMap<String, Any>) = values.all { it.eval(env) }
         }
 
         data class Or(
             val values: List<RuleExpr<Boolean>>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: Map<String, Any>) = values.any { it.eval(env) }
+            override fun eval(env: KMap<String, Any>) = values.any { it.eval(env) }
         }
 
         data class If<T>(
@@ -273,7 +273,7 @@ private sealed class RuleExpr<T> {
             val valueIfTrue: RuleExpr<T>,
             val valueIfFalse: RuleExpr<T>
         ) : FunctionExpr<T>() {
-            override fun eval(env: Map<String, Any>) = if (condition.eval(env)) {
+            override fun eval(env: KMap<String, Any>) = if (condition.eval(env)) {
                 valueIfTrue.eval(env)
             } else {
                 valueIfFalse.eval(env)
@@ -288,7 +288,7 @@ private sealed class RuleExpr<T> {
             val doubleOp: (Double, Double) -> Number
             val longOp: (Long, Long) -> Number
 
-            fun eval(env: Map<String, Any>): Number {
+            fun eval(env: KMap<String, Any>): Number {
                 val leftValue = left.eval(env)
                 val rightValue = right.eval(env)
                 return if (leftValue is Double || rightValue is Double) {
@@ -306,7 +306,7 @@ private sealed class RuleExpr<T> {
             override val doubleOp: (Double, Double) -> Number = Double::plus
             override val longOp: (Long, Long) -> Number = Long::plus
 
-            override fun eval(env: Map<String, Any>) = super.eval(env)
+            override fun eval(env: KMap<String, Any>) = super.eval(env)
         }
 
         data class Minus(
@@ -316,7 +316,7 @@ private sealed class RuleExpr<T> {
             override val doubleOp: (Double, Double) -> Number = Double::minus
             override val longOp: (Long, Long) -> Number = Long::minus
 
-            override fun eval(env: Map<String, Any>) = super.eval(env)
+            override fun eval(env: KMap<String, Any>) = super.eval(env)
         }
 
         data class Times(
@@ -326,7 +326,7 @@ private sealed class RuleExpr<T> {
             override val doubleOp: (Double, Double) -> Number = Double::times
             override val longOp: (Long, Long) -> Number = Long::times
 
-            override fun eval(env: Map<String, Any>) = super.eval(env)
+            override fun eval(env: KMap<String, Any>) = super.eval(env)
         }
 
         data class Div(
@@ -338,7 +338,7 @@ private sealed class RuleExpr<T> {
                 if (l % r == 0L) l / r else l.toDouble() / r
             }
 
-            override fun eval(env: Map<String, Any>) = super.eval(env)
+            override fun eval(env: KMap<String, Any>) = super.eval(env)
         }
 
         data class Rem(
@@ -348,7 +348,7 @@ private sealed class RuleExpr<T> {
             override val doubleOp: (Double, Double) -> Number = Double::rem
             override val longOp: (Long, Long) -> Number = Long::rem
 
-            override fun eval(env: Map<String, Any>) = super.eval(env)
+            override fun eval(env: KMap<String, Any>) = super.eval(env)
         }
         //endregion
 
@@ -359,7 +359,7 @@ private sealed class RuleExpr<T> {
         ) : FunctionExpr<Double>() {
             constructor(value: RuleExpr<Number>) : this(value, NumberExpr(DEFAULT_BASE))
 
-            override fun eval(env: Map<String, Any>) =
+            override fun eval(env: KMap<String, Any>) =
                 log(value.eval(env).toDouble(), base.eval(env).toDouble())
 
             companion object {
@@ -370,21 +370,38 @@ private sealed class RuleExpr<T> {
         data class Ln(
             val value: RuleExpr<Number>,
         ) : FunctionExpr<Double>() {
-            override fun eval(env: Map<String, Any>) = ln(value.eval(env).toDouble())
+            override fun eval(env: KMap<String, Any>) = ln(value.eval(env).toDouble())
         }
 
         data class Pow(
             val value: RuleExpr<Number>,
             val exponent: RuleExpr<Number>
         ) : FunctionExpr<Double>() {
-            override fun eval(env: Map<String, Any>) =
+            override fun eval(env: KMap<String, Any>) =
                 value.eval(env).toDouble().pow(exponent.eval(env).toDouble())
         }
 
         data class Exp(
             val value: RuleExpr<Number>,
         ) : FunctionExpr<Double>() {
-            override fun eval(env: Map<String, Any>) = exp(value.eval(env).toDouble())
+            override fun eval(env: KMap<String, Any>) = exp(value.eval(env).toDouble())
+        }
+
+        data class Map(
+            val value: RuleExpr<Number>,
+            val inputStart: RuleExpr<Number>,
+            val inputEnd: RuleExpr<Number>,
+            val outputStart: RuleExpr<Number>,
+            val outputEnd: RuleExpr<Number>
+        ) : FunctionExpr<Double>() {
+            override fun eval(env: KMap<String, Any>): Double {
+                val inputStartValue = inputStart.eval(env).toDouble()
+                val outputStartValue = outputStart.eval(env).toDouble()
+                return (value.eval(env).toDouble() - inputStartValue) /
+                    (inputEnd.eval(env).toDouble() - inputStartValue) *
+                    (outputEnd.eval(env).toDouble() - outputStartValue) +
+                    outputStartValue
+            }
         }
         //endregion
     }
@@ -440,3 +457,6 @@ private sealed class RuleExpr<T> {
         }
     }
 }
+
+// Alias Map<K, V> to avoid clashes with map function expression.
+typealias KMap<K, V> = Map<K, V>

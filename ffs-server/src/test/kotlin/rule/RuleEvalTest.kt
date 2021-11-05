@@ -174,6 +174,7 @@ class RuleEvalTest {
         assert(eval("""ln(2)""") == 0.693147181f)
         assert(eval("""pow(2, 3)""") == 8f)
         assert(eval("""exp(2)""") == 7.389056099f)
+        assert(eval("""map(0.75, 0, 1, 2, 4)""") == 3.5f)
 
         assertThrows<IllegalArgumentException> { eval("""log(1, 2, 3)""") }
         assertThrows<IllegalArgumentException> { eval("""pow(2)""") }
@@ -193,6 +194,14 @@ class RuleEvalTest {
         assert(eval("""if(gte(datetime("2021-06-01"), datetime("2021-05-31")), 0, 1)""") == 0f)
         assert(eval("""log(if(gte(datetime("2021-06-01"), now()), 0, 1))""") == 0f)
         assert(eval("""if(gt(plus(now(), 1), div(now(), 1)), minus(2, 1), 0)""") == 1f)
+        assert(
+            eval(
+                """map(
+                    |datetime("2021-11-11"),
+                    |datetime("2021-11-08"), datetime("2021-11-15"),
+                    |0, 1)""".trimMargin()
+            ) == 3 / 7f
+        )
     }
 
     private fun eval(formula: String, env: Map<String, Any> = emptyMap()) =
