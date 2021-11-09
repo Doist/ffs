@@ -30,7 +30,7 @@ allprojects {
 }
 
 val generateDetektReport by tasks.registering(ReportMergeTask::class) {
-    output.set(rootProject.buildDir.resolve("reports/detekt/merge.sarif"))
+    output.set(File("${rootProject.buildDir}/reports/detekt/merge.sarif"))
 }
 
 subprojects {
