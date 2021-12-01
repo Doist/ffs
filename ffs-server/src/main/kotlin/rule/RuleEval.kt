@@ -289,12 +289,12 @@ private sealed class RuleExpr<T> {
             val longOp: (Long, Long) -> Number
 
             fun eval(env: KMap<String, Any>): Number {
-                val leftValue = left.eval(env)
-                val rightValue = right.eval(env)
-                return if (leftValue is Double || rightValue is Double) {
-                    doubleOp(leftValue.toDouble(), rightValue.toDouble())
+                val leftResult = left.eval(env)
+                val rightResult = right.eval(env)
+                return if (leftResult is Double || rightResult is Double) {
+                    doubleOp(leftResult.toDouble(), rightResult.toDouble())
                 } else {
-                    longOp(leftValue.toLong(), rightValue.toLong())
+                    longOp(leftResult.toLong(), rightResult.toLong())
                 }
             }
         }
@@ -395,12 +395,12 @@ private sealed class RuleExpr<T> {
             val outputEnd: RuleExpr<Number>
         ) : FunctionExpr<Double>() {
             override fun eval(env: KMap<String, Any>): Double {
-                val inputStartValue = inputStart.eval(env).toDouble()
-                val outputStartValue = outputStart.eval(env).toDouble()
-                return (value.eval(env).toDouble() - inputStartValue) /
-                    (inputEnd.eval(env).toDouble() - inputStartValue) *
-                    (outputEnd.eval(env).toDouble() - outputStartValue) +
-                    outputStartValue
+                val inputStartResult = inputStart.eval(env).toDouble()
+                val outputStartResult = outputStart.eval(env).toDouble()
+                return (value.eval(env).toDouble() - inputStartResult) /
+                    (inputEnd.eval(env).toDouble() - inputStartResult) *
+                    (outputEnd.eval(env).toDouble() - outputStartResult) +
+                    outputStartResult
             }
         }
         //endregion
