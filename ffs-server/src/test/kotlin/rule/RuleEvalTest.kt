@@ -185,7 +185,7 @@ class RuleEvalTest {
         assert(eval("""ln(2)""") == 0.693147181f)
         assert(eval("""pow(2, 3)""") == 8f)
         assert(eval("""exp(2)""") == 7.389056099f)
-        assert(eval("""map(0.75, 0, 1, 2, 4)""") == 3.5f)
+        assert(eval("""map(0, 1, 2, 4, 0.75)""") == 3.5f)
 
         assertThrows<IllegalArgumentException> { eval("""log(1, 2, 3)""") }
         assertThrows<IllegalArgumentException> { eval("""pow(2)""") }
@@ -208,9 +208,9 @@ class RuleEvalTest {
         assert(
             eval(
                 """map(
-                    |datetime("2021-11-11"),
                     |datetime("2021-11-08"), datetime("2021-11-15"),
-                    |0, 1)""".trimMargin()
+                    |0, 1,
+                    |datetime("2021-11-11"))""".trimMargin()
             ) == 3 / 7f
         )
     }

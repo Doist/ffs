@@ -38,7 +38,7 @@ import kotlin.reflect.typeOf
  * - True for specific UTC offsets: `contains(["+01:00", "+02:00"], env["user.utc_offset"])`
  * - True after a date/time: `gte(now(), datetime("2038-01-19T04:14:07+01:00")`
  * - True if the user is logged in: `not(isblank(env["user.email"]))`
- * - Gradual rollout: `map(now(), datetime("2021-11-08"), datetime("2021-11-16"), 0, 1)`
+ * - Gradual rollout: `map(datetime("2021-11-08"), datetime("2021-11-16"), 0, 1, now())`
  *
  * @param formula the formula to parse.
  * @param env the environment map. Accepted values are booleans, numbers, strings, or lists of them.
@@ -405,11 +405,11 @@ private sealed class RuleExpr<T> {
         }
 
         data class Map(
-            val value: RuleExpr<Number>,
             val inputStart: RuleExpr<Number>,
             val inputEnd: RuleExpr<Number>,
             val outputStart: RuleExpr<Number>,
-            val outputEnd: RuleExpr<Number>
+            val outputEnd: RuleExpr<Number>,
+            val value: RuleExpr<Number>
         ) : FunctionExpr<Double>() {
             override fun eval(env: KMap<String, Any>): Double {
                 val inputStartResult = inputStart.eval(env).toDouble()
