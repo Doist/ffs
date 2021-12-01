@@ -32,10 +32,13 @@ import kotlin.reflect.typeOf
  * 0 is always false, 1 is always true, 0.5 is true ~50% of the time, depending on the environment.
  *
  * Example formulas:
- * - Always true: `1`
- * - True for an email domain: `=matches("*@doist.com", env["user.email"])
- * - True for specific UTC offsets: `=contains(["+01:00", "+02:00"], env["user.utc_offset"])`
- * - True after a specific date/time: `=gte(now(), datetime("2038-01-19T04:14:07+01:00")`
+ * - Always true: `1` or `true`
+ * - True for half of the contexts: `0.5`
+ * - True for an email domain: `matches("*@doist.com", env["user.email"])
+ * - True for specific UTC offsets: `contains(["+01:00", "+02:00"], env["user.utc_offset"])`
+ * - True after a date/time: `gte(now(), datetime("2038-01-19T04:14:07+01:00")`
+ * - True if the user is logged in: `not(isblank(env["user.email"]))`
+ * - Gradual rollout: `map(now(), datetime("2021-11-08"), datetime("2021-11-16"), 0, 1)`
  *
  * @param formula the formula to parse.
  * @param env the environment map. Acceptable values are numbers, strings, and booleans.
@@ -173,6 +176,15 @@ private sealed class RuleExpr<T> {
      */
     @Suppress("unused")
     sealed class FunctionExpr<T> : RuleExpr<T>() {
+        //region Info.
+        data class IsBlank(val value: RuleExpr<Any?>) : FunctionExpr<Boolean>() {
+            override fun eval(env: KMap<String, Any>) = when (val result = value.eval(env)) {
+                is String -> result.isBlank()
+                else -> result == null
+            }
+        }
+        //endregion
+
         //region Operators.
         data class Eq(
             val value1: Any,

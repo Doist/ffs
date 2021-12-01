@@ -27,6 +27,19 @@ class RuleEvalTest {
     }
 
     @Test
+    fun testInfo() {
+        assert(eval("""isblank("")""") == 1f)
+        assert(eval("""isblank("notblank")""") == 0f)
+        assert(eval("""isblank(env["user.email"])""") == 1f)
+        assert(
+            eval(
+                """isblank(env["user.email"])""",
+                mapOf("user.email" to "goncalo@doist.com")
+            ) == 0f
+        )
+    }
+
+    @Test
     fun testOperators() {
         assert(eval("""eq(1, 0)""") == 0f)
         assert(eval("""eq(0, 0)""") == 1f)
