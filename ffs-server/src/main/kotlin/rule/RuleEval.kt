@@ -41,7 +41,7 @@ import kotlin.reflect.typeOf
  * - Gradual rollout: `map(now(), datetime("2021-11-08"), datetime("2021-11-16"), 0, 1)`
  *
  * @param formula the formula to parse.
- * @param env the environment map. Acceptable values are numbers, strings, and booleans.
+ * @param env the environment map. Accepted values are booleans, numbers, strings, or lists of them.
  *
  * @see RuleGrammar
  * @see RuleExpr
@@ -137,11 +137,11 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
 private sealed class RuleExpr<T> {
     abstract fun eval(env: KMap<String, Any>): T
 
-    data class NumberExpr(val value: Number) : RuleExpr<Number>() {
+    data class BooleanExpr(val value: Boolean) : RuleExpr<Boolean>() {
         override fun eval(env: KMap<String, Any>) = value
     }
 
-    data class BooleanExpr(val value: Boolean) : RuleExpr<Boolean>() {
+    data class NumberExpr(val value: Number) : RuleExpr<Number>() {
         override fun eval(env: KMap<String, Any>) = value
     }
 
@@ -150,18 +150,22 @@ private sealed class RuleExpr<T> {
     }
 
     data class EnvExpr(val nameVal: RuleExpr<String>) : RuleExpr<Any>() {
-        override fun eval(env: KMap<String, Any>): Any {
-            return when (val value = env[nameVal.eval(env)]) {
-                // Coerce number types to Long and Double.
-                is Byte -> value.toLong()
-                is Short -> value.toLong()
-                is Int -> value.toLong()
-                is Float -> value.toDouble()
-                // Besides numbers, accept Strings and Booleans.
-                is String, is Boolean -> value
-                // Drop everything else.
-                else -> ""
-            }
+        override fun eval(env: KMap<String, Any>) = coerceType(env[nameVal.eval(env)]) ?: ""
+
+        fun coerceType(value: Any?, canNest: Boolean = true): Any? = when {
+            // Coerce number types to Long and Double.
+            value is Byte -> value.toLong()
+            value is Short -> value.toLong()
+            value is Int -> value.toLong()
+            value is Float -> value.toDouble()
+            // Accept Boolean, Long, Double, and String.
+            value is Boolean || value is Long || value is Double || value is String -> value
+            // Coerce Array into List.
+            canNest && value is Array<*> -> value.mapNotNull { coerceType(it, false) }
+            // Accept List.
+            canNest && value is List<*> -> value.mapNotNull { coerceType(it, false) }
+            // Drop everything else.
+            else -> null
         }
     }
 
@@ -180,6 +184,7 @@ private sealed class RuleExpr<T> {
         data class IsBlank(val value: RuleExpr<Any?>) : FunctionExpr<Boolean>() {
             override fun eval(env: KMap<String, Any>) = when (val result = value.eval(env)) {
                 is String -> result.isBlank()
+                is List<*> -> result.isEmpty()
                 else -> result == null
             }
         }

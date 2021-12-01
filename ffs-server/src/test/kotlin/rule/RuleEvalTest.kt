@@ -27,16 +27,32 @@ class RuleEvalTest {
     }
 
     @Test
+    fun testEnv() {
+        assert(eval("""env["b"]""") == 0f)
+        assert(eval("""env["b"]""", mapOf("b" to false)) == 0f)
+        assert(eval("""env["b"]""", mapOf("b" to true)) == 1f)
+        assert(eval("""env["n"]""", mapOf("n" to 0f)) == 0f)
+        assert(eval("""env["n"]""", mapOf("n" to 0.5f)) == 0.5f)
+        assert(eval("""env["n"]""", mapOf("n" to 1f)) == 1f)
+        assert(eval("""env["s"]""", mapOf("s" to "0")) == 0f)
+        assert(eval("""env["s"]""", mapOf("s" to "0.5")) == 0.5f)
+        assert(eval("""env["s"]""", mapOf("s" to "1")) == 1f)
+        assert(eval("""contains(env["l"], "d")""", mapOf("l" to listOf("a", "b", "c"))) == 0f)
+        assert(eval("""contains(env["l"], "b")""", mapOf("l" to listOf("a", "b", "c"))) == 1f)
+
+        assert(eval("""isblank(env["i"])""", mapOf("i" to mapOf("a" to "b"))) == 1f)
+        assert(eval("""isblank(env["i"])""", mapOf("i" to listOf(listOf("a", "b")))) == 1f)
+    }
+
+    @Test
+    fun testFail() {
+        assert(eval("""isblank(env["i"])""", mapOf("i" to listOf(listOf("a", "b")))) == 1f)
+    }
+
+    @Test
     fun testInfo() {
         assert(eval("""isblank("")""") == 1f)
         assert(eval("""isblank("notblank")""") == 0f)
-        assert(eval("""isblank(env["user.email"])""") == 1f)
-        assert(
-            eval(
-                """isblank(env["user.email"])""",
-                mapOf("user.email" to "goncalo@doist.com")
-            ) == 0f
-        )
     }
 
     @Test
@@ -49,7 +65,6 @@ class RuleEvalTest {
         assert(eval("""eq("0", "1")""") == 0f)
 
         assert(eval("""gt(1, 0)""") == 1f)
-        assert(eval("""gt(env["number"], 0)""", mapOf("number" to 1)) == 1f)
         assert(eval("""gt(0, 0)""") == 0f)
         assert(eval("""gt(0, 1)""") == 0f)
         assert(eval("""gt("1", "0")""") == 1f)
@@ -102,19 +117,8 @@ class RuleEvalTest {
 
     @Test
     fun testText() {
-        assert(eval("""matches(".+@doist.com", env["user.email"])""") == 0f)
-        assert(
-            eval(
-                """matches(".+@doist.com", env["user.email"])""",
-                mapOf("user.email" to "goncalo@doist.com")
-            ) == 1f
-        )
-        assert(
-            eval(
-                """matches(".+@doist.io", env["user.email"])""",
-                mapOf("user.email" to "goncalo@doist.com")
-            ) == 0f
-        )
+        assert(eval("""matches(".+@doist.com", "goncalo@doist.io")""") == 0f)
+        assert(eval("""matches(".+@doist.com", "goncalo@doist.com")""") == 1f)
 
         assertThrows<IllegalArgumentException> { eval("""matches("1", "1", "1")""") }
         assertThrows<ClassCastException> { eval("""matches(1, 2)""") }
@@ -125,14 +129,8 @@ class RuleEvalTest {
 
     @Test
     fun testArrays() {
+        assert(eval("""contains(["+01:00", "+02:00"], "+00:00")""") == 0f)
         assert(eval("""contains(["+01:00", "+02:00"], "+01:00")""") == 1f)
-        assert(eval("""contains(["+01:00", "+02:00"], env["user.utc_offset"])""") == 0f)
-        assert(
-            eval(
-                """contains(["+01:00", "+02:00"], env["user.utc_offset"])""",
-                mapOf("user.utc_offset" to "+02:00")
-            ) == 1f
-        )
 
         assert(eval("""contains([1, 2], 1)""") == 1f)
         assert(eval("""contains([1, 2], 3)""") == 0f)
