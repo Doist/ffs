@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.kotlinx.kover)
     alias(libs.plugins.kotlin.power.assert) apply false // Applied below.
     alias(libs.plugins.detekt) apply false // Applied and configured below.
+    alias(libs.plugins.dokka) apply false // Applied below.
 
     // Plugins for some subprojects.
     alias(libs.plugins.kotlin.multiplatform) apply false
@@ -61,6 +62,10 @@ subprojects {
                 }
             }
         }
+
+        // Apply dokka in all subprojects.
+        // Build targets must be set before this happens.
+        apply(plugin = libs.plugins.dokka.get().pluginId)
     }
 }
 
