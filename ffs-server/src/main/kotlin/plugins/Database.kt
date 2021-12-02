@@ -12,7 +12,7 @@ import io.ktor.util.AttributeKey
 import org.slf4j.Logger
 
 /**
- * Plugin that opens a database connection on application start, and
+ * Plugin that opens a database connection on application start, and closes it on application stop.
  */
 class Database(log: Logger, monitor: Events, configuration: Configuration) {
     var instance: doist.ffs.Database = Database(configuration.driver, log)
