@@ -39,13 +39,13 @@ class FlowConverter : ContentConverter {
                 {
                     var lastUpdatedFlags = emptyList<Flag>()
                     flow.collect { flags ->
-                        // Select flags that changed since the last emission by picking those that
-                        // were updated as/more recently as the most recent in the previous batch,
+                        // Select flags that changed since the last emission by picking those
+                        // updated as or more recently than the most recent in the previous batch,
                         // and were not contained in the batch itself.
-                        // Comparisons are safe, as instances are not shared.
                         val lastUpdatedAt =
                             lastUpdatedFlags.firstOrNull()?.updated_at ?: Instant.DISTANT_PAST
                         val updatedFlags = flags.filter { flag ->
+                            // Instances are not shared, so we can rely on contains().
                             flag.updated_at >= lastUpdatedAt && !lastUpdatedFlags.contains(flag)
                         }
 
