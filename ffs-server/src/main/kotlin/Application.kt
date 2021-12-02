@@ -6,6 +6,7 @@ import doist.ffs.routes.flagRoutes
 import doist.ffs.routes.organizationRoutes
 import doist.ffs.routes.projectRoutes
 import doist.ffs.serialization.FlowConverter
+import doist.ffs.serialization.cbor
 import doist.ffs.serialization.json
 import io.ktor.http.ContentType
 import io.ktor.serialization.kotlinx.serialization
@@ -28,6 +29,7 @@ fun Application.module() {
     install(DefaultHeaders)
     install(ContentNegotiation) {
         serialization(ContentType.Application.Json, json)
+        serialization(ContentType.Application.Cbor, cbor)
         register(ContentType.Text.EventStream, FlowConverter())
     }
     install(Compression)

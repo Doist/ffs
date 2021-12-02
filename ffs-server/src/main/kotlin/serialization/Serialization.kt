@@ -4,6 +4,7 @@ import doist.ffs.db.Flag
 import doist.ffs.db.Organization
 import doist.ffs.db.Project
 import kotlinx.serialization.Serializer
+import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
@@ -17,11 +18,17 @@ private object ProjectSerializer
 @Serializer(forClass = Flag::class)
 private object FlagSerializer
 
+private val modules = SerializersModule {
+    contextual(OrganizationSerializer)
+    contextual(ProjectSerializer)
+    contextual(FlagSerializer)
+}
+
 val json = Json {
     isLenient = true
-    serializersModule = SerializersModule {
-        contextual(OrganizationSerializer)
-        contextual(ProjectSerializer)
-        contextual(FlagSerializer)
-    }
+    serializersModule = modules
+}
+
+val cbor = Cbor {
+    serializersModule = modules
 }
