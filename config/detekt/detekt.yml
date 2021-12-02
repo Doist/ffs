@@ -1,17 +1,11 @@
 formatting:
-
-  # Match ktlint's default rules (100-char max line length).
-  ImportOrdering:
-    active: true # was false
-  Indentation:
-    active: true # was false
+  # Set 100-char max line length.
   MaximumLineLength:
     maxLineLength: 100 # was 120
-    ignoreBackTickedIdentifier: true # was false
   ParameterListWrapping:
     maxLineLength: 100 # was 120
 
-  # Match ktlint's experimental rules (100-char max line length).
+  # Match ktlint's experimental rules (plus 100-char max line length).
   AnnotationOnSeparateLine:
     active: true # was false
   AnnotationSpacing:

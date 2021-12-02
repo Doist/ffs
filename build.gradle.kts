@@ -3,6 +3,8 @@ import io.gitlab.arturbosch.detekt.DetektPlugin
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import io.gitlab.arturbosch.detekt.report.ReportMergeTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 
 group = "doist"
 version = "1.0-SNAPSHOT"
@@ -19,6 +21,10 @@ plugins {
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.sqldelight) apply false
     alias(libs.plugins.kotlinx.benchmark) apply false
+}
+
+plugins.withType<NodeJsRootPlugin> {
+    the<NodeJsRootExtension>().nodeVersion = "16.13.1"
 }
 
 allprojects {
@@ -48,14 +54,14 @@ subprojects {
             val kotlinExtension = extensions.getByName("kotlin") as KotlinProjectExtension
             source = files(kotlinExtension.sourceSets.flatMap { it.kotlin.srcDirs })
             parallel = true
-            reports.sarif.enabled = true
         }
         dependencies {
             val detektPlugins by configurations.getting
             detektPlugins(libs.detekt.formatting)
         }
         plugins.withType(DetektPlugin::class) {
-            tasks.withType(Detekt::class) detekt@{
+            tasks.withType<Detekt>().configureEach detekt@{
+                reports.sarif.required.set(true)
                 finalizedBy(generateDetektReport)
                 generateDetektReport.configure {
                     input.from(this@detekt.sarifReportFile)
