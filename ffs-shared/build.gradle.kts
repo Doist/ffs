@@ -39,20 +39,12 @@ kotlin {
     sourceSets {
         val commonTest by getting {
             dependencies {
-                implementation(kotlin("test"))
-            }
-        }
-
-        val jvmTest by getting {
-            dependencies {
-                implementation(kotlin("test-junit"))
-            }
-        }
-
-        val jsTest by getting {
-            dependencies {
-                implementation(kotlin("test-js"))
+                implementation(libs.kotlin.test)
             }
         }
     }
+}
+
+kotlin.sourceSets.all {
+    languageSettings.optIn("kotlin.ExperimentalUnsignedTypes")
 }

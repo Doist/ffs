@@ -40,19 +40,7 @@ kotlin {
     sourceSets {
         val commonTest by getting {
             dependencies {
-                implementation(libs.kotlin.test.base)
-            }
-        }
-
-        val jvmTest by getting {
-            dependencies {
-                implementation(libs.kotlin.test.jvm)
-            }
-        }
-
-        val jsTest by getting {
-            dependencies {
-                implementation(libs.kotlin.test.js)
+                implementation(libs.kotlin.test)
             }
         }
     }

@@ -5,7 +5,7 @@ plugins {
 dependencies {
     implementation(libs.bundles.kotlin.react)
     
-    testImplementation(libs.kotlin.test.js)
+    testImplementation(libs.kotlin.test)
 }
 
 kotlin {

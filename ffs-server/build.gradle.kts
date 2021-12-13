@@ -19,7 +19,7 @@ dependencies {
 
     implementation(libs.better.parse)
 
-    testImplementation(libs.kotlin.test.base)
+    testImplementation(libs.kotlin.test)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlinx.benchmark.runtime)
 
