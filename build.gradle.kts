@@ -5,6 +5,8 @@ import io.gitlab.arturbosch.detekt.report.ReportMergeTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 group = "doist"
 version = "1.0-SNAPSHOT"
@@ -72,6 +74,16 @@ subprojects {
         // Apply dokka in all subprojects.
         // Build targets must be set before this happens.
         apply(plugin = libs.plugins.dokka.get().pluginId)
+
+        // Log test output and results to standard streams.
+        tasks.withType<AbstractTestTask> {
+            testLogging {
+                events(TestLogEvent.PASSED, TestLogEvent.FAILED, TestLogEvent.SKIPPED)
+                exceptionFormat = TestExceptionFormat.FULL
+                showStandardStreams = true
+                showStackTraces = true
+            }
+        }
     }
 }
 
