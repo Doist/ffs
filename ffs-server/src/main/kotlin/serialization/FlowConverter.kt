@@ -25,7 +25,6 @@ class FlowConverter : ContentConverter {
         content: ByteReadChannel
     ) = throw NotImplementedError("FlowConverter can only serialize, not deserialize")
 
-    @OptIn(ExperimentalStdlibApi::class)
     override suspend fun serialize(
         contentType: ContentType,
         charset: Charset,

@@ -41,7 +41,7 @@ tasks.withType<KotlinCompile> {
 }
 
 kotlin.sourceSets.all {
-    languageSettings.optIn("kotlin.RequiresOptIn")
+    languageSettings.optIn("kotlin.ExperimentalStdlibApi")
     languageSettings.optIn("kotlinx.serialization.ExperimentalSerializationApi")
 }
 

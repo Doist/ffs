@@ -423,7 +423,6 @@ private sealed class RuleExpr<T> {
         //endregion
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     companion object {
         private val CLASSIFIER_LIST: KClassifier
         private val CLASSIFIER_EXPR: KClassifier
