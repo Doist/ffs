@@ -2,9 +2,9 @@ package doist.ffs
 
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import doist.ffs.plugins.Database
-import doist.ffs.routes.flagRoutes
-import doist.ffs.routes.organizationRoutes
-import doist.ffs.routes.projectRoutes
+import doist.ffs.routes.installFlagRoutes
+import doist.ffs.routes.installOrganizationRoutes
+import doist.ffs.routes.installProjectRoutes
 import doist.ffs.serialization.FlowConverter
 import doist.ffs.serialization.cbor
 import doist.ffs.serialization.json
@@ -35,7 +35,7 @@ fun Application.module() {
     install(Compression)
 
     // Setup routes.
-    organizationRoutes()
-    projectRoutes()
-    flagRoutes()
+    installOrganizationRoutes()
+    installProjectRoutes()
+    installFlagRoutes()
 }

@@ -22,7 +22,7 @@ fun Database.capturingLastInsertId(block: Database.() -> Unit) =
 /**
  * Initializes a [Database] instance for [driver].
  */
-fun Database(driver: SqlDriver, log: Logger? = null): Database {
+internal fun Database(driver: SqlDriver, log: Logger? = null): Database {
     // Create or migrate database.
     val oldVersion =
         driver.executeQuery(null, "PRAGMA user_version", 0)

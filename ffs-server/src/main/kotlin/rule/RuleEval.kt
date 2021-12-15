@@ -475,4 +475,4 @@ private sealed class RuleExpr<T> {
 }
 
 // Alias Map<K, V> to avoid clashes with map function expression.
-typealias KMap<K, V> = Map<K, V>
+private typealias KMap<K, V> = Map<K, V>

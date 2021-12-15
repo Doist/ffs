@@ -22,13 +22,13 @@ import io.ktor.server.routing.put
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
 
-fun Application.projectRoutes() {
+fun Application.installProjectRoutes() {
     routing {
-        routeCreateProject()
-        routeGetProjects()
-        routeGetProject()
-        routeUpdateProject()
-        routeDeleteProject()
+        createProject()
+        getProjects()
+        getProject()
+        updateProject()
+        deleteProject()
     }
 }
 
@@ -48,7 +48,7 @@ fun PATH_PROJECT(id: Any) = PATH_PROJECT.replace("{id}", id.toString())
  * | `organization_id` | Yes      | ID of the organization. |
  * | `name`            | Yes      | Name of the project.    |
  */
-fun Route.routeCreateProject() = post(PATH_PROJECTS) {
+private fun Route.createProject() = post(PATH_PROJECTS) {
     val params = call.receiveParameters()
     val organizationId = params.getOrFail<Long>("organization_id")
     val name = params.getOrFail("name")
@@ -70,7 +70,7 @@ fun Route.routeCreateProject() = post(PATH_PROJECTS) {
  * | ----------------- | -------- | ----------------------- |
  * | `organization_id` | Yes      | ID of the organization. |
  */
-fun Route.routeGetProjects() = get(PATH_PROJECTS) {
+private fun Route.getProjects() = get(PATH_PROJECTS) {
     val organizationId = call.request.queryParameters.getOrFail<Long>("organization_id")
     val projects =
         application.database.projects.selectByOrganization(organizationId).executeAsList()
@@ -86,7 +86,7 @@ fun Route.routeGetProjects() = get(PATH_PROJECTS) {
  * | --------- | -------- | ------------------ |
  * | `id`      | Yes      | ID of the project. |
  */
-fun Route.routeGetProject() = get(PATH_PROJECT) {
+private fun Route.getProject() = get(PATH_PROJECT) {
     val id = call.parameters.getOrFail<Long>("id")
     val project = application.database.projects.select(id = id).executeAsOneOrNull()
         ?: throw NotFoundException()
@@ -103,7 +103,7 @@ fun Route.routeGetProject() = get(PATH_PROJECT) {
  * | `id`      | Yes      | ID of the project.   |
  * | `name`    | No       | Name of the project. |
  */
-fun Route.routeUpdateProject() = put(PATH_PROJECT) {
+private fun Route.updateProject() = put(PATH_PROJECT) {
     val id = call.parameters.getOrFail<Long>("id")
     val name = call.receiveParameters()["name"]
     application.database.projects.run {
@@ -122,7 +122,7 @@ fun Route.routeUpdateProject() = put(PATH_PROJECT) {
  * | --------- | -------- | ------------------ |
  * | `id`      | Yes      | ID of the project. |
  */
-fun Route.routeDeleteProject() = delete(PATH_PROJECT) {
+private fun Route.deleteProject() = delete(PATH_PROJECT) {
     val id = call.parameters.getOrFail<Long>("id")
     application.database.projects.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
