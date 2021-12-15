@@ -13,6 +13,8 @@ kotlin-power-assert = "0.11.0"
 better-parse = "0.4.3"
 kotlinx-benchmark = "0.3.1"
 kotlinx-kover = "0.4.4"
+mkdocs = "2.2.0"
+mkdocs-plugin-awesome-pages = "2.6.1"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -53,3 +55,4 @@ kotlin-power-assert = { id = "com.bnorm.power.kotlin-power-assert", version.ref 
 kotlinx-benchmark = { id = "org.jetbrains.kotlinx.benchmark", version.ref = "kotlinx-benchmark" }
 kotlinx-kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kotlinx-kover" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "kotlin" }
+mkdocs = { id = "ru.vyarus.mkdocs", version.ref = "mkdocs" }

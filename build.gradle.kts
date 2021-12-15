@@ -2,21 +2,25 @@ import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.DetektPlugin
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import io.gitlab.arturbosch.detekt.report.ReportMergeTask
-import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
-import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
+import ru.vyarus.gradle.plugin.mkdocs.task.MkdocsTask
 
 group = "doist"
 version = "1.0-SNAPSHOT"
 
 plugins {
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.mkdocs)
+
     // Plugins for all subprojects.
     alias(libs.plugins.kotlinx.kover)
     alias(libs.plugins.kotlin.power.assert) apply false // Applied below.
     alias(libs.plugins.detekt) apply false // Applied and configured below.
-    alias(libs.plugins.dokka) apply false // Applied below.
 
     // Plugins for some subprojects.
     alias(libs.plugins.kotlin.multiplatform) apply false
@@ -32,9 +36,6 @@ plugins.withType<NodeJsRootPlugin> {
 allprojects {
     repositories {
         mavenCentral()
-        maven {
-            url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
-        }
     }
 }
 
@@ -71,12 +72,8 @@ subprojects {
             }
         }
 
-        // Apply dokka in all subprojects.
-        // Build targets must be set before this happens.
-        apply(plugin = libs.plugins.dokka.get().pluginId)
-
         // Log test output and results to standard streams.
-        tasks.withType<AbstractTestTask> {
+        tasks.withType<AbstractTestTask>().configureEach {
             testLogging {
                 events(TestLogEvent.PASSED, TestLogEvent.FAILED, TestLogEvent.SKIPPED)
                 exceptionFormat = TestExceptionFormat.FULL
@@ -84,8 +81,28 @@ subprojects {
                 showStackTraces = true
             }
         }
+
+        // Apply and configure dokka in library subprojects.
+        if (project.name.startsWith("ffs-library-")) {
+            apply(plugin = libs.plugins.dokka.get().pluginId)
+            tasks.withType<DokkaTaskPartial>().configureEach {
+                moduleName.set(project.name.removePrefix("ffs-").replace('-', ' ').capitalize())
+            }
+        }
     }
 }
+
+// Configure documentation.
+python.pip("mkdocs-awesome-pages-plugin:${libs.versions.mkdocs.plugin.awesome.pages.get()}")
+mkdocs {
+    sourcesDir = "docs"
+    strict = false
+}
+tasks.withType<MkdocsTask>().configureEach {
+    val dokkaGfmMultiModule by tasks.getting
+    dependsOn(dokkaGfmMultiModule)
+}
+
 
 // Install git hooks automatically.
 gradle.taskGraph.whenReady {

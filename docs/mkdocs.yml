@@ -1,0 +1,83 @@
+site_name: FFS
+
+# Meta tags (placed in header).
+site_description: FFS is a fast and lean open-source platform for managing and deploying feature flags.
+site_author: Gonçalo Silva
+site_url: https://github.com/goncalossilva/ffs
+
+# Repository (add link to repository on each page).
+repo_name: goncalossilva/ffs
+repo_url: https://github.com/goncalossilva/ffs
+edit_uri: edit/main/docs/src/doc/docs/
+
+# Copyright (shown at the footer).
+copyright: 'Copyright &copy; 2022 Gonçalo Silva'
+
+# Material theme.
+theme:
+  logo: _assets/icon-192.png
+  favicon: _assets/favicon.ico
+  name: 'material'
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: red
+      accent: red
+      toggle:
+        icon: material/lightbulb
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/lightbulb-outline
+        name: Light mode
+  social:
+    - type: 'github'
+      link: 'https://github.com/goncalossilva/ffs'
+
+# Plugins and extensions.
+plugins:
+  - awesome-pages
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - footnotes
+  - meta
+  - def_list
+  - toc:
+      permalink: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+
+# Navigation.
+docs_dir: src
+nav:
+  - Home: index.md
+  - Setting up the SDK:
+      - Frontend SDK: sdk/frontend.md
+      - Backend SDK: sdk/backend.md
+      - Testing: sdk/testing.md
+  - Feature flags:
+      - About feature flags: feature-flags/about.md
+      - The anatomy of rules: feature-flags/rules.md
+      - Time to live: feature-flags/ttl.md
+      - Archiving feature flags: feature-flags/archiving.md
+  - Dashboard:
+      - Managing feature flags: dashboard/managing-feature-flags.md
+      - Managing users: dashboard/managing-users.md
+      - Security: dashboard/security.md
+  - Server:
+      - Running in Docker: server/docker.md
+  - API Reference:
+      - ffs-library-frontend:
+        - ... | flat | dokka/ffs-library-frontend/**/*
+      - ffs-library-backend:
+        - ... | flat | dokka/ffs-backend-backend/**/*
