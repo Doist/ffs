@@ -23,9 +23,6 @@ import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.log
 import kotlin.math.pow
-import kotlin.reflect.KClassifier
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.typeOf
 
 /**
  * Evaluates the given [formula] resulting in unit interval [0, 1], the frequency of returning true.
@@ -47,11 +44,18 @@ import kotlin.reflect.typeOf
  * @see RuleExpr
  */
 fun eval(formula: String, env: KMap<String, Any>): Float {
-    return when (val result = RuleGrammar.parseToEnd(formula).eval(env)) {
-        is Boolean -> if (result) 1f else 0f
-        is Number -> result.toFloat()
-        is String -> result.runCatching { toFloat() }.recoverCatching { 0f }.getOrThrow()
-        else -> 0f
+    try {
+        return when (val result = RuleGrammar.parseToEnd(formula).eval(env)) {
+            is Boolean -> if (result) 1f else 0f
+            is Number -> result.toFloat()
+            is String -> result.runCatching { toFloat() }.recoverCatching { 0f }.getOrThrow()
+            else -> 0f
+        }
+    } catch (e: ClassCastException) {
+        // ClassCastException is expected on wrongly typed parameters,
+        // since nextAs() below does not verify the reified type.
+        // We use Throwable because JS throws TypeError.
+        throw IllegalArgumentException(e)
     }
 }
 
@@ -134,8 +138,11 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
 /**
  * Rule expressions to be evaluated.
  */
-private sealed class RuleExpr<T> {
+private sealed class RuleExpr<out T> {
     abstract fun eval(env: KMap<String, Any>): T
+
+    // Casting is necessary because JS is lenient and type parameters are only assessed at runtime.
+    protected inline fun <reified T> castEval(env: KMap<String, Any>): T = eval(env) as T
 
     data class BooleanExpr(val value: Boolean) : RuleExpr<Boolean>() {
         override fun eval(env: KMap<String, Any>) = value
@@ -150,7 +157,7 @@ private sealed class RuleExpr<T> {
     }
 
     data class EnvExpr(val nameVal: RuleExpr<String>) : RuleExpr<Any>() {
-        override fun eval(env: KMap<String, Any>) = coerceType(env[nameVal.eval(env)]) ?: ""
+        override fun eval(env: KMap<String, Any>) = coerceType(env[nameVal.castEval(env)]) ?: ""
 
         fun coerceType(value: Any?, canNest: Boolean = true): Any? = when {
             // Coerce number types to Long and Double.
@@ -169,10 +176,8 @@ private sealed class RuleExpr<T> {
         }
     }
 
-    data class ArrayExpr(
-        val list: List<RuleExpr<*>>
-    ) : RuleExpr<List<*>>() {
-        override fun eval(env: KMap<String, Any>): List<*> = list.map { it.eval(env) }
+    data class ArrayExpr<out T>(val list: List<RuleExpr<T>>) : RuleExpr<List<T>>() {
+        override fun eval(env: KMap<String, Any>): List<T> = list.map { it.eval(env) }
     }
 
     /**
@@ -181,49 +186,53 @@ private sealed class RuleExpr<T> {
     @Suppress("unused")
     sealed class FunctionExpr<T> : RuleExpr<T>() {
         //region Info.
-        data class IsBlank(val value: RuleExpr<Any?>) : FunctionExpr<Boolean>() {
+        data class IsBlank(val value: RuleExpr<Any>) : FunctionExpr<Boolean>() {
             override fun eval(env: KMap<String, Any>) = when (val result = value.eval(env)) {
                 is String -> result.isBlank()
                 is List<*> -> result.isEmpty()
-                else -> result == null
+                else -> false
             }
         }
         //endregion
 
         //region Operators.
-        data class Eq(
-            val value1: Any,
-            val value2: Any
+        data class Eq<T>(
+            val value1: RuleExpr<Any>,
+            val value2: RuleExpr<Any>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = value1 == value2
+            override fun eval(env: KMap<String, Any>) = value1.eval(env) == value2.eval(env)
         }
 
-        data class Gt(
-            val value1: RuleExpr<Comparable<Any>>,
-            val value2: RuleExpr<Comparable<Any>>
+        data class Gt<T>(
+            val value1: RuleExpr<Comparable<T>>,
+            val value2: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = value1.eval(env) > value2.eval(env)
+            override fun eval(env: KMap<String, Any>) =
+                value1.castEval<Comparable<Any>>(env) > value2.castEval(env)
         }
 
-        data class Gte(
-            val value1: RuleExpr<Comparable<Any>>,
-            val value2: RuleExpr<Comparable<Any>>
+        data class Gte<T>(
+            val value1: RuleExpr<Comparable<T>>,
+            val value2: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = value1.eval(env) >= value2.eval(env)
+            override fun eval(env: KMap<String, Any>) =
+                value1.castEval<Comparable<Any>>(env) >= value2.castEval(env)
         }
 
-        data class Lt(
-            val value1: RuleExpr<Comparable<Any>>,
-            val value2: RuleExpr<Comparable<Any>>
+        data class Lt<T>(
+            val value1: RuleExpr<Comparable<T>>,
+            val value2: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = value1.eval(env) < value2.eval(env)
+            override fun eval(env: KMap<String, Any>) =
+                value1.castEval<Comparable<Any>>(env) < value2.castEval(env)
         }
 
-        data class Lte(
-            val value1: RuleExpr<Comparable<Any>>,
-            val value2: RuleExpr<Comparable<Any>>
+        data class Lte<T>(
+            val value1: RuleExpr<Comparable<T>>,
+            val value2: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = value1.eval(env) <= value2.eval(env)
+            override fun eval(env: KMap<String, Any>) =
+                value1.castEval<Comparable<Any>>(env) <= value2.castEval(env)
         }
         //endregion
 
@@ -234,7 +243,7 @@ private sealed class RuleExpr<T> {
 
         data class Datetime(val value: RuleExpr<String>) : FunctionExpr<Long>() {
             override fun eval(env: KMap<String, Any>): Long {
-                val value = value.eval(env)
+                val value = value.castEval<String>(env)
                 val instant = runCatching {
                     value.toInstant()
                 }.recoverCatching {
@@ -253,7 +262,7 @@ private sealed class RuleExpr<T> {
             val value: RuleExpr<String>
         ) : FunctionExpr<Boolean>() {
             override fun eval(env: KMap<String, Any>) =
-                regex.eval(env).toRegex().matches(value.eval(env))
+                regex.castEval<String>(env).toRegex().matches(value.castEval(env))
         }
         //endregion
 
@@ -262,7 +271,8 @@ private sealed class RuleExpr<T> {
             val list: RuleExpr<List<T>>,
             val value: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = list.eval(env).contains(value.eval(env))
+            override fun eval(env: KMap<String, Any>) =
+                list.castEval<List<Any>>(env).contains(value.castEval(env))
         }
         //endregion
 
@@ -270,19 +280,19 @@ private sealed class RuleExpr<T> {
         data class Not(
             val value: RuleExpr<Boolean>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = !value.eval(env)
+            override fun eval(env: KMap<String, Any>) = !value.castEval<Boolean>(env)
         }
 
         data class And(
             val values: List<RuleExpr<Boolean>>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = values.all { it.eval(env) }
+            override fun eval(env: KMap<String, Any>) = values.all { it.castEval(env) }
         }
 
         data class Or(
             val values: List<RuleExpr<Boolean>>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = values.any { it.eval(env) }
+            override fun eval(env: KMap<String, Any>) = values.any { it.castEval(env) }
         }
 
         data class If<T>(
@@ -290,7 +300,7 @@ private sealed class RuleExpr<T> {
             val valueIfTrue: RuleExpr<T>,
             val valueIfFalse: RuleExpr<T>
         ) : FunctionExpr<T>() {
-            override fun eval(env: KMap<String, Any>) = if (condition.eval(env)) {
+            override fun eval(env: KMap<String, Any>) = if (condition.castEval(env)) {
                 valueIfTrue.eval(env)
             } else {
                 valueIfFalse.eval(env)
@@ -305,9 +315,9 @@ private sealed class RuleExpr<T> {
             val doubleOp: (Double, Double) -> Number
             val longOp: (Long, Long) -> Number
 
-            fun eval(env: KMap<String, Any>): Number {
-                val leftResult = left.eval(env)
-                val rightResult = right.eval(env)
+            fun opEval(env: KMap<String, Any>): Number {
+                val leftResult = left.castEval<Number>(env)
+                val rightResult = right.castEval<Number>(env)
                 return if (leftResult is Double || rightResult is Double) {
                     doubleOp(leftResult.toDouble(), rightResult.toDouble())
                 } else {
@@ -323,7 +333,7 @@ private sealed class RuleExpr<T> {
             override val doubleOp: (Double, Double) -> Number = Double::plus
             override val longOp: (Long, Long) -> Number = Long::plus
 
-            override fun eval(env: KMap<String, Any>) = super.eval(env)
+            override fun eval(env: KMap<String, Any>) = super.opEval(env)
         }
 
         data class Minus(
@@ -333,7 +343,7 @@ private sealed class RuleExpr<T> {
             override val doubleOp: (Double, Double) -> Number = Double::minus
             override val longOp: (Long, Long) -> Number = Long::minus
 
-            override fun eval(env: KMap<String, Any>) = super.eval(env)
+            override fun eval(env: KMap<String, Any>) = super.opEval(env)
         }
 
         data class Times(
@@ -343,7 +353,7 @@ private sealed class RuleExpr<T> {
             override val doubleOp: (Double, Double) -> Number = Double::times
             override val longOp: (Long, Long) -> Number = Long::times
 
-            override fun eval(env: KMap<String, Any>) = super.eval(env)
+            override fun eval(env: KMap<String, Any>) = super.opEval(env)
         }
 
         data class Div(
@@ -355,7 +365,7 @@ private sealed class RuleExpr<T> {
                 if (l % r == 0L) l / r else l.toDouble() / r
             }
 
-            override fun eval(env: KMap<String, Any>) = super.eval(env)
+            override fun eval(env: KMap<String, Any>) = super.opEval(env)
         }
 
         data class Rem(
@@ -365,7 +375,7 @@ private sealed class RuleExpr<T> {
             override val doubleOp: (Double, Double) -> Number = Double::rem
             override val longOp: (Long, Long) -> Number = Long::rem
 
-            override fun eval(env: KMap<String, Any>) = super.eval(env)
+            override fun eval(env: KMap<String, Any>) = super.opEval(env)
         }
         //endregion
 
@@ -377,7 +387,7 @@ private sealed class RuleExpr<T> {
             constructor(value: RuleExpr<Number>) : this(value, NumberExpr(DEFAULT_BASE))
 
             override fun eval(env: KMap<String, Any>) =
-                log(value.eval(env).toDouble(), base.eval(env).toDouble())
+                log(value.castEval<Number>(env).toDouble(), base.castEval<Number>(env).toDouble())
 
             companion object {
                 const val DEFAULT_BASE = 10
@@ -387,7 +397,7 @@ private sealed class RuleExpr<T> {
         data class Ln(
             val value: RuleExpr<Number>,
         ) : FunctionExpr<Double>() {
-            override fun eval(env: KMap<String, Any>) = ln(value.eval(env).toDouble())
+            override fun eval(env: KMap<String, Any>) = ln(value.castEval<Number>(env).toDouble())
         }
 
         data class Pow(
@@ -395,13 +405,14 @@ private sealed class RuleExpr<T> {
             val exponent: RuleExpr<Number>
         ) : FunctionExpr<Double>() {
             override fun eval(env: KMap<String, Any>) =
-                value.eval(env).toDouble().pow(exponent.eval(env).toDouble())
+                value.castEval<Number>(env).toDouble()
+                    .pow(exponent.castEval<Number>(env).toDouble())
         }
 
         data class Exp(
             val value: RuleExpr<Number>,
         ) : FunctionExpr<Double>() {
-            override fun eval(env: KMap<String, Any>) = exp(value.eval(env).toDouble())
+            override fun eval(env: KMap<String, Any>) = exp(value.castEval<Number>(env).toDouble())
         }
 
         data class Map(
@@ -412,11 +423,11 @@ private sealed class RuleExpr<T> {
             val value: RuleExpr<Number>
         ) : FunctionExpr<Double>() {
             override fun eval(env: KMap<String, Any>): Double {
-                val inputStartResult = inputStart.eval(env).toDouble()
-                val outputStartResult = outputStart.eval(env).toDouble()
-                return (value.eval(env).toDouble() - inputStartResult) /
-                    (inputEnd.eval(env).toDouble() - inputStartResult) *
-                    (outputEnd.eval(env).toDouble() - outputStartResult) +
+                val inputStartResult = inputStart.castEval<Number>(env).toDouble()
+                val outputStartResult = outputStart.castEval<Number>(env).toDouble()
+                return (value.castEval<Number>(env).toDouble() - inputStartResult) /
+                    (inputEnd.castEval<Number>(env).toDouble() - inputStartResult) *
+                    (outputEnd.castEval<Number>(env).toDouble() - outputStartResult) +
                     outputStartResult
             }
         }
@@ -424,52 +435,69 @@ private sealed class RuleExpr<T> {
     }
 
     companion object {
-        private val CLASSIFIER_LIST: KClassifier
-        private val CLASSIFIER_EXPR: KClassifier
-
-        init {
-            val type = typeOf<List<RuleExpr<*>>>()
-            CLASSIFIER_LIST = type.classifier!!
-            CLASSIFIER_EXPR = type.arguments[0].type!!.classifier!!
+        @Suppress("ComplexMethod", "FunctionName", "UNCHECKED_CAST")
+        fun FunctionExpr(id: String, args: List<RuleExpr<*>>): FunctionExpr<*> {
+            val it = args.iterator()
+            val functionExpr = when (id.lowercase()) {
+                "isblank" -> FunctionExpr.IsBlank(it.castNext())
+                "eq" -> FunctionExpr.Eq<Any>(it.castNext(), it.castNext())
+                "gt" -> FunctionExpr.Gt<Any>(it.castNext(), it.castNext())
+                "gte" -> FunctionExpr.Gte<Any>(it.castNext(), it.castNext())
+                "lt" -> FunctionExpr.Lt<Any>(it.castNext(), it.castNext())
+                "lte" -> FunctionExpr.Lte<Any>(it.castNext(), it.castNext())
+                "now" -> FunctionExpr.Now
+                "datetime" -> FunctionExpr.Datetime(it.castNext())
+                "matches" -> FunctionExpr.Matches(it.castNext(), it.castNext())
+                "contains" -> FunctionExpr.Contains(it.castNext<List<*>>(), it.castNext())
+                "not" -> FunctionExpr.Not(it.castNext())
+                "and" -> {
+                    it.fastForward() // Skip the iterator since we're passing the whole list.
+                    FunctionExpr.And(args as List<RuleExpr<Boolean>>)
+                }
+                "or" -> {
+                    it.fastForward() // Skip the iterator since we're passing the whole list.
+                    FunctionExpr.Or(args as List<RuleExpr<Boolean>>)
+                }
+                "if" -> FunctionExpr.If(it.castNext(), it.castNext(), it.castNext())
+                "plus" -> FunctionExpr.Plus(it.castNext(), it.castNext())
+                "minus" -> FunctionExpr.Minus(it.castNext(), it.castNext())
+                "times" -> FunctionExpr.Times(it.castNext(), it.castNext())
+                "div" -> FunctionExpr.Div(it.castNext(), it.castNext())
+                "rem" -> FunctionExpr.Rem(it.castNext(), it.castNext())
+                "log" -> it.castNext<Number>().let { arg0 ->
+                    if (it.hasNext()) {
+                        FunctionExpr.Log(arg0, it.castNext())
+                    } else {
+                        FunctionExpr.Log(arg0)
+                    }
+                }
+                "ln" -> FunctionExpr.Ln(it.castNext())
+                "pow" -> FunctionExpr.Pow(it.castNext(), it.castNext())
+                "exp" -> FunctionExpr.Exp(it.castNext())
+                "map" -> FunctionExpr.Map(
+                    it.castNext(), it.castNext(), it.castNext(), it.castNext(), it.castNext()
+                )
+                else -> throw IllegalArgumentException("Unknown function: $id")
+            }
+            if (it.hasNext()) {
+                throw IllegalArgumentException(
+                    "Too many arguments for function: $id (${args.size})"
+                )
+            }
+            return functionExpr
         }
 
-        @Suppress("FunctionName", "ReturnCount")
-        fun FunctionExpr(id: String, args: List<RuleExpr<*>>): FunctionExpr<*> {
-            // Find function expression class for `id`.
-            val cls = FunctionExpr::class.sealedSubclasses.find {
-                id.equals(it.simpleName, ignoreCase = true)
-            } ?: throw IllegalArgumentException("Unsupported function \"$id\"")
-
-            // Use its object instance, if it's an object.
-            cls.objectInstance?.let {
-                return it
+        @Suppress("UNCHECKED_CAST")
+        private inline fun <reified T : Any> Iterator<RuleExpr<*>>.castNext(): RuleExpr<T> {
+            if (hasNext()) {
+                return next() as RuleExpr<T>
+            } else {
+                throw IllegalArgumentException(NoSuchElementException())
             }
+        }
 
-            // Instantiate by spreading `args`, if a constructor matches argument count.
-            // Optimize common cases since `toTypedArray` copies, and so does *spreading.
-            val argCount = args.size
-            cls.constructors.find { it.parameters.size == argCount }?.let {
-                @Suppress("SpreadOperator", "MagicNumber")
-                return when (argCount) {
-                    0 -> it.call()
-                    1 -> it.call(args[0])
-                    2 -> it.call(args[0], args[1])
-                    3 -> it.call(args[0], args[1], args[2])
-                    else -> it.call(*args.toTypedArray())
-                }
-            }
-
-            // Instantiate with `args` directly, if a constructor takes a list of expressions.
-            cls.primaryConstructor?.let {
-                val params = it.parameters
-                if (params.size != 1) return@let
-                val type = params[0].type
-                if (type.classifier != CLASSIFIER_LIST) return@let
-                if (type.arguments.getOrNull(0)?.type?.classifier != CLASSIFIER_EXPR) return@let
-                return it.call(args)
-            }
-
-            throw IllegalArgumentException("Unsupported arguments for \"$id\"")
+        private fun Iterator<*>.fastForward() {
+            while (hasNext()) next()
         }
     }
 }

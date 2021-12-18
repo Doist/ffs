@@ -13,7 +13,22 @@ kotlin {
     }
 
     js(IR) {
-        browser()
+        browser {
+            testTask {
+                useKarma {
+                    // List all browsers from test-resources.js, so that the Kotlin plugin downloads
+                    // their runners and captures failures. "karma-detect-browsers" figures out
+                    // which browser to enable, depending on what's installed in the base system.
+                    useChromeHeadless()
+                    useChromiumHeadless()
+                    useFirefoxHeadless()
+                    useFirefoxDeveloperHeadless()
+                    useOpera()
+                    useSafari()
+                    useIe()
+                }
+            }
+        }
         nodejs()
         binaries.library()
     }
@@ -37,9 +52,22 @@ kotlin {
     mingwX64()
     
     sourceSets {
+        val commonMain by getting {
+            dependencies {
+                api(libs.kotlinx.datetime)
+                api(libs.better.parse)
+            }
+        }
+
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
+            }
+        }
+
+        val jsTest by getting {
+            dependencies {
+                implementation(npm("karma-detect-browsers", "^2.0"))
             }
         }
     }

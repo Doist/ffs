@@ -48,6 +48,11 @@ subprojects {
         // Apply kotlin-power-assert in all subprojects.
         // Build targets must be set before this happens.
         apply(plugin = libs.plugins.kotlin.power.assert.get().pluginId)
+        configure<com.bnorm.power.PowerAssertGradleExtension> {
+            functions = listOf(
+                "kotlin.assert", "kotlin.test.assertTrue", "kotlin.test.assertEquals"
+            )
+        }
 
         // Apply and configure detekt in all subprojects.
         // Allows fetching source sets dynamically and having dedicated tasks for each.
