@@ -1,12 +1,38 @@
 package doist.ffs.rule
 
 import kotlinx.datetime.Clock
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class RuleEvalTest {
+    @Test
+    fun testEnabled() {
+        assertEquals(true, isEnabled("1", emptyMap(), "rollout-id"))
+        assertEquals(false, isEnabled("0", emptyMap(), "rollout-id"))
+        assertEquals(false, isEnabled("0.6", emptyMap(), "rollout-id"))
+        assertEquals(true, isEnabled("0.7", emptyMap(), "rollout-id"))
+    }
+
+    @Test
+    fun testEnabledDistribution() {
+        val samples = 5000
+        val distributions = arrayOf(0.2, 0.5, 0.9)
+        for (distribution in distributions) {
+            val actualCount = (1..samples).count {
+                (1..Random.nextInt(10, 40))
+                    .map { Random.nextInt(0, Char.MAX_VALUE.code).toChar() }
+                    .joinToString("")
+                    .let { isEnabled(distribution.toString(), emptyMap(), it) }
+            }
+            val expectedCount = (samples * distribution).toInt()
+            val tolerance = samples / 10
+            assertTrue(actualCount in expectedCount - tolerance..expectedCount + tolerance)
+        }
+    }
+
     @Test
     fun testBooleans() {
         assertEquals(1f, eval("true"))
@@ -215,7 +241,8 @@ class RuleEvalTest {
         assertEquals(1f, eval("""if(gt(plus(now(), 1), div(now(), 1)), minus(2, 1), 0)"""))
         assertEquals(
             3 / 7f,
-            eval("""
+            eval(
+                """
                 |map(
                 |datetime("2021-11-08"), datetime("2021-11-15"),
                 |0, 1,

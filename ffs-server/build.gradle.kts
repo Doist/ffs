@@ -17,13 +17,13 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":ffs-shared"))
+
     implementation(libs.bundles.ktor.server)
 
     implementation(libs.sqldelight.driver.sqlite)
     implementation(libs.sqldelight.coroutines.extensions)
     implementation(libs.kotlinx.datetime)
-
-    implementation(libs.better.parse)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.ktor.server.test.host)

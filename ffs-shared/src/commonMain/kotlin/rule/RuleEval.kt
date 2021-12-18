@@ -13,6 +13,7 @@ import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
+import com.goncalossilva.murmurhash.MurmurHash3
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -23,6 +24,32 @@ import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.log
 import kotlin.math.pow
+
+private val murmurHash = MurmurHash3()
+
+/**
+ * Returns true when the given [formula] evaluates positively, false when it doesn't.
+ *
+ * The formula can be probabilistic, where it is true for only a subset of users.
+ *
+ * @param formula the formula to parse.
+ * @param env the environment map. Accepted values are booleans, numbers, strings, or lists of them.
+ * @param rolloutId for partial frequencies , determines if the formula returns true in a
+ *                  consistent manner between calls and across clients.
+ *
+ * @see eval
+ */
+@Suppress("MagicNumber")
+fun isEnabled(formula: String, env: KMap<String, Any>, rolloutId: String): Boolean {
+    return when (val probability = eval(formula, env)) {
+        0f -> false
+        1f -> true
+        else -> {
+            val hash = murmurHash.hash32x86(rolloutId.encodeToByteArray())
+            hash % 100u < (probability * 100).toUInt()
+        }
+    }
+}
 
 /**
  * Evaluates the given [formula] resulting in unit interval [0, 1], the frequency of returning true.

@@ -54,8 +54,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(libs.kotlinx.datetime)
-                api(libs.better.parse)
+                implementation(libs.kotlinx.datetime)
+                implementation(libs.better.parse)
+                implementation(libs.kotlinx.murmurhash)
             }
         }
 
