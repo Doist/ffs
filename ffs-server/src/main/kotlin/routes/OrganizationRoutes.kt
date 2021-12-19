@@ -17,24 +17,26 @@ import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
+import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
 
-fun Application.installOrganizationRoutes() {
-    routing {
-        createOrganization()
-        getOrganizations()
-        getOrganization()
-        updateOrganization()
-        deleteOrganization()
-    }
-}
-
 const val PATH_ORGANIZATIONS = "/organizations"
-const val PATH_ORGANIZATION = "/organizations/{id}"
 
 @Suppress("FunctionName")
-fun PATH_ORGANIZATION(id: Any) = PATH_ORGANIZATION.replace("{id}", id.toString())
+fun PATH_ORGANIZATION(id: Any) = "$PATH_ORGANIZATIONS/$id"
+
+fun Application.installOrganizationRoutes() {
+    routing {
+        route(PATH_ORGANIZATIONS) {
+            createOrganization()
+            getOrganizations()
+            getOrganization()
+            updateOrganization()
+            deleteOrganization()
+        }
+    }
+}
 
 /**
  * Create a new organization.
@@ -45,7 +47,7 @@ fun PATH_ORGANIZATION(id: Any) = PATH_ORGANIZATION.replace("{id}", id.toString()
  * | --------- | -------- | ------------------------- |
  * | `name`    | Yes      | Name of the organization. |
  */
-private fun Route.createOrganization() = post(PATH_ORGANIZATIONS) {
+private fun Route.createOrganization() = post {
     val name = call.receiveParameters().getOrFail("name")
     val id = application.database.capturingLastInsertId {
         organizations.insert(name)
@@ -61,7 +63,7 @@ private fun Route.createOrganization() = post(PATH_ORGANIZATIONS) {
  *
  * On success, responds `200 OK` with a JSON array containing all organizations.
  */
-private fun Route.getOrganizations() = get(PATH_ORGANIZATIONS) {
+private fun Route.getOrganizations() = get {
     val organizations = application.database.organizations.selectAll().executeAsList()
     call.respond(HttpStatusCode.OK, organizations)
 }
@@ -75,7 +77,7 @@ private fun Route.getOrganizations() = get(PATH_ORGANIZATIONS) {
  * | --------- | -------- | ----------------------- |
  * | `id`      | Yes      | ID of the organization. |
  */
-private fun Route.getOrganization() = get(PATH_ORGANIZATION) {
+private fun Route.getOrganization() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
     val organization = application.database.organizations.select(id = id).executeAsOneOrNull()
         ?: throw NotFoundException()
@@ -92,7 +94,7 @@ private fun Route.getOrganization() = get(PATH_ORGANIZATION) {
  * | `id`      | Yes      | ID of the organization.   |
  * | `name`    | No       | Name of the organization. |
  */
-private fun Route.updateOrganization() = put(PATH_ORGANIZATION) {
+private fun Route.updateOrganization() = put("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
     val name = call.receiveParameters()["name"]
     application.database.organizations.run {
@@ -111,7 +113,7 @@ private fun Route.updateOrganization() = put(PATH_ORGANIZATION) {
  * | --------- | -------- | ----------------------- |
  * | `id`      | Yes      | ID of the organization. |
  */
-private fun Route.deleteOrganization() = delete(PATH_ORGANIZATION) {
+private fun Route.deleteOrganization() = delete("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
     application.database.organizations.delete(id = id)
     call.respond(HttpStatusCode.NoContent)

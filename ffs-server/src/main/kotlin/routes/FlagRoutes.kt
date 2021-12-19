@@ -23,27 +23,26 @@ import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
+import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
 
-fun Application.installFlagRoutes() {
-    routing {
-        createFlag()
-        getFlags()
-        getFlag()
-        updateFlag()
-        deleteFlag()
-    }
-}
-
 const val PATH_FLAGS = "/flags"
-const val PATH_FLAG = "/flag/{id}"
 
 @Suppress("FunctionName")
-fun PATH_FLAG(id: Any) = PATH_FLAG.replace("{id}", id.toString())
+fun PATH_FLAG(id: Any) = "$PATH_FLAGS/$id"
 
-internal const val SSE_FIELD_PREFIX_DATA = "data: "
-internal const val SSE_FIELD_PREFIX_ID = "id: "
+fun Application.installFlagRoutes() {
+    routing {
+        route(PATH_FLAGS) {
+            createFlag()
+            getFlags()
+            getFlag()
+            updateFlag()
+            deleteFlag()
+        }
+    }
+}
 
 /**
  * Create a new flag.
@@ -56,7 +55,7 @@ internal const val SSE_FIELD_PREFIX_ID = "id: "
  * | `name`            | Yes      | Name of the flag.  |
  * | `rule`            | Yes      | Rule of the flag.  |
  */
-private fun Route.createFlag() = post(PATH_FLAGS) {
+private fun Route.createFlag() = post {
     val params = call.receiveParameters()
     val projectId = params.getOrFail<Long>("project_id")
     val name = params.getOrFail("name")
@@ -80,7 +79,7 @@ private fun Route.createFlag() = post(PATH_FLAGS) {
  * | `project_id`      | Yes      | ID of the project. |
  */
 @Suppress("BlockingMethodInNonBlockingContext")
-private fun Route.getFlags() = get(PATH_FLAGS) {
+private fun Route.getFlags() = get {
     val projectId = call.request.queryParameters.getOrFail<Long>("project_id")
     val query = application.database.flags.selectByProject(projectId)
     val sse = call.request.acceptItems().any { ContentType.Text.EventStream.match(it.value) }
@@ -102,7 +101,7 @@ private fun Route.getFlags() = get(PATH_FLAGS) {
  * | --------- | -------- | --------------- |
  * | `id`      | Yes      | ID of the flag. |
  */
-private fun Route.getFlag() = get(PATH_FLAG) {
+private fun Route.getFlag() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
     val project = application.database.flags.select(id = id).executeAsOneOrNull()
         ?: throw NotFoundException()
@@ -120,7 +119,7 @@ private fun Route.getFlag() = get(PATH_FLAG) {
  * | `name`    | No       | Name of the flag. |
  * | `rule`    | No       | Rule of the flag.  |
  */
-private fun Route.updateFlag() = put(PATH_FLAG) {
+private fun Route.updateFlag() = put("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
     val params = call.receiveParameters()
     val name = params["name"]
@@ -141,7 +140,7 @@ private fun Route.updateFlag() = put(PATH_FLAG) {
  * | --------- | -------- | --------------- |
  * | `id`      | Yes      | ID of the flag. |
  */
-private fun Route.deleteFlag() = delete(PATH_FLAG) {
+private fun Route.deleteFlag() = delete("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
     application.database.flags.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
