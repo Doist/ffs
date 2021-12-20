@@ -22,8 +22,6 @@ import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
-import jdk.jfr.internal.consumer.EventLog.update
-import kotlinx.coroutines.selects.select
 
 const val PATH_PROJECTS = "/projects"
 
