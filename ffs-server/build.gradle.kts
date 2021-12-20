@@ -49,6 +49,7 @@ tasks.withType<KotlinCompile> {
 kotlin.sourceSets.all {
     languageSettings.optIn("kotlin.ExperimentalStdlibApi")
     languageSettings.optIn("kotlinx.serialization.ExperimentalSerializationApi")
+    languageSettings.optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
 }
 
 sqldelight {
