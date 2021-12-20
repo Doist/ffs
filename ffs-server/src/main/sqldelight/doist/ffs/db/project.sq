@@ -10,7 +10,7 @@ CREATE TABLE project (
     UNIQUE(name, organization_id)
 );
 
-CREATE TRIGGER trigger_porject_updated_at
+CREATE TRIGGER trigger_project_updated_at
 AFTER UPDATE ON project
 BEGIN
     UPDATE project
