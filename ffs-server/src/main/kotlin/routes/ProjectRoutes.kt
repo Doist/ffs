@@ -98,7 +98,7 @@ private fun Route.getProject() = get("{id}") {
 /**
  * Update a project.
  *
- * On success, responds `200 OK` with an empty body.
+ * On success, responds `204 No Content` with an empty body.
  *
  * | Parameter | Required | Description          |
  * | --------- | -------- | -------------------- |
@@ -118,7 +118,7 @@ private fun Route.updateProject() = put("{id}") {
 /**
  * Delete a project.
  *
- * On success, responds `201 Created` with an empty body.
+ * On success, responds `204 No Content` with an empty body.
  *
  * | Parameter | Required | Description        |
  * | --------- | -------- | ------------------ |

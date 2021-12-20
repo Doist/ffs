@@ -87,7 +87,7 @@ private fun Route.getOrganization() = get("{id}") {
 /**
  * Update an organization.
  *
- * On success, responds `200 OK` with an empty body.
+ * On success, responds `204 No Content` with an empty body.
  *
  * | Parameter | Required | Description               |
  * | --------- | -------- | ------------------------- |
@@ -107,7 +107,7 @@ private fun Route.updateOrganization() = put("{id}") {
 /**
  * Delete an organization.
  *
- * On success, responds `201 Created` with an empty body.
+ * On success, responds `204 No Content` with an empty body.
  *
  * | Parameter | Required | Description             |
  * | --------- | -------- | ----------------------- |

@@ -140,7 +140,7 @@ private fun Route.getFlag() = get("{id}") {
 /**
  * Update a flag.
  *
- * On success, responds `200 OK` with an empty body.
+ * On success, responds `204 No Content` with an empty body.
  *
  * | Parameter | Required | Description       |
  * | --------- | -------- | ----------------- |
@@ -163,7 +163,7 @@ private fun Route.updateFlag() = put("{id}") {
 /**
  * Delete a flag.
  *
- * On success, responds `201 Created` with an empty body.
+ * On success, responds `204 No Content` with an empty body.
  *
  * | Parameter | Required | Description     |
  * | --------- | -------- | --------------- |
