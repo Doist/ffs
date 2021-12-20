@@ -17,13 +17,11 @@ import kotlinx.serialization.decodeFromString
 inline fun <reified T> TestApplicationEngine.assertResourceCount(
     path: String,
     size: Int
-) {
-    with(handleRequest(HttpMethod.Get, path)) {
-        assert(response.status() == HttpStatusCode.OK)
-        assert(response.contentType().match(ContentType.Application.Json))
-        val resources = json.decodeFromString<List<T>>(response.content!!)
-        assert(resources.size == size)
-    }
+) = with(handleRequest(HttpMethod.Get, path)) {
+    assert(response.status() == HttpStatusCode.OK)
+    assert(response.contentType().match(ContentType.Application.Json))
+    val resources = json.decodeFromString<List<T>>(response.content!!)
+    assert(resources.size == size)
 }
 
 inline fun TestApplicationEngine.assertResourceCreates(
