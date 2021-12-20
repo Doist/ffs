@@ -63,8 +63,8 @@ internal class FlagTest {
             insert(project_id = projectId, name = NAME, rule = RULE)
         }
         update(id = id, name = NAME_UPDATED, rule = RULE)
-        val project = select(id).executeAsOne()
-        assert(project.name == NAME_UPDATED)
+        val flag = select(id).executeAsOne()
+        assert(flag.name == NAME_UPDATED)
     }
 
     @Test
@@ -73,8 +73,8 @@ internal class FlagTest {
             insert(project_id = projectId, name = NAME, rule = RULE)
         }
         update(id = id, name = NAME, rule = RULE_UPDATED)
-        val project = select(id).executeAsOne()
-        assert(project.rule == RULE_UPDATED)
+        val flag = select(id).executeAsOne()
+        assert(flag.rule == RULE_UPDATED)
     }
 
     @Test
