@@ -77,6 +77,29 @@ internal class FlagTest {
         assert(project.rule == RULE_UPDATED)
     }
 
+    @Test
+    fun testArchive(): Unit = testDatabase.flags.run {
+        val id = testDatabase.capturingLastInsertId {
+            insert(project_id = projectId, name = NAME, rule = RULE)
+        }
+        var flag = select(id).executeAsOne()
+        assert(flag.archived_at == null)
+        archive(id)
+        flag = select(id).executeAsOne()
+        assert(flag.archived_at != null)
+    }
+
+    @Test
+    fun testUnarchive(): Unit = testDatabase.flags.run {
+        val id = testDatabase.capturingLastInsertId {
+            insert(project_id = projectId, name = NAME, rule = RULE)
+        }
+        archive(id)
+        unarchive(id)
+        val flag = select(id).executeAsOne()
+        assert(flag.archived_at == null)
+    }
+
     companion object {
         private const val NAME = "test-project"
         private const val NAME_UPDATED = "new-test-project"

@@ -7,6 +7,7 @@ CREATE TABLE flag (
     rule TEXT NOT NULL,
     created_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    archived_at INTEGER AS Instant,
     FOREIGN KEY(project_id) REFERENCES project(id) ON DELETE CASCADE,
     UNIQUE(name, project_id)
 );
@@ -37,4 +38,14 @@ WHERE id = ?;
 update:
 UPDATE flag
 SET name = ?, rule = ?
+WHERE id = ?;
+
+archive:
+UPDATE flag
+SET archived_at = CURRENT_TIMESTAMP
+WHERE id = ?;
+
+unarchive:
+UPDATE flag
+SET archived_at = NULL
 WHERE id = ?;

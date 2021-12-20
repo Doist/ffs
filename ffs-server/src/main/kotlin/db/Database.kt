@@ -44,7 +44,7 @@ internal fun Database(driver: SqlDriver, log: Logger? = null): Database {
         driver = driver,
         organizationAdapter = Organization.Adapter(instantAdapter, instantAdapter),
         projectAdapter = Project.Adapter(instantAdapter, instantAdapter),
-        flagAdapter = Flag.Adapter(instantAdapter, instantAdapter),
+        flagAdapter = Flag.Adapter(instantAdapter, instantAdapter, instantAdapter),
     )
 }
 

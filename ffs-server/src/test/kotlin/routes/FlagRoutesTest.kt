@@ -106,6 +106,21 @@ class FlagRoutesTest {
             }
             readLine().isEmpty()
 
+            // Archive the flag and check it is sent again.
+            flag = application.database.flags.run {
+                archive(id = flag.id)
+                select(flag.id).executeAsOne()
+            }
+            readLine().startsWith(SSE_FIELD_PREFIX_ID)
+            readLine().let { line ->
+                line.startsWith(SSE_FIELD_PREFIX_DATA)
+                val flags = json.decodeFromString<List<Flag>>(
+                    line.substring(SSE_FIELD_PREFIX_DATA.length)
+                )
+                assert(flags == listOf(flag))
+            }
+            readLine().isEmpty()
+
             // Without further changes, channel is empty.
             assert(channel.availableForRead == 0)
         }
@@ -137,13 +152,24 @@ class FlagRoutesTest {
         assert(project.rule == RULE_TRUE)
     }
 
-    private fun createProject(application: Application): Long {
-        val organizationId = application.database.capturingLastInsertId {
-            organizations.insert(name = "test-organization")
+    @Test
+    fun testFlagArchive() = withTestApplication(Application::module) {
+        val projectId = createProject(application)
+        var flag = application.database.run {
+            flags.run {
+                val id = capturingLastInsertId {
+                    insert(project_id = projectId, name = NAME, rule = RULE_TRUE)
+                }
+                select(id).executeAsOne()
+            }
         }
-        return application.database.capturingLastInsertId {
-            projects.insert(organization_id = organizationId, name = "test-project")
-        }
+        assert(flag.archived_at == null)
+        assertResourceUpdates("${PATH_FLAG(flag.id)}$PATH_ARCHIVE", emptyList())
+        flag = application.database.flags.select(flag.id).executeAsOne()
+        assert(flag.archived_at != null)
+        assertResourceDeletes("${PATH_FLAG(flag.id)}$PATH_ARCHIVE")
+        flag = application.database.flags.select(flag.id).executeAsOne()
+        assert(flag.archived_at == null)
     }
 
     @Test
@@ -220,6 +246,15 @@ class FlagRoutesTest {
                 select(flag.id).executeAsOne()
             }
             assert(channel.availableForRead == 0)
+        }
+    }
+
+    private fun createProject(application: Application): Long {
+        val organizationId = application.database.capturingLastInsertId {
+            organizations.insert(name = "test-organization")
+        }
+        return application.database.capturingLastInsertId {
+            projects.insert(organization_id = organizationId, name = "test-project")
         }
     }
 

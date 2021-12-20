@@ -1,4 +1,4 @@
-@file:Suppress("LocalVariableName", "VariableNaming")
+@file:Suppress("LocalVariableName", "VariableNaming", "TooManyFunctions")
 
 package doist.ffs.routes
 
@@ -45,6 +45,7 @@ import kotlin.time.Duration.Companion.minutes
 
 const val PATH_FLAGS = "/flags"
 const val PATH_EVAL = "/eval"
+const val PATH_ARCHIVE = "/archive"
 
 @Suppress("FunctionName")
 fun PATH_FLAG(id: Any) = "$PATH_FLAGS/$id"
@@ -56,6 +57,9 @@ fun Application.installFlagRoutes() {
             getFlags()
             getFlag()
             updateFlag()
+
+            archiveFlag()
+            unarchiveFlag()
 
             getFlagsEval()
         }
@@ -160,6 +164,36 @@ private fun Route.updateFlag() = put("{id}") {
 }
 
 /**
+ * Archive a flag.
+ *
+ * On success, responds `204 No Content` with an empty body.
+ *
+ * | Parameter | Required | Description     |
+ * | --------- | -------- | --------------- |
+ * | `id`      | Yes      | ID of the flag. |
+ */
+private fun Route.archiveFlag() = put("{id}$PATH_ARCHIVE") {
+    val id = call.parameters.getOrFail<Long>("id")
+    application.database.flags.archive(id = id)
+    call.respond(HttpStatusCode.NoContent)
+}
+
+/**
+ * Unarchive a flag.
+ *
+ * On success, responds `204 No Content` with an empty body.
+ *
+ * | Parameter | Required | Description     |
+ * | --------- | -------- | --------------- |
+ * | `id`      | Yes      | ID of the flag. |
+ */
+private fun Route.unarchiveFlag() = delete("{id}$PATH_ARCHIVE") {
+    val id = call.parameters.getOrFail<Long>("id")
+    application.database.flags.unarchive(id = id)
+    call.respond(HttpStatusCode.NoContent)
+}
+
+/**
  * Evaluates all existing flags for the project.
  *
  * On success, responds `200 OK` with a JSON object mapping flag names to their evaluation.
@@ -225,6 +259,7 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
 }
 
 private fun Flag.isEnabled(env: JsonObject): Boolean {
+    if (archived_at != null) return false
     val rolloutId = env["rollout.id"]?.jsonPrimitive?.contentOrNull
         ?: throw IllegalArgumentException("env[\"rollout.id\"] is missing or incorrectly specified")
     return doist.ffs.rule.isEnabled(rule, env, "${id}$rolloutId")
