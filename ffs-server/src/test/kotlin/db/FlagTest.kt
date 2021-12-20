@@ -77,16 +77,6 @@ internal class FlagTest {
         assert(project.rule == RULE_UPDATED)
     }
 
-    @Test
-    fun testDelete(): Unit = testDatabase.flags.run {
-        val id = testDatabase.capturingLastInsertId {
-            insert(project_id = projectId, name = NAME, rule = RULE)
-        }
-        delete(id)
-        val project = select(id).executeAsOneOrNull()
-        assert(project == null)
-    }
-
     companion object {
         private const val NAME = "test-project"
         private const val NAME_UPDATED = "new-test-project"

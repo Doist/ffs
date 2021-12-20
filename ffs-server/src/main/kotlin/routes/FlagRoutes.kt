@@ -56,7 +56,6 @@ fun Application.installFlagRoutes() {
             getFlags()
             getFlag()
             updateFlag()
-            deleteFlag()
 
             getFlagsEval()
         }
@@ -157,21 +156,6 @@ private fun Route.updateFlag() = put("{id}") {
         val flag = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
         update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
     }
-    call.respond(HttpStatusCode.NoContent)
-}
-
-/**
- * Delete a flag.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description     |
- * | --------- | -------- | --------------- |
- * | `id`      | Yes      | ID of the flag. |
- */
-private fun Route.deleteFlag() = delete("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
-    application.database.flags.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
 }
 

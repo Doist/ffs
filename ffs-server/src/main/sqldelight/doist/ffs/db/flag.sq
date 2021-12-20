@@ -38,7 +38,3 @@ update:
 UPDATE flag
 SET name = ?, rule = ?
 WHERE id = ?;
-
-delete:
-DELETE FROM flag
-WHERE id = ?;

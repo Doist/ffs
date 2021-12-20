@@ -60,8 +60,6 @@ class FlagRoutesTest {
             assert(flag.name == NAME)
             assert(flag.rule == RULE_TRUE)
         }
-        application.database.flags.delete(id)
-        assertResourceCount<Flag>(pathFlagsForProject, 0)
     }
 
     @Test
@@ -139,17 +137,6 @@ class FlagRoutesTest {
         assert(project.rule == RULE_TRUE)
     }
 
-    @Test
-    fun testFlagDelete() = withTestApplication(Application::module) {
-        val projectId = createProject(application)
-        val id = application.database.capturingLastInsertId {
-            flags.insert(project_id = projectId, name = NAME, rule = RULE_TRUE)
-        }
-        assertResourceDeletes(PATH_FLAG(id))
-        val flag = application.database.flags.select(id).executeAsOneOrNull()
-        assert(flag == null)
-    }
-
     private fun createProject(application: Application): Long {
         val organizationId = application.database.capturingLastInsertId {
             organizations.insert(name = "test-organization")
@@ -177,10 +164,6 @@ class FlagRoutesTest {
             val (name, enabled) = map.entries.single()
             assert(name == NAME)
             assert(enabled)
-        }
-        application.database.flags.delete(id)
-        assertResource<Map<String, Boolean>>(pathFlagsEvalForProject) { map ->
-            assert(map.isEmpty())
         }
     }
 
