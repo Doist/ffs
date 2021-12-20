@@ -82,7 +82,7 @@ class ProjectRoutesTest {
         }
 
     companion object {
-        private const val NAME = "old-test-project"
+        private const val NAME = "test-project"
         private const val NAME_UPDATED = "new-test-project"
     }
 }

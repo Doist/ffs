@@ -70,7 +70,7 @@ internal class OrganizationTest {
     }
 
     companion object {
-        private const val NAME = "old-test-organization"
+        private const val NAME = "test-organization"
         private const val NAME_UPDATED = "new-test-organization"
     }
 }

@@ -88,7 +88,7 @@ internal class FlagTest {
     }
 
     companion object {
-        private const val NAME = "old-test-project"
+        private const val NAME = "test-project"
         private const val NAME_UPDATED = "new-test-project"
         private const val RULE = "1"
         private const val RULE_UPDATED = "0"
