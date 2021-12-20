@@ -1,5 +1,6 @@
 plugins {
     id(libs.plugins.kotlin.multiplatform.get().pluginId)
+    id(libs.plugins.kotlin.serialization.get().pluginId)
 }
 
 kotlin {
@@ -56,6 +57,7 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.better.parse)
+                implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.murmurhash)
             }
         }

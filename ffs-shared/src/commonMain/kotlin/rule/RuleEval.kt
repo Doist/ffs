@@ -20,6 +20,14 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDate
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.longOrNull
 import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.log
@@ -34,18 +42,18 @@ private val murmurHash = MurmurHash3()
  *
  * @param formula the formula to parse.
  * @param env the environment map. Accepted values are booleans, numbers, strings, or lists of them.
- * @param rolloutId for partial frequencies , determines if the formula returns true in a
- *                  consistent manner between calls and across clients.
+ * @param key for partial frequencies, ensures that the formula returns evaluation is consistent
+ *                between calls and across clients.
  *
  * @see eval
  */
 @Suppress("MagicNumber")
-fun isEnabled(formula: String, env: KMap<String, Any>, rolloutId: String): Boolean {
+fun isEnabled(formula: String, env: JsonObject, key: String): Boolean {
     return when (val probability = eval(formula, env)) {
         0f -> false
         1f -> true
         else -> {
-            val hash = murmurHash.hash32x86(rolloutId.encodeToByteArray())
+            val hash = murmurHash.hash32x86(key.encodeToByteArray())
             hash % 100u < (probability * 100).toUInt()
         }
     }
@@ -70,7 +78,7 @@ fun isEnabled(formula: String, env: KMap<String, Any>, rolloutId: String): Boole
  * @see RuleGrammar
  * @see RuleExpr
  */
-fun eval(formula: String, env: KMap<String, Any>): Float {
+fun eval(formula: String, env: JsonObject): Float {
     try {
         return when (val result = RuleGrammar.parseToEnd(formula).eval(env)) {
             is Boolean -> if (result) 1f else 0f
@@ -166,45 +174,42 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
  * Rule expressions to be evaluated.
  */
 private sealed class RuleExpr<out T> {
-    abstract fun eval(env: KMap<String, Any>): T
+    abstract fun eval(env: JsonObject): T
 
     // Casting is necessary because JS is lenient and type parameters are only assessed at runtime.
-    protected inline fun <reified T> castEval(env: KMap<String, Any>): T = eval(env) as T
+    protected inline fun <reified T> castEval(env: JsonObject): T = eval(env) as T
 
     data class BooleanExpr(val value: Boolean) : RuleExpr<Boolean>() {
-        override fun eval(env: KMap<String, Any>) = value
+        override fun eval(env: JsonObject) = value
     }
 
     data class NumberExpr(val value: Number) : RuleExpr<Number>() {
-        override fun eval(env: KMap<String, Any>) = value
+        override fun eval(env: JsonObject) = value
     }
 
     data class StringExpr(val value: String) : RuleExpr<String>() {
-        override fun eval(env: KMap<String, Any>) = value.substring(1, value.lastIndex)
+        override fun eval(env: JsonObject) = value.substring(1, value.lastIndex)
     }
 
-    data class EnvExpr(val nameVal: RuleExpr<String>) : RuleExpr<Any>() {
-        override fun eval(env: KMap<String, Any>) = coerceType(env[nameVal.castEval(env)]) ?: ""
+    data class EnvExpr(val nameVal: RuleExpr<String>) : RuleExpr<Any?>() {
+        override fun eval(env: JsonObject) = coerceType(env[nameVal.castEval(env)])
 
-        fun coerceType(value: Any?, canNest: Boolean = true): Any? = when {
-            // Coerce number types to Long and Double.
-            value is Byte -> value.toLong()
-            value is Short -> value.toLong()
-            value is Int -> value.toLong()
-            value is Float -> value.toDouble()
-            // Accept Boolean, Long, Double, and String.
-            value is Boolean || value is Long || value is Double || value is String -> value
-            // Coerce Array into List.
-            canNest && value is Array<*> -> value.mapNotNull { coerceType(it, false) }
-            // Accept List.
-            canNest && value is List<*> -> value.mapNotNull { coerceType(it, false) }
-            // Drop everything else.
+        /*
+         * Coerce types recursively to String, Boolean, Long, Double, or List.
+         */
+        fun coerceType(value: JsonElement?, canNest: Boolean = true): Any? = when {
+            value is JsonPrimitive -> when {
+                value is JsonNull -> null
+                value.isString -> value.content
+                else -> value.booleanOrNull ?: value.longOrNull ?: value.doubleOrNull
+            }
+            canNest && value is JsonArray -> value.mapNotNull { coerceType(it, false) }
             else -> null
         }
     }
 
     data class ArrayExpr<out T>(val list: List<RuleExpr<T>>) : RuleExpr<List<T>>() {
-        override fun eval(env: KMap<String, Any>): List<T> = list.map { it.eval(env) }
+        override fun eval(env: JsonObject): List<T> = list.map { it.eval(env) }
     }
 
     /**
@@ -213,8 +218,9 @@ private sealed class RuleExpr<out T> {
     @Suppress("unused")
     sealed class FunctionExpr<T> : RuleExpr<T>() {
         //region Info.
-        data class IsBlank(val value: RuleExpr<Any>) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = when (val result = value.eval(env)) {
+        data class IsBlank(val value: RuleExpr<Any?>) : FunctionExpr<Boolean>() {
+            override fun eval(env: JsonObject) = when (val result = value.eval(env)) {
+                null -> true
                 is String -> result.isBlank()
                 is List<*> -> result.isEmpty()
                 else -> false
@@ -224,17 +230,17 @@ private sealed class RuleExpr<out T> {
 
         //region Operators.
         data class Eq<T>(
-            val value1: RuleExpr<Any>,
-            val value2: RuleExpr<Any>
+            val value1: RuleExpr<Any?>,
+            val value2: RuleExpr<Any?>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = value1.eval(env) == value2.eval(env)
+            override fun eval(env: JsonObject) = value1.eval(env) == value2.eval(env)
         }
 
         data class Gt<T>(
             val value1: RuleExpr<Comparable<T>>,
             val value2: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) =
+            override fun eval(env: JsonObject) =
                 value1.castEval<Comparable<Any>>(env) > value2.castEval(env)
         }
 
@@ -242,7 +248,7 @@ private sealed class RuleExpr<out T> {
             val value1: RuleExpr<Comparable<T>>,
             val value2: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) =
+            override fun eval(env: JsonObject) =
                 value1.castEval<Comparable<Any>>(env) >= value2.castEval(env)
         }
 
@@ -250,7 +256,7 @@ private sealed class RuleExpr<out T> {
             val value1: RuleExpr<Comparable<T>>,
             val value2: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) =
+            override fun eval(env: JsonObject) =
                 value1.castEval<Comparable<Any>>(env) < value2.castEval(env)
         }
 
@@ -258,18 +264,18 @@ private sealed class RuleExpr<out T> {
             val value1: RuleExpr<Comparable<T>>,
             val value2: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) =
+            override fun eval(env: JsonObject) =
                 value1.castEval<Comparable<Any>>(env) <= value2.castEval(env)
         }
         //endregion
 
         //region Dates.
         object Now : FunctionExpr<Long>() {
-            override fun eval(env: KMap<String, Any>) = Clock.System.now().epochSeconds
+            override fun eval(env: JsonObject) = Clock.System.now().epochSeconds
         }
 
         data class Datetime(val value: RuleExpr<String>) : FunctionExpr<Long>() {
-            override fun eval(env: KMap<String, Any>): Long {
+            override fun eval(env: JsonObject): Long {
                 val value = value.castEval<String>(env)
                 val instant = runCatching {
                     value.toInstant()
@@ -288,7 +294,7 @@ private sealed class RuleExpr<out T> {
             val regex: RuleExpr<String>,
             val value: RuleExpr<String>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) =
+            override fun eval(env: JsonObject) =
                 regex.castEval<String>(env).toRegex().matches(value.castEval(env))
         }
         //endregion
@@ -298,7 +304,7 @@ private sealed class RuleExpr<out T> {
             val list: RuleExpr<List<T>>,
             val value: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) =
+            override fun eval(env: JsonObject) =
                 list.castEval<List<Any>>(env).contains(value.castEval(env))
         }
         //endregion
@@ -307,19 +313,19 @@ private sealed class RuleExpr<out T> {
         data class Not(
             val value: RuleExpr<Boolean>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = !value.castEval<Boolean>(env)
+            override fun eval(env: JsonObject) = !value.castEval<Boolean>(env)
         }
 
         data class And(
             val values: List<RuleExpr<Boolean>>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = values.all { it.castEval(env) }
+            override fun eval(env: JsonObject) = values.all { it.castEval(env) }
         }
 
         data class Or(
             val values: List<RuleExpr<Boolean>>
         ) : FunctionExpr<Boolean>() {
-            override fun eval(env: KMap<String, Any>) = values.any { it.castEval(env) }
+            override fun eval(env: JsonObject) = values.any { it.castEval(env) }
         }
 
         data class If<T>(
@@ -327,7 +333,7 @@ private sealed class RuleExpr<out T> {
             val valueIfTrue: RuleExpr<T>,
             val valueIfFalse: RuleExpr<T>
         ) : FunctionExpr<T>() {
-            override fun eval(env: KMap<String, Any>) = if (condition.castEval(env)) {
+            override fun eval(env: JsonObject) = if (condition.castEval(env)) {
                 valueIfTrue.eval(env)
             } else {
                 valueIfFalse.eval(env)
@@ -342,7 +348,7 @@ private sealed class RuleExpr<out T> {
             val doubleOp: (Double, Double) -> Number
             val longOp: (Long, Long) -> Number
 
-            fun opEval(env: KMap<String, Any>): Number {
+            fun opEval(env: JsonObject): Number {
                 val leftResult = left.castEval<Number>(env)
                 val rightResult = right.castEval<Number>(env)
                 return if (leftResult is Double || rightResult is Double) {
@@ -360,7 +366,7 @@ private sealed class RuleExpr<out T> {
             override val doubleOp: (Double, Double) -> Number = Double::plus
             override val longOp: (Long, Long) -> Number = Long::plus
 
-            override fun eval(env: KMap<String, Any>) = super.opEval(env)
+            override fun eval(env: JsonObject) = super.opEval(env)
         }
 
         data class Minus(
@@ -370,7 +376,7 @@ private sealed class RuleExpr<out T> {
             override val doubleOp: (Double, Double) -> Number = Double::minus
             override val longOp: (Long, Long) -> Number = Long::minus
 
-            override fun eval(env: KMap<String, Any>) = super.opEval(env)
+            override fun eval(env: JsonObject) = super.opEval(env)
         }
 
         data class Times(
@@ -380,7 +386,7 @@ private sealed class RuleExpr<out T> {
             override val doubleOp: (Double, Double) -> Number = Double::times
             override val longOp: (Long, Long) -> Number = Long::times
 
-            override fun eval(env: KMap<String, Any>) = super.opEval(env)
+            override fun eval(env: JsonObject) = super.opEval(env)
         }
 
         data class Div(
@@ -392,7 +398,7 @@ private sealed class RuleExpr<out T> {
                 if (l % r == 0L) l / r else l.toDouble() / r
             }
 
-            override fun eval(env: KMap<String, Any>) = super.opEval(env)
+            override fun eval(env: JsonObject) = super.opEval(env)
         }
 
         data class Rem(
@@ -402,7 +408,7 @@ private sealed class RuleExpr<out T> {
             override val doubleOp: (Double, Double) -> Number = Double::rem
             override val longOp: (Long, Long) -> Number = Long::rem
 
-            override fun eval(env: KMap<String, Any>) = super.opEval(env)
+            override fun eval(env: JsonObject) = super.opEval(env)
         }
         //endregion
 
@@ -413,7 +419,7 @@ private sealed class RuleExpr<out T> {
         ) : FunctionExpr<Double>() {
             constructor(value: RuleExpr<Number>) : this(value, NumberExpr(DEFAULT_BASE))
 
-            override fun eval(env: KMap<String, Any>) =
+            override fun eval(env: JsonObject) =
                 log(value.castEval<Number>(env).toDouble(), base.castEval<Number>(env).toDouble())
 
             companion object {
@@ -424,14 +430,14 @@ private sealed class RuleExpr<out T> {
         data class Ln(
             val value: RuleExpr<Number>,
         ) : FunctionExpr<Double>() {
-            override fun eval(env: KMap<String, Any>) = ln(value.castEval<Number>(env).toDouble())
+            override fun eval(env: JsonObject) = ln(value.castEval<Number>(env).toDouble())
         }
 
         data class Pow(
             val value: RuleExpr<Number>,
             val exponent: RuleExpr<Number>
         ) : FunctionExpr<Double>() {
-            override fun eval(env: KMap<String, Any>) =
+            override fun eval(env: JsonObject) =
                 value.castEval<Number>(env).toDouble()
                     .pow(exponent.castEval<Number>(env).toDouble())
         }
@@ -439,7 +445,7 @@ private sealed class RuleExpr<out T> {
         data class Exp(
             val value: RuleExpr<Number>,
         ) : FunctionExpr<Double>() {
-            override fun eval(env: KMap<String, Any>) = exp(value.castEval<Number>(env).toDouble())
+            override fun eval(env: JsonObject) = exp(value.castEval<Number>(env).toDouble())
         }
 
         data class Map(
@@ -449,7 +455,7 @@ private sealed class RuleExpr<out T> {
             val outputEnd: RuleExpr<Number>,
             val value: RuleExpr<Number>
         ) : FunctionExpr<Double>() {
-            override fun eval(env: KMap<String, Any>): Double {
+            override fun eval(env: JsonObject): Double {
                 val inputStartResult = inputStart.castEval<Number>(env).toDouble()
                 val outputStartResult = outputStart.castEval<Number>(env).toDouble()
                 return (value.castEval<Number>(env).toDouble() - inputStartResult) /
@@ -528,6 +534,3 @@ private sealed class RuleExpr<out T> {
         }
     }
 }
-
-// Alias Map<K, V> to avoid clashes with map function expression.
-private typealias KMap<K, V> = Map<K, V>

@@ -1,6 +1,14 @@
 package doist.ffs.rule
 
 import kotlinx.datetime.Clock
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,10 +18,10 @@ import kotlin.test.assertTrue
 class RuleEvalTest {
     @Test
     fun testEnabled() {
-        assertEquals(true, isEnabled("1", emptyMap(), "rollout-id"))
-        assertEquals(false, isEnabled("0", emptyMap(), "rollout-id"))
-        assertEquals(false, isEnabled("0.6", emptyMap(), "rollout-id"))
-        assertEquals(true, isEnabled("0.7", emptyMap(), "rollout-id"))
+        assertEquals(true, isEnabled("1", JsonObject(emptyMap()), "rollout-id"))
+        assertEquals(false, isEnabled("0", JsonObject(emptyMap()), "rollout-id"))
+        assertEquals(false, isEnabled("0.6", JsonObject(emptyMap()), "rollout-id"))
+        assertEquals(true, isEnabled("0.7", JsonObject(emptyMap()), "rollout-id"))
     }
 
     @Test
@@ -25,7 +33,7 @@ class RuleEvalTest {
                 (1..Random.nextInt(10, 40))
                     .map { Random.nextInt(0, Char.MAX_VALUE.code).toChar() }
                     .joinToString("")
-                    .let { isEnabled(distribution.toString(), emptyMap(), it) }
+                    .let { isEnabled(distribution.toString(), JsonObject(emptyMap()), it) }
             }
             val expectedCount = (samples * distribution).toInt()
             val tolerance = samples / 10
@@ -56,25 +64,65 @@ class RuleEvalTest {
 
     @Test
     fun testEnv() {
-        assertEquals(0f, eval("""env["b"]"""))
-        assertEquals(0f, eval("""env["b"]""", mapOf("b" to false)))
-        assertEquals(1f, eval("""env["b"]""", mapOf("b" to true)))
-        assertEquals(0f, eval("""env["n"]""", mapOf("n" to 0f)))
-        assertEquals(0.5f, eval("""env["n"]""", mapOf("n" to 0.5f)))
-        assertEquals(1f, eval("""env["n"]""", mapOf("n" to 1f)))
-        assertEquals(0f, eval("""env["s"]""", mapOf("s" to "0")))
-        assertEquals(0.5f, eval("""env["s"]""", mapOf("s" to "0.5")))
-        assertEquals(1f, eval("""env["s"]""", mapOf("s" to "1")))
-        assertEquals(0f, eval("""contains(env["l"], "d")""", mapOf("l" to listOf("a", "b", "c"))))
-        assertEquals(1f, eval("""contains(env["l"], "b")""", mapOf("l" to listOf("a", "b", "c"))))
+        assertEquals(0f, eval("""env["n"]"""))
+        assertEquals(
+            1f,
+            eval("""isblank(env["n"])""", buildJsonObject { put("n", null as String?) })
+        )
 
-        assertEquals(1f, eval("""isblank(env["i"])""", mapOf("i" to mapOf("a" to "b"))))
-        assertEquals(1f, eval("""isblank(env["i"])""", mapOf("i" to listOf(listOf("a", "b")))))
-    }
+        assertEquals(0f, eval("""env["b"]""", buildJsonObject { put("b", false) }))
+        assertEquals(1f, eval("""env["b"]""", buildJsonObject { put("b", true) }))
 
-    @Test
-    fun testFail() {
-        assertEquals(1f, eval("""isblank(env["i"])""", mapOf("i" to listOf(listOf("a", "b")))))
+        assertEquals(0f, eval("""env["n"]""", buildJsonObject { put("n", 0f) }))
+        assertEquals(0.5f, eval("""env["n"]""", buildJsonObject { put("n", 0.5f) }))
+        assertEquals(1f, eval("""env["n"]""", buildJsonObject { put("n", 1f) }))
+
+        assertEquals(0f, eval("""env["s"]""", buildJsonObject { put("s", "0") }))
+        assertEquals(0.5f, eval("""env["s"]""", buildJsonObject { put("s", "0.5") }))
+        assertEquals(1f, eval("""env["s"]""", buildJsonObject { put("s", "1") }))
+
+        assertEquals(
+            0f,
+            eval("""contains(env["l"], "d")""", buildJsonObject { put("l", listOf("a", "b", "c")) })
+        )
+        assertEquals(
+            1f,
+            eval("""contains(env["l"], "b")""", buildJsonObject { put("l", listOf("a", "b", "c")) })
+        )
+
+        assertEquals(
+            1f,
+            eval(
+                """isblank(env["i"])""",
+                buildJsonObject {
+                    put(
+                        "i",
+                        buildJsonObject {
+                            put("k", "v")
+                        }
+                    )
+                }
+            )
+        )
+        assertEquals(
+            1f,
+            eval(
+                """isblank(env["i"])""",
+                buildJsonObject {
+                    put(
+                        "i",
+                        buildJsonArray {
+                            add(
+                                buildJsonArray {
+                                    add("a")
+                                    add("b")
+                                }
+                            )
+                        }
+                    )
+                }
+            )
+        )
     }
 
     @Test
@@ -253,6 +301,16 @@ class RuleEvalTest {
         )
     }
 
-    private fun eval(formula: String, env: Map<String, Any> = emptyMap()) =
+    private fun eval(formula: String, env: JsonObject = JsonObject(emptyMap())) =
         doist.ffs.rule.eval(formula, env)
+
+    private fun JsonObjectBuilder.put(key: String, values: List<String>): JsonElement? =
+        put(
+            key,
+            buildJsonArray {
+                values.forEach {
+                    add(JsonPrimitive(it))
+                }
+            }
+        )
 }

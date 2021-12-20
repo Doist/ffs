@@ -2,6 +2,8 @@ package rule
 
 import doist.ffs.rule.eval
 import kotlinx.benchmark.Scope
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.Param
 import org.openjdk.jmh.annotations.State
@@ -16,13 +18,13 @@ open class RuleEvalBenchmark {
     lateinit var formula: String
 
     private val env = mapOf(
-        "user.email" to "goncalo@doist.com",
-        "user.utc_offset" to "+01:00",
-        "user.locale" to "pt-PT"
+        "user.email" to JsonPrimitive("goncalo@doist.com"),
+        "user.utc_offset" to JsonPrimitive("+01:00"),
+        "user.locale" to JsonPrimitive("pt-PT")
     )
 
     @Benchmark
     fun eval(): Float {
-        return eval(formula, env)
+        return eval(formula, JsonObject(env))
     }
 }
