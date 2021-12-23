@@ -43,7 +43,7 @@ private val murmurHash = MurmurHash3()
  * @param formula the formula to parse.
  * @param env the environment map. Accepted values are booleans, numbers, strings, or lists of them.
  * @param key for partial frequencies, ensures that the formula returns evaluation is consistent
- *                between calls and across clients.
+ *            between calls and across clients.
  *
  * @see eval
  */
@@ -147,18 +147,19 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
         RuleExpr.StringExpr(it.text)
     }
 
-    private val envValue = skip(envLiteral) and skip(lB) and parser(::string) and skip(rB) map {
-        RuleExpr.EnvExpr(it)
-    }
+    private val envValue =
+        skip(envLiteral) and skip(lB) and parser(RuleGrammar::string) and skip(rB) map {
+            RuleExpr.EnvExpr(it)
+        }
 
     private val array =
-        skip(lB) and separatedTerms(parser(::rootParser), comma, true) and skip(rB) map {
+        skip(lB) and separatedTerms(parser(RuleGrammar::rootParser), comma, true) and skip(rB) map {
             RuleExpr.ArrayExpr(it)
         }
 
     private val function =
         id and skip(lP) and separatedTerms(
-            parser(::rootParser),
+            parser(RuleGrammar::rootParser),
             comma,
             true
         ) and skip(rP) map { (id, args) ->
