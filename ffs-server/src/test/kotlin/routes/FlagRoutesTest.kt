@@ -5,12 +5,13 @@ import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags
 import doist.ffs.db.organizations
 import doist.ffs.db.projects
+import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
 import doist.ffs.ext.handleSse
 import doist.ffs.module
 import doist.ffs.plugins.database
-import doist.ffs.serialization.SSE_FIELD_PREFIX_DATA
-import doist.ffs.serialization.SSE_FIELD_PREFIX_ID
 import doist.ffs.serialization.json
+import doist.ffs.sse.SSE_FIELD_PREFIX_DATA
+import doist.ffs.sse.SSE_FIELD_PREFIX_ID
 import io.ktor.http.encodeURLPath
 import io.ktor.server.application.Application
 import io.ktor.server.testing.withTestApplication
@@ -179,17 +180,35 @@ class FlagRoutesTest {
             "$PATH_FLAGS$PATH_EVAL?" +
                 "project_id=$projectId&" +
                 "env=${json.encodeToString(ENV).encodeURLPath()}"
+
         assertResource<Map<String, Boolean>>(pathFlagsEvalForProject) { map ->
             assert(map.isEmpty())
         }
-        val id = application.database.capturingLastInsertId {
-            flags.insert(project_id = projectId, name = NAME, rule = RULE_TRUE)
+
+        val flag = application.database.run {
+            flags.run {
+                val id = capturingLastInsertId {
+                    insert(project_id = projectId, name = NAME, rule = RULE_TRUE)
+                }
+                select(id).executeAsOne()
+            }
         }
         assertResource<Map<String, Boolean>>(pathFlagsEvalForProject) { map ->
             assert(map.size == 1)
             val (name, enabled) = map.entries.single()
             assert(name == NAME)
             assert(enabled)
+        }
+
+        application.database.flags.run {
+            update(id = flag.id, name = NAME, rule = RULE_FALSE)
+            select(flag.id).executeAsOne()
+        }
+        assertResource<Map<String, Boolean>>(pathFlagsEvalForProject) { map ->
+            assert(map.size == 1)
+            val (name, enabled) = map.entries.single()
+            assert(name == NAME)
+            assert(!enabled)
         }
     }
 
@@ -210,25 +229,10 @@ class FlagRoutesTest {
             val flag = application.database.run {
                 flags.run {
                     val id = capturingLastInsertId {
-                        insert(project_id = projectId, name = NAME, rule = RULE_FALSE)
+                        insert(project_id = projectId, name = NAME, rule = RULE_TRUE)
                     }
                     select(id).executeAsOne()
                 }
-            }
-            readLine().startsWith(SSE_FIELD_PREFIX_ID)
-            readLine().let { line ->
-                line.startsWith(SSE_FIELD_PREFIX_DATA)
-                val flagEvals = json.decodeFromString<Map<String, Boolean>>(
-                    line.substring(SSE_FIELD_PREFIX_DATA.length)
-                )
-                assert(flagEvals == mapOf(NAME to false))
-            }
-            readLine().isEmpty()
-
-            // Update the flag rule and check its eval is sent again.
-            application.database.flags.run {
-                update(id = flag.id, name = NAME, rule = RULE_TRUE)
-                select(flag.id).executeAsOne()
             }
             readLine().startsWith(SSE_FIELD_PREFIX_ID)
             readLine().let { line ->
@@ -240,9 +244,24 @@ class FlagRoutesTest {
             }
             readLine().isEmpty()
 
+            // Update the flag rule and check its eval is sent again.
+            application.database.flags.run {
+                update(id = flag.id, name = NAME, rule = RULE_FALSE)
+                select(flag.id).executeAsOne()
+            }
+            readLine().startsWith(SSE_FIELD_PREFIX_ID)
+            readLine().let { line ->
+                line.startsWith(SSE_FIELD_PREFIX_DATA)
+                val flagEvals = json.decodeFromString<Map<String, Boolean>>(
+                    line.substring(SSE_FIELD_PREFIX_DATA.length)
+                )
+                assert(flagEvals == mapOf(NAME to false))
+            }
+            readLine().isEmpty()
+
             // Update the flag name and ensure the channel remains empty.
             application.database.flags.run {
-                update(id = flag.id, name = NAME_UPDATED, rule = RULE_TRUE)
+                update(id = flag.id, name = NAME_UPDATED, rule = RULE_FALSE)
                 select(flag.id).executeAsOne()
             }
             assert(channel.availableForRead == 0)
@@ -264,7 +283,7 @@ class FlagRoutesTest {
         private const val RULE_TRUE = "gt(env[\"number\"], 2)"
         private const val RULE_FALSE = "lt(env[\"number\"], 2)"
         private val ENV = buildJsonObject {
-            put("rollout.id", "123456789abcdef")
+            put(ENV_INTERNAL_ROLLOUT_ID, "123456789abcdef")
             put("number", 3)
         }
     }

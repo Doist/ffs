@@ -7,10 +7,11 @@ import com.squareup.sqldelight.runtime.coroutines.mapToList
 import doist.ffs.db.Flag
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags
+import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
+import doist.ffs.ext.stream
 import doist.ffs.plugins.database
-import doist.ffs.serialization.SseEvent
 import doist.ffs.serialization.json
-import doist.ffs.serialization.respondSse
+import doist.ffs.sse.SseEvent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -117,7 +118,7 @@ private fun Route.getFlags() = get {
                 )
             }
         }
-        call.respondSse(HttpStatusCode.OK, channel)
+        call.stream(HttpStatusCode.OK, channel)
     } else {
         val flags = query.executeAsList()
         call.respond(HttpStatusCode.OK, flags)
@@ -208,6 +209,7 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
     val queryParameters = call.request.queryParameters
     val projectId = queryParameters.getOrFail<Long>("project_id")
     val env = json.decodeFromString<JsonObject>(queryParameters.getOrFail<String>("env"))
+
     val query = application.database.flags.selectByProject(projectId)
     val sse = call.request.acceptItems().any { ContentType.Text.EventStream.match(it.value) }
     if (sse) {
@@ -246,7 +248,7 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
                 sendUpdatedFlagsEval(query.executeAsList())
             }
         }
-        call.respondSse(HttpStatusCode.OK, channel)
+        call.stream(HttpStatusCode.OK, channel)
     } else {
         val flags = query.executeAsList()
         call.respond(
@@ -260,9 +262,12 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
 
 private fun Flag.isEnabled(env: JsonObject): Boolean {
     if (archived_at != null) return false
-    val rolloutId = env["rollout.id"]?.jsonPrimitive?.contentOrNull
-        ?: throw IllegalArgumentException("env[\"rollout.id\"] is missing or incorrectly specified")
-    return doist.ffs.rule.isEnabled(rule, env, "${id}$rolloutId")
+    val rolloutId = env[ENV_INTERNAL_ROLLOUT_ID]?.jsonPrimitive?.contentOrNull
+    return doist.ffs.rule.isEnabled(
+        rule,
+        env,
+        rolloutId.takeUnless { it.isNullOrEmpty() }?.let { "$id$it" }
+    )
 }
 
 private suspend fun collectUpdatedFlags(

@@ -48,13 +48,16 @@ private val murmurHash = MurmurHash3()
  * @see eval
  */
 @Suppress("MagicNumber")
-fun isEnabled(formula: String, env: JsonObject, key: String): Boolean {
+fun isEnabled(formula: String, env: JsonObject, key: String?): Boolean {
     return when (val probability = eval(formula, env)) {
         0f -> false
         1f -> true
-        else -> {
-            val hash = murmurHash.hash32x86(key.encodeToByteArray())
-            hash % 100u < (probability * 100).toUInt()
+        else -> when (key) {
+            null -> false
+            else -> {
+                val hash = murmurHash.hash32x86(key.encodeToByteArray())
+                hash % 100u < (probability * 100).toUInt()
+            }
         }
     }
 }
