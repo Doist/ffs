@@ -16,6 +16,7 @@ kotlin {
 
     js(IR) {
         browser()
+        nodejs()
         binaries.library()
     }
 
