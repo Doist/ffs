@@ -1,7 +1,7 @@
 [versions]
 kotlin = "1.6.0"
 detekt = "1.19.0"
-ktor = "2.0.0-eap-278"
+ktor = "2.0.0-beta-1"
 logback = "1.2.9"
 sqldelight = "1.5.3"
 kotlinx-datetime = "0.3.1"

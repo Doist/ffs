@@ -87,7 +87,7 @@ internal suspend fun HttpClient.stream(
 
             delay(retry)
         } catch (throwable: Throwable) {
-            plugin(Logging)?.logger?.log(throwable.stackTraceToString())
+            plugin(Logging).logger.log(throwable.stackTraceToString())
 
             if (throwable is ResponseException || throwable is CancellationException) {
                 // Stop retrying on network errors or cancellation.
