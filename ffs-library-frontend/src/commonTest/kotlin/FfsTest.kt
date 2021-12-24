@@ -14,7 +14,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -34,14 +34,14 @@ class FfsTest {
     }
 
     @Test
-    fun testApiToken() = runBlocking {
+    fun testApiToken() = runTest {
         Ffs(API_TOKEN, PROJECT_ID).initialize(engine).join()
         val request = engine.requestHistory.last()
         assertEquals("Bearer $API_TOKEN", request.headers[HttpHeaders.Authorization])
     }
 
     @Test
-    fun testParams() = runBlocking {
+    fun testParams() = runTest {
         Ffs(API_TOKEN, PROJECT_ID).initialize(engine).join()
         val request = engine.requestHistory.last()
         assertContains(request.url.parameters.names(), "project_id")
@@ -49,7 +49,7 @@ class FfsTest {
     }
 
     @Test
-    fun testEnv() = runBlocking {
+    fun testEnv() = runTest {
         Ffs(API_TOKEN, PROJECT_ID).apply {
             setRolloutId(ROLLOUT_ID)
             setUserId(USER_ID)
@@ -73,7 +73,7 @@ class FfsTest {
     }
 
     @Test
-    fun testLiveUpdatesFlag() = runBlocking {
+    fun testLiveUpdatesFlag() = runTest {
         Ffs(API_TOKEN, PROJECT_ID).initialize(engine).join()
         var request = engine.requestHistory.last()
         assertTrue(
@@ -94,7 +94,7 @@ class FfsTest {
     }
 
     @Test
-    fun testFlagEnabled() = runBlocking {
+    fun testFlagEnabled() = runTest {
         val ffs = Ffs(API_TOKEN, PROJECT_ID, liveUpdates = false)
         assertFalse(ffs.isEnabled("test"))
         ffs.initialize(

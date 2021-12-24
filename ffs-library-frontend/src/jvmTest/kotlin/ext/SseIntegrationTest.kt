@@ -19,11 +19,11 @@ import io.ktor.server.routing.routing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import sse.write
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,8 +31,10 @@ import io.ktor.client.engine.cio.CIO as CIOEngine
 
 class SseIntegrationTest {
     @Test
-    fun testSseIntegration() = runBlocking(Dispatchers.Default) {
+    fun testSseIntegration() = runTest {
         var lastId = 0
+
+        // Setup and start server.
         val port = 56473
         val server = embeddedServer(CIO, port) {
             routing {
@@ -51,14 +53,25 @@ class SseIntegrationTest {
             }
         }
         server.start(wait = false)
+
+        // Setup and start client.
         val client = HttpClient(CIOEngine)
-        client.launch {
+        launch {
             client.stream("http://localhost:$port") {
+                println(it)
             }
         }
-        delay(1000)
+
+        // Wait for streaming, and a retry.
+        withContext(Dispatchers.Default) {
+            delay(1000)
+        }
+
+        // Stop client and server.
         client.close()
         server.stop(500, 500)
+
+        // Ensure that the last event id is correct.
         assertEquals(10, lastId)
     }
 

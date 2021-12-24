@@ -4,6 +4,7 @@ detekt = "1.19.0"
 ktor = "2.0.0-beta-1"
 logback = "1.2.9"
 sqldelight = "1.5.3"
+kotlinx-coroutines = "1.6.0"
 kotlinx-datetime = "0.3.1"
 kotlin-react = "0.0.1-pre.276-kotlin-1.6.0"
 kotlin-react-router-dom = "6.0.2-pre.276-kotlin-1.6.0"
@@ -50,6 +51,7 @@ better-parse = { module = "com.github.h0tk3y.betterParse:better-parse", version.
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-murmurhash = { module = "com.goncalossilva:murmurhash", version.ref = "kotlinx-murmurhash" }
 kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "kotlinx-benchmark" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 
 [bundles]
 ktor-server = ["ktor-server-core", "ktor-server-cio", "logback-classic", "ktor-serialization-kotlinx-json", "ktor-serialization-kotlinx-cbor", "ktor-server-content-negotiation", "ktor-server-call-logging", "ktor-server-default-headers", "ktor-server-compression"]

@@ -50,6 +50,8 @@ kotlin {
             dependencies {
                 implementation(libs.kotlin.test)
 
+                implementation(libs.kotlinx.coroutines.test)
+
                 implementation(libs.ktor.client.mock)
             }
         }
@@ -88,4 +90,5 @@ kotlin {
 
 kotlin.sourceSets.all {
     languageSettings.optIn("kotlin.js.ExperimentalJsExport")
+    languageSettings.optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
 }
