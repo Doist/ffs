@@ -1,29 +1,26 @@
 plugins {
     id(libs.plugins.kotlin.multiplatform.get().pluginId)
-    id(libs.plugins.kotlin.serialization.get().pluginId)
 }
 
 kotlin {
     enableMultiplatformTargets()
+}
 
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(libs.kotlinx.datetime)
-                implementation(libs.better.parse)
-                implementation(libs.kotlinx.serialization.json)
-                implementation(libs.kotlinx.murmurhash)
-            }
-        }
+subprojects {
+    // https://github.com/gradle/gradle/issues/16634
+    val libs = rootProject.libs
 
-        val commonTest by getting {
-            dependencies {
-                implementation(libs.kotlin.test)
+    apply(plugin = libs.plugins.kotlin.multiplatform.get().pluginId)
+
+    kotlin {
+        enableMultiplatformTargets()
+
+        sourceSets {
+            val commonTest by getting {
+                dependencies {
+                    implementation(libs.kotlin.test)
+                }
             }
         }
     }
-}
-
-kotlin.sourceSets.all {
-    languageSettings.optIn("kotlin.ExperimentalUnsignedTypes")
 }

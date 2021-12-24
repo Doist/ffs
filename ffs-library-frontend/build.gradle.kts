@@ -14,7 +14,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":ffs-shared"))
+                implementation(project(":ffs-shared:env"))
+                implementation(project(":ffs-shared:sse"))
+                implementation(project(":ffs-shared:uuid"))
 
                 implementation(libs.bundles.ktor.client)
             }

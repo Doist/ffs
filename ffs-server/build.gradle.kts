@@ -11,7 +11,9 @@ plugins {
 sourceSets.create("benchmark")
 
 dependencies {
-    implementation(project(":ffs-shared"))
+    implementation(project(":ffs-shared:env"))
+    implementation(project(":ffs-shared:rule"))
+    implementation(project(":ffs-shared:sse"))
 
     implementation(libs.bundles.ktor.server)
 
