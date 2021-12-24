@@ -14,26 +14,15 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":ffs-shared:env"))
-                implementation(project(":ffs-shared:sse"))
-                implementation(project(":ffs-shared:uuid"))
-
-                implementation(libs.bundles.ktor.client)
+                implementation(project(":ffs-shared:client-library"))
             }
         }
+
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
-
                 implementation(libs.ktor.client.mock)
-
                 implementation(libs.kotlinx.coroutines.test)
-            }
-        }
-
-        val jvmTest by getting {
-            dependencies {
-                implementation(libs.bundles.ktor.server)
             }
         }
 
@@ -65,5 +54,4 @@ kotlin {
 
 kotlin.sourceSets.all {
     languageSettings.optIn("kotlin.js.ExperimentalJsExport")
-    languageSettings.optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
 }

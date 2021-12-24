@@ -18,10 +18,12 @@ import kotlinx.coroutines.CoroutineScope
 
 internal class ApiClient(
     private val url: String,
+    private val path: String,
     private val httpClient: HttpClient
 ) : CoroutineScope by httpClient, Closeable by httpClient {
-    constructor(url: String, engine: HttpClientEngine? = null) : this(
+    constructor(url: String, path: String, engine: HttpClientEngine? = null) : this(
         url,
+        path,
         if (engine != null) {
             HttpClient(engine, CONFIG_HTTP_ENGINE)
         } else {
@@ -29,14 +31,14 @@ internal class ApiClient(
         }
     )
 
-    suspend fun getFlagsEval(config: HttpRequestBuilder.() -> Unit): HttpResponse =
-        httpClient.get("$url/flags/eval", config)
+    suspend fun get(config: HttpRequestBuilder.() -> Unit): HttpResponse =
+        httpClient.get("$url$path", config)
 
-    suspend fun streamFlagsEval(
+    suspend fun stream(
         config: HttpRequestBuilder.() -> Unit,
         block: suspend (SseEvent) -> Unit
     ) {
-        httpClient.stream("$url/flags/eval", config, block)
+        httpClient.stream("$url$path", config, block)
     }
 
     companion object {

@@ -11,6 +11,6 @@ include(":ffs-shared")
 include(":ffs-shared:env")
 include(":ffs-shared:rule")
 include(":ffs-shared:sse")
-include(":ffs-shared:uuid")
+include(":ffs-shared:client-library")
 
 enableFeaturePreview("VERSION_CATALOGS")

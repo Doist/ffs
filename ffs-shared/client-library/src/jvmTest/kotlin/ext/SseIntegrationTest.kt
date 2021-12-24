@@ -33,6 +33,7 @@ class SseIntegrationTest {
     @Test
     fun testSseIntegration() = runTest {
         var lastId = 0
+        val batch = 5
 
         // Setup and start server.
         val port = 56473
@@ -41,7 +42,7 @@ class SseIntegrationTest {
                 get("/") {
                     lastId = call.request.header(HEADER_LAST_EVENT_ID)?.toInt() ?: 0
                     val flow = flow {
-                        repeat(5) {
+                        repeat(batch) {
                             delay(50)
                             emit(lastId + it + 1)
                         }
@@ -58,7 +59,6 @@ class SseIntegrationTest {
         val client = HttpClient(CIOEngine)
         launch {
             client.stream("http://localhost:$port") {
-                println(it)
             }
         }
 
@@ -73,6 +73,7 @@ class SseIntegrationTest {
 
         // Ensure that the last event id is correct.
         assertTrue(lastId >= 10)
+        assertTrue(lastId % batch == 0)
     }
 
     private suspend fun ApplicationCall.stream(events: Flow<SseEvent>, retry: Int? = null) {
