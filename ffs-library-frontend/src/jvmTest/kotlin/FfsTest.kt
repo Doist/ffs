@@ -1,5 +1,4 @@
-package doist.ffs
-
+import doist.ffs.Ffs
 import doist.ffs.env.ENV_DEVICE_LOCALE
 import doist.ffs.env.ENV_DEVICE_NAME
 import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
@@ -27,6 +26,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+// This can and should be multiplatform, but building fails due to a coroutines version mismatch.
+// See: https://youtrack.jetbrains.com/issue/KT-50222
 class FfsTest {
     private val engine = MockEngine {
         // Respond with error by default so that SSE terminates.
