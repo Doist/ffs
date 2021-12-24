@@ -8,7 +8,7 @@ config.set({
         postDetection: function(browsers) {
             browsers = browsers.filter((browser) => browser.includes("Headless")) || browsers;
             browsers = browsers.filter((browser) => browser.includes("Chrom")) || browsers;
-            browsers = browsers.slice(0,1);
+            browsers = browsers.slice(0, 1);
             return browsers;
         }
     }

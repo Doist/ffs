@@ -18,16 +18,7 @@ kotlin {
         browser {
             testTask {
                 useKarma {
-                    // List all browsers from test-resources.js, so that the Kotlin plugin downloads
-                    // their runners and captures failures. "karma-detect-browsers" figures out
-                    // which browser to enable, depending on what's installed in the base system.
-                    useChromeHeadless()
-                    useChromiumHeadless()
-                    useFirefoxHeadless()
-                    useFirefoxDeveloperHeadless()
-                    useOpera()
-                    useSafari()
-                    useIe()
+                    useAnyBrowser()
                 }
             }
         }

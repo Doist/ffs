@@ -21,6 +21,7 @@ mkdocs = "2.2.0"
 mkdocs-plugin-awesome-pages = "2.6.1"
 
 [libraries]
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }

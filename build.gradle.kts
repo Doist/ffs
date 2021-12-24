@@ -23,7 +23,7 @@ plugins {
     alias(libs.plugins.detekt) apply false // Applied and configured below.
 
     // Plugins for some subprojects.
-    alias(libs.plugins.kotlin.multiplatform) apply false
+    // Multiplatform is loaded indirectly in buildSrc/build.gradle.kts.
     alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.sqldelight) apply false
     alias(libs.plugins.kotlinx.benchmark) apply false
