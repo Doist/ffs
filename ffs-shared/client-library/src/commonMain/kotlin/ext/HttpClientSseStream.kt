@@ -10,8 +10,6 @@ import doist.ffs.sse.SseEvent
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.plugin
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
 import io.ktor.client.request.prepareGet
@@ -87,8 +85,6 @@ internal suspend fun HttpClient.stream(
 
             delay(retry)
         } catch (throwable: Throwable) {
-            plugin(Logging).logger.log(throwable.stackTraceToString())
-
             if (throwable is ResponseException || throwable is CancellationException) {
                 // Stop retrying on network errors or cancellation.
                 throw throwable

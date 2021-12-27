@@ -54,4 +54,5 @@ kotlin {
 
 kotlin.sourceSets.all {
     languageSettings.optIn("kotlin.js.ExperimentalJsExport")
+    languageSettings.optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
 }

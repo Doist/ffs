@@ -32,7 +32,6 @@ ktor-server-default-headers = { module = "io.ktor:ktor-server-default-headers", 
 ktor-server-compression = { module = "io.ktor:ktor-server-compression", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
-ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 ktor-engine-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
@@ -57,7 +56,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 
 [bundles]
 ktor-server = ["ktor-server-core", "ktor-server-cio", "logback-classic", "ktor-serialization-kotlinx-json", "ktor-serialization-kotlinx-cbor", "ktor-server-content-negotiation", "ktor-server-call-logging", "ktor-server-default-headers", "ktor-server-compression"]
-ktor-client = ["ktor-client-core", "ktor-client-logging", "logback-classic", "ktor-serialization-kotlinx-json", "ktor-client-content-negotiation"]
+ktor-client = ["ktor-client-core", "ktor-serialization-kotlinx-json", "ktor-client-content-negotiation"]
 kotlin-react = ["kotlin-react", "kotlin-react-dom", "kotlin-react-router-dom", "kotlin-redux", "kotlin-react-redux"]
 
 [plugins]
