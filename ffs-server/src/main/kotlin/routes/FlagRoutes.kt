@@ -7,7 +7,6 @@ import com.squareup.sqldelight.runtime.coroutines.mapToList
 import doist.ffs.db.Flag
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags
-import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
 import doist.ffs.ext.stream
 import doist.ffs.plugins.database
 import doist.ffs.serialization.json
@@ -40,8 +39,6 @@ import kotlinx.datetime.Instant
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonPrimitive
 import kotlin.time.Duration.Companion.minutes
 
 const val PATH_FLAGS = "/flags"
@@ -250,7 +247,7 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
         }
         call.stream(HttpStatusCode.OK, channel)
     } else {
-        val flags = query.executeAsList()
+        val flags = query.executeAsList().filter { it.archived_at == null }
         call.respond(
             HttpStatusCode.OK,
             flags.associateBy({ it.name }) {
@@ -262,12 +259,7 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
 
 private fun Flag.isEnabled(env: JsonObject): Boolean {
     if (archived_at != null) return false
-    val rolloutId = env[ENV_INTERNAL_ROLLOUT_ID]?.jsonPrimitive?.contentOrNull
-    return doist.ffs.rule.isEnabled(
-        rule,
-        env,
-        rolloutId.takeUnless { it.isNullOrEmpty() }?.let { "$id$it" }
-    )
+    return doist.ffs.rule.isEnabled(rule, env, id)
 }
 
 private suspend fun collectUpdatedFlags(

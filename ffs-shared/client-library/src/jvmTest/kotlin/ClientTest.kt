@@ -11,7 +11,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -26,10 +25,13 @@ import kotlin.test.assertTrue
 // This can and should be multiplatform, but building fails due to a coroutines version mismatch.
 // See: https://youtrack.jetbrains.com/issue/KT-50222
 class ClientTest {
-    class MockClient(liveUpdates: Boolean = true) : Client<Unit>(
-        TOKEN, 1L, "https://doist.com", "/dummy", liveUpdates, Unit.serializer()
-    ) {
+    class MockClient(liveUpdates: Boolean = true) :
+        Client<Unit>(TOKEN, 1L, "https://doist.com", "/dummy", liveUpdates) {
+        override val data = Unit
+
         override fun isEnabled(name: String): Boolean = false
+
+        override fun updateData(response: String) = Unit
     }
 
     private val engine = MockEngine {

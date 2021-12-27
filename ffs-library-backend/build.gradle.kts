@@ -1,5 +1,6 @@
 plugins {
     id(libs.plugins.kotlin.multiplatform.get().pluginId)
+    id(libs.plugins.kotlin.serialization.get().pluginId)
 }
 
 kotlin {
@@ -15,6 +16,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(project(":ffs-shared:client-library"))
+                implementation(project(":ffs-shared:rule"))
             }
         }
 
@@ -54,4 +56,6 @@ kotlin {
 
 kotlin.sourceSets.all {
     languageSettings.optIn("kotlin.js.ExperimentalJsExport")
+    languageSettings.optIn("kotlinx.serialization.ExperimentalSerializationApi")
+    languageSettings.optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
 }

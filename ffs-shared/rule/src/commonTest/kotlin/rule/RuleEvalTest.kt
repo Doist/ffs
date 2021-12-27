@@ -1,5 +1,6 @@
 package doist.ffs.rule
 
+import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -16,12 +17,14 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class RuleEvalTest {
+    private val baseEnv = JsonObject(mapOf(ENV_INTERNAL_ROLLOUT_ID to JsonPrimitive("rollout-id")))
+
     @Test
     fun testEnabled() {
-        assertEquals(true, isEnabled("1", JsonObject(emptyMap()), "rollout-id"))
-        assertEquals(false, isEnabled("0", JsonObject(emptyMap()), "rollout-id"))
-        assertEquals(false, isEnabled("0.6", JsonObject(emptyMap()), "rollout-id"))
-        assertEquals(true, isEnabled("0.7", JsonObject(emptyMap()), "rollout-id"))
+        assertEquals(true, isEnabled("1", baseEnv, ""))
+        assertEquals(false, isEnabled("0", baseEnv, ""))
+        assertEquals(false, isEnabled("0.6", baseEnv, ""))
+        assertEquals(true, isEnabled("0.7", baseEnv, ""))
     }
 
     @Test
@@ -33,7 +36,7 @@ class RuleEvalTest {
                 (1..Random.nextInt(10, 40))
                     .map { Random.nextInt(0, Char.MAX_VALUE.code).toChar() }
                     .joinToString("")
-                    .let { isEnabled(distribution.toString(), JsonObject(emptyMap()), it) }
+                    .let { isEnabled(distribution.toString(), baseEnv, it) }
             }
             val expectedCount = (samples * distribution).toInt()
             val tolerance = samples / 10
@@ -301,8 +304,7 @@ class RuleEvalTest {
         )
     }
 
-    private fun eval(formula: String, env: JsonObject = JsonObject(emptyMap())) =
-        doist.ffs.rule.eval(formula, env)
+    private fun eval(formula: String, env: JsonObject = baseEnv) = doist.ffs.rule.eval(formula, env)
 
     private fun JsonObjectBuilder.put(key: String, values: List<String>): JsonElement? =
         put(

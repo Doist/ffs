@@ -18,10 +18,6 @@ import io.ktor.client.request.parameter
 import io.ktor.http.ContentType
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -30,30 +26,21 @@ import kotlin.collections.set
 
 public const val DEFAULT_URL: String = "https://ffs.doist.com"
 
-abstract class Client<T> private constructor(
-    private val config: BaseConfig,
-    serializer: KSerializer<T>
-) : Config by config {
+abstract class Client<T> private constructor(private val config: BaseConfig) : Config by config {
     constructor(
         apiToken: String,
         projectId: Long,
         url: String,
         path: String,
-        liveUpdates: Boolean,
-        valueSerializer: KSerializer<T>
-    ) : this(
-        BaseConfig(apiToken, projectId, url, path, liveUpdates),
-        valueSerializer
-    )
+        liveUpdates: Boolean
+    ) : this(BaseConfig(apiToken, projectId, url, path, liveUpdates))
 
     private var apiClient: ApiClient? = null
-
-    private val mapSerializer = MapSerializer(String.serializer(), serializer)
 
     // TODO: Store and read from storage.
     // Could be immutable externally in Kotlin 1.7.0.
     // See: https://youtrack.jetbrains.com/issue/KT-14663
-    protected val map: MutableMap<String, T> = mutableMapOf()
+    protected abstract val data: T
 
     fun initialize() {
         initialize(null)
@@ -74,16 +61,18 @@ abstract class Client<T> private constructor(
                 }
 
                 if (config.liveUpdates) {
-                    it.stream(configRequest) { (data, _, _) ->
-                        map.putAll(Json.decodeFromString(mapSerializer, data))
+                    it.stream(configRequest) { (response, _, _) ->
+                        updateData(response)
                     }
                 } else {
                     val response = it.get(configRequest)
-                    map.putAll(Json.decodeFromString(mapSerializer, response.body()))
+                    updateData(response.body())
                 }
             }
         }
     }
+
+    protected abstract fun updateData(response: String): Unit
 
     abstract fun isEnabled(name: String): Boolean
 
