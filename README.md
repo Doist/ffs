@@ -20,6 +20,6 @@ Feature Flags as a Service (FFS) is a fast and lean open-source platform for man
 {setup-example}
 ```
 
-## Licence
+## License
 
 Released under the [MIT License](https://opensource.org/licenses/MIT).
