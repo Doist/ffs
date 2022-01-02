@@ -9,6 +9,7 @@ import org.slf4j.Logger
 val Database.organizations get() = organizationQueries
 val Database.projects get() = projectQueries
 val Database.flags get() = flagQueries
+val Database.tokens get() = tokenQueries
 
 /**
  * Runs [block], typically an insert, and returns the id of the last inserted row.
@@ -45,6 +46,7 @@ internal fun Database(driver: SqlDriver, log: Logger? = null): Database {
         organizationAdapter = Organization.Adapter(instantAdapter, instantAdapter),
         projectAdapter = Project.Adapter(instantAdapter, instantAdapter),
         flagAdapter = Flag.Adapter(instantAdapter, instantAdapter, instantAdapter),
+        tokenAdapter = Token.Adapter(instantAdapter),
     )
 }
 

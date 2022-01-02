@@ -1,0 +1,31 @@
+import kotlinx.datetime.Instant;
+
+CREATE TABLE token (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    token TEXT NOT NULL UNIQUE,
+    project_id INTEGER NOT NULL,
+    description TEXT NOT NULL,
+    created_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(project_id) REFERENCES project(id) ON DELETE CASCADE
+);
+
+CREATE INDEX index_token_token
+ON token(token);
+
+CREATE INDEX index_token_project_id
+ON token(project_id);
+
+insert:
+INSERT INTO token(token, project_id, description)
+VALUES ( ?, ?, ?);
+
+selectByProject:
+SELECT id, project_id, description, created_at FROM token
+WHERE project_id = ?;
+
+selectProject:
+SELECT project_id FROM token WHERE token = ?;
+
+delete:
+DELETE FROM token
+WHERE id = ?;

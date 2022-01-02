@@ -29,11 +29,10 @@ public const val DEFAULT_URL: String = "https://ffs.doist.com"
 abstract class Client<T> private constructor(private val config: BaseConfig) : Config by config {
     constructor(
         apiToken: String,
-        projectId: Long,
         url: String,
         path: String,
         liveUpdates: Boolean
-    ) : this(BaseConfig(apiToken, projectId, url, path, liveUpdates))
+    ) : this(BaseConfig(apiToken, url, path, liveUpdates))
 
     private var apiClient: ApiClient? = null
 
@@ -56,7 +55,6 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
                     accept(ContentType.Application.Json)
                     bearerAuth(config.apiToken)
 
-                    parameter("project_id", config.projectId)
                     parameter("env", config.env)
                 }
 
@@ -88,7 +86,6 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
     @Suppress("TooManyFunctions")
     private class BaseConfig(
         override val apiToken: String,
-        override val projectId: Long,
         override val url: String,
         val path: String,
         override val liveUpdates: Boolean

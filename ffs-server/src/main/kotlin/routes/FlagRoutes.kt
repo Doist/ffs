@@ -4,6 +4,7 @@ package doist.ffs.routes
 
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
+import doist.ffs.auth.ProjectPrincipal
 import doist.ffs.db.Flag
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags
@@ -17,6 +18,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.application
 import io.ktor.server.application.call
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.principal
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.acceptItems
 import io.ktor.server.request.receiveParameters
@@ -52,14 +55,18 @@ fun Application.installFlagRoutes() {
     routing {
         route(PATH_FLAGS) {
             createFlag()
-            getFlags()
             getFlag()
             updateFlag()
 
             archiveFlag()
             unarchiveFlag()
 
-            getFlagsEval()
+            authenticate("token-read") {
+                getFlags()
+            }
+            authenticate("token-eval") {
+                getFlagsEval()
+            }
         }
     }
 }
@@ -100,7 +107,7 @@ private fun Route.createFlag() = post {
  */
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlags() = get {
-    val projectId = call.request.queryParameters.getOrFail<Long>("project_id")
+    val projectId = call.principal<ProjectPrincipal>()!!.id
     val query = application.database.flags.selectByProject(projectId)
     val sse = call.request.acceptItems().any { ContentType.Text.EventStream.match(it.value) }
     if (sse) {
@@ -204,7 +211,7 @@ private fun Route.unarchiveFlag() = delete("{id}$PATH_ARCHIVE") {
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlagsEval() = get(PATH_EVAL) {
     val queryParameters = call.request.queryParameters
-    val projectId = queryParameters.getOrFail<Long>("project_id")
+    val projectId = call.principal<ProjectPrincipal>()!!.id
     val env = json.decodeFromString<JsonObject>(queryParameters.getOrFail<String>("env"))
 
     val query = application.database.flags.selectByProject(projectId)

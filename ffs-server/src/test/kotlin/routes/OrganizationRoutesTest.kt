@@ -12,7 +12,7 @@ import kotlin.test.Test
 class OrganizationRoutesTest {
     @Test
     fun testOrganizationCreate() = withTestApplication(Application::module) {
-        assertResourceCreates(PATH_ORGANIZATIONS, listOf("name" to NAME))
+        assertResourceCreates(uri = PATH_ORGANIZATIONS, args = listOf("name" to NAME))
         val organizations = application.database.organizations.selectAll().executeAsList()
         assert(organizations.size == 1)
         assert(organizations[0].name == NAME)
@@ -20,23 +20,33 @@ class OrganizationRoutesTest {
 
     @Test
     fun testOrganizationCreateLocation() = withTestApplication(Application::module) {
-        val location = assertResourceCreates(PATH_ORGANIZATIONS, listOf("name" to NAME))
-        assertResource<Organization>(location)
+        val location = assertResourceCreates(
+            uri = PATH_ORGANIZATIONS,
+            args = listOf("name" to NAME)
+        )
+        assertResource<Organization>(uri = location)
+    }
+
+    @Test
+    fun testOrganizationCount() = withTestApplication(Application::module) {
+        assertResourceCount<Organization>(uri = PATH_ORGANIZATIONS, count = 0)
+        val id = application.database.capturingLastInsertId {
+            organizations.insert(name = NAME)
+        }
+        assertResourceCount<Organization>(uri = PATH_ORGANIZATIONS, count = 1)
+        application.database.organizations.delete(id)
+        assertResourceCount<Organization>(uri = PATH_ORGANIZATIONS, count = 0)
     }
 
     @Test
     fun testOrganizationRead() = withTestApplication(Application::module) {
-        assertResourceCount<Organization>(PATH_ORGANIZATIONS, 0)
         val id = application.database.capturingLastInsertId {
             organizations.insert(name = NAME)
         }
-        assertResourceCount<Organization>(PATH_ORGANIZATIONS, 1)
-        assertResource<Organization>(PATH_ORGANIZATION(id)) { organization ->
+        assertResource<Organization>(uri = PATH_ORGANIZATION(id)) { organization ->
             assert(organization.id == id)
             assert(organization.name == NAME)
         }
-        application.database.organizations.delete(id)
-        assertResourceCount<Organization>(PATH_ORGANIZATIONS, 0)
     }
 
     @Test
@@ -44,7 +54,7 @@ class OrganizationRoutesTest {
         val id = application.database.capturingLastInsertId {
             organizations.insert(name = NAME)
         }
-        assertResourceUpdates(PATH_ORGANIZATION(id), listOf("name" to NAME_UPDATED))
+        assertResourceUpdates(uri = PATH_ORGANIZATION(id), args = listOf("name" to NAME_UPDATED))
         val organization = application.database.organizations.select(id).executeAsOne()
         assert(organization.name == NAME_UPDATED)
     }
@@ -54,7 +64,7 @@ class OrganizationRoutesTest {
         val id = application.database.capturingLastInsertId {
             organizations.insert(name = NAME)
         }
-        assertResourceDeletes(PATH_ORGANIZATION(id))
+        assertResourceDeletes(uri = PATH_ORGANIZATION(id))
         val organization = application.database.organizations.select(id).executeAsOneOrNull()
         assert(organization == null)
     }

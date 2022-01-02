@@ -26,7 +26,7 @@ import kotlin.test.assertTrue
 // See: https://youtrack.jetbrains.com/issue/KT-50222
 class ClientTest {
     class MockClient(liveUpdates: Boolean = true) :
-        Client<Unit>(TOKEN, 1L, "https://doist.com", "/dummy", liveUpdates) {
+        Client<Unit>(TOKEN, "https://doist.com", "/dummy", liveUpdates) {
         override val data = Unit
 
         override fun isEnabled(name: String): Boolean = false
@@ -50,7 +50,6 @@ class ClientTest {
     fun testParams() = runTest {
         MockClient().initialize(engine).join()
         val request = engine.requestHistory.last()
-        assertContains(request.url.parameters.names(), "project_id")
         assertContains(request.url.parameters.names(), "env")
     }
 

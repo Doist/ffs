@@ -6,12 +6,10 @@ import kotlinx.serialization.json.Json
 
 public class Ffs(
     apiToken: String,
-    projectId: Long,
     url: String = DEFAULT_URL,
     liveUpdates: Boolean = true
 ) : Client<Map<String, Boolean>>(
     apiToken,
-    projectId,
     url,
     "/flags/eval",
     liveUpdates

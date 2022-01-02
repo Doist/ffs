@@ -7,12 +7,10 @@ import kotlinx.serialization.json.JsonObject
 
 public class Ffs(
     apiToken: String,
-    projectId: Long,
     url: String = DEFAULT_URL,
     liveUpdates: Boolean = true
 ) : Client<Map<String, Flag>>(
     apiToken,
-    projectId,
     url,
     "/flags",
     liveUpdates

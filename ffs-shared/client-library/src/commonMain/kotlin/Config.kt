@@ -5,7 +5,6 @@ import kotlinx.serialization.json.JsonObject
 @Suppress("TooManyFunctions")
 public interface Config {
     public val apiToken: String
-    public val projectId: Long
 
     public val url: String
     public val liveUpdates: Boolean
