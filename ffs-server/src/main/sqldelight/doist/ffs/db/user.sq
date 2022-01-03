@@ -1,0 +1,59 @@
+import kotlinx.datetime.Instant;
+
+CREATE TABLE user(
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    created_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER trigger_user_updated_at
+AFTER UPDATE ON user
+BEGIN
+    UPDATE user
+    SET updated_at = CURRENT_TIMESTAMP
+    WHERE id = old.id;
+END;
+
+CREATE INDEX index_user_email_password
+ON user(email, password);
+
+insert:
+INSERT INTO user(name, email, password)
+VALUES (?,?,?);
+
+select:
+SELECT id, name, email, created_at, updated_at
+FROM user
+WHERE id = ?;
+
+selectByAuth:
+SELECT id, name, email, created_at, updated_at
+FROM user
+WHERE email = ? AND password = ?;
+
+selectByOrganization:
+SELECT id, name, email, created_at, updated_at, organization_id, role
+FROM user INNER JOIN user_organization ON user.id = user_organization.user_id
+WHERE user_organization.organization_id = ?;
+
+updateName:
+UPDATE user
+SET name = ?
+WHERE id = ?;
+
+updateEmail:
+UPDATE user
+SET email = ?
+WHERE id = ? AND password = :current_password;
+
+updatePassword:
+UPDATE user
+SET password = ?
+WHERE id = ? AND password = :current_password;
+
+delete:
+DELETE FROM user
+WHERE id = ?;

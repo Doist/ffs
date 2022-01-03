@@ -10,6 +10,8 @@ val Database.organizations get() = organizationQueries
 val Database.projects get() = projectQueries
 val Database.flags get() = flagQueries
 val Database.tokens get() = tokenQueries
+val Database.users get() = userQueries
+val Database.usersOrganizations get() = user_organizationQueries
 
 /**
  * Runs [block], typically an insert, and returns the id of the last inserted row.
@@ -47,6 +49,7 @@ internal fun Database(driver: SqlDriver, log: Logger? = null): Database {
         projectAdapter = Project.Adapter(instantAdapter, instantAdapter),
         flagAdapter = Flag.Adapter(instantAdapter, instantAdapter, instantAdapter),
         tokenAdapter = Token.Adapter(instantAdapter),
+        userAdapter = User.Adapter(instantAdapter, instantAdapter),
     )
 }
 
