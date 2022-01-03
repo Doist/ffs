@@ -91,10 +91,10 @@ internal class UserTest {
         val id = testDatabase.capturingLastInsertId {
             insert(name = NAME, email = EMAIL, password = PASSWORD)
         }
-        var user = selectByAuth(email = EMAIL, password = PASSWORD).executeAsOne()
+        var user = selectByEmailPassword(email = EMAIL, password = PASSWORD).executeAsOne()
         assert(user.id == id)
         updatePassword(id = id, current_password = PASSWORD, password = PASSWORD_OTHER)
-        user = selectByAuth(email = EMAIL, password = PASSWORD_OTHER).executeAsOne()
+        user = selectByEmailPassword(email = EMAIL, password = PASSWORD_OTHER).executeAsOne()
         assert(user.id == id)
     }
 
@@ -103,10 +103,16 @@ internal class UserTest {
         val id = testDatabase.capturingLastInsertId {
             insert(name = NAME, email = EMAIL, password = PASSWORD)
         }
-        var user = selectByAuth(email = EMAIL, password = PASSWORD_OTHER).executeAsOneOrNull()
+        var user = selectByEmailPassword(
+            email = EMAIL,
+            password = PASSWORD_OTHER
+        ).executeAsOneOrNull()
         assert(user == null)
         updatePassword(id = id, password = PASSWORD_OTHER, current_password = PASSWORD_OTHER)
-        user = selectByAuth(email = EMAIL, password = PASSWORD_OTHER).executeAsOneOrNull()
+        user = selectByEmailPassword(
+            email = EMAIL,
+            password = PASSWORD_OTHER
+        ).executeAsOneOrNull()
         assert(user == null)
     }
 

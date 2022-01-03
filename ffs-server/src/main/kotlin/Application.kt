@@ -43,7 +43,8 @@ fun Application.module() {
                 validate { credential ->
                     val token = credential.token
                     if (scope.includes(token)) {
-                        val projectId = database.tokens.selectProject(token).executeAsOneOrNull()
+                        val projectId =
+                            database.tokens.selectProjectIdByToken(token).executeAsOneOrNull()
                         if (projectId != null) {
                             return@validate TokenPrincipal(projectId, scope)
                         }

@@ -29,7 +29,7 @@ SELECT id, name, email, created_at, updated_at
 FROM user
 WHERE id = ?;
 
-selectByAuth:
+selectByEmailPassword:
 SELECT id, name, email, created_at, updated_at
 FROM user
 WHERE email = ? AND password = ?;

@@ -27,15 +27,15 @@ insert:
 INSERT INTO flag(project_id, name, rule)
 VALUES (?,?,?);
 
-selectByProject:
-SELECT *
-FROM flag
-WHERE project_id = ?;
-
 select:
 SELECT *
 FROM flag
 WHERE id = ?;
+
+selectByProject:
+SELECT *
+FROM flag
+WHERE project_id = ?;
 
 update:
 UPDATE flag

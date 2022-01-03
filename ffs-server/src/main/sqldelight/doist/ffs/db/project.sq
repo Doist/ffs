@@ -25,15 +25,15 @@ insert:
 INSERT INTO project(organization_id, name)
 VALUES (?,?);
 
-selectByOrganization:
-SELECT *
-FROM project
-WHERE organization_id = ?;
-
 select:
 SELECT *
 FROM project
 WHERE id = ?;
+
+selectByOrganization:
+SELECT *
+FROM project
+WHERE organization_id = ?;
 
 update:
 UPDATE project
