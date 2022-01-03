@@ -20,10 +20,12 @@ INSERT INTO organization(name)
 VALUES (?);
 
 selectAll:
-SELECT * FROM organization;
+SELECT *
+FROM organization;
 
 select:
-SELECT * FROM organization
+SELECT *
+FROM organization
 WHERE id = ?;
 
 update:

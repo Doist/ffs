@@ -20,11 +20,14 @@ INSERT INTO token(token, project_id, description)
 VALUES ( ?, ?, ?);
 
 selectByProject:
-SELECT id, project_id, description, created_at FROM token
+SELECT id, project_id, description, created_at
+FROM token
 WHERE project_id = ?;
 
 selectProject:
-SELECT project_id FROM token WHERE token = ?;
+SELECT project_id
+FROM token
+WHERE token = ?;
 
 delete:
 DELETE FROM token

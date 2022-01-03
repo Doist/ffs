@@ -26,11 +26,13 @@ INSERT INTO project(organization_id, name)
 VALUES (?,?);
 
 selectByOrganization:
-SELECT * FROM project
+SELECT *
+FROM project
 WHERE organization_id = ?;
 
 select:
-SELECT * FROM project
+SELECT *
+FROM project
 WHERE id = ?;
 
 update:

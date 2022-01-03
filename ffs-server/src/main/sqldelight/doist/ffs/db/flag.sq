@@ -28,11 +28,13 @@ INSERT INTO flag(project_id, name, rule)
 VALUES (?,?,?);
 
 selectByProject:
-SELECT * FROM flag
+SELECT *
+FROM flag
 WHERE project_id = ?;
 
 select:
-SELECT * FROM flag
+SELECT *
+FROM flag
 WHERE id = ?;
 
 update:
