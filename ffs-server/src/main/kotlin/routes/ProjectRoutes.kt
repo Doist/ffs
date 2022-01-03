@@ -8,7 +8,6 @@ import doist.ffs.plugins.database
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
-import io.ktor.server.application.application
 import io.ktor.server.application.call
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.receiveParameters
@@ -54,7 +53,7 @@ private fun Route.createProject() = post {
     val params = call.receiveParameters()
     val organizationId = params.getOrFail<Long>("organization_id")
     val name = params.getOrFail("name")
-    val id = application.database.capturingLastInsertId {
+    val id = database.capturingLastInsertId {
         projects.insert(organization_id = organizationId, name = name)
     }
     call.run {
@@ -75,7 +74,7 @@ private fun Route.createProject() = post {
 private fun Route.getProjects() = get {
     val organizationId = call.request.queryParameters.getOrFail<Long>("organization_id")
     val projects =
-        application.database.projects.selectByOrganization(organizationId).executeAsList()
+        database.projects.selectByOrganization(organizationId).executeAsList()
     call.respond(HttpStatusCode.OK, projects)
 }
 
@@ -90,7 +89,7 @@ private fun Route.getProjects() = get {
  */
 private fun Route.getProject() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
-    val project = application.database.projects.select(id = id).executeAsOneOrNull()
+    val project = database.projects.select(id = id).executeAsOneOrNull()
         ?: throw NotFoundException()
     call.respond(HttpStatusCode.OK, project)
 }
@@ -108,7 +107,7 @@ private fun Route.getProject() = get("{id}") {
 private fun Route.updateProject() = put("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
     val name = call.receiveParameters()["name"]
-    application.database.projects.run {
+    database.projects.run {
         val project = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
         update(id = id, name = name ?: project.name)
     }
@@ -126,6 +125,6 @@ private fun Route.updateProject() = put("{id}") {
  */
 private fun Route.deleteProject() = delete("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
-    application.database.projects.delete(id = id)
+    database.projects.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
 }

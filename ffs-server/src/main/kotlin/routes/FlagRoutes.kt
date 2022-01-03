@@ -87,7 +87,8 @@ private fun Route.createFlag() = post {
     val projectId = params.getOrFail<Long>("project_id")
     val name = params.getOrFail("name")
     val rule = params.getOrFail("rule")
-    val id = application.database.capturingLastInsertId {
+    application
+    val id = database.capturingLastInsertId {
         flags.insert(project_id = projectId, name = name, rule = rule)
     }
     call.run {
@@ -108,7 +109,7 @@ private fun Route.createFlag() = post {
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlags() = get {
     val projectId = call.principal<ProjectPrincipal>()!!.id
-    val query = application.database.flags.selectByProject(projectId)
+    val query = database.flags.selectByProject(projectId)
     val sse = call.request.acceptItems().any { ContentType.Text.EventStream.match(it.value) }
     if (sse) {
         val channel = produce {
@@ -140,7 +141,7 @@ private fun Route.getFlags() = get {
  */
 private fun Route.getFlag() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
-    val project = application.database.flags.select(id = id).executeAsOneOrNull()
+    val project = database.flags.select(id = id).executeAsOneOrNull()
         ?: throw NotFoundException()
     call.respond(HttpStatusCode.OK, project)
 }
@@ -161,7 +162,7 @@ private fun Route.updateFlag() = put("{id}") {
     val params = call.receiveParameters()
     val name = params["name"]
     val rule = params["rule"]
-    application.database.flags.run {
+    database.flags.run {
         val flag = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
         update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
     }
@@ -179,7 +180,7 @@ private fun Route.updateFlag() = put("{id}") {
  */
 private fun Route.archiveFlag() = put("{id}$PATH_ARCHIVE") {
     val id = call.parameters.getOrFail<Long>("id")
-    application.database.flags.archive(id = id)
+    database.flags.archive(id = id)
     call.respond(HttpStatusCode.NoContent)
 }
 
@@ -194,7 +195,7 @@ private fun Route.archiveFlag() = put("{id}$PATH_ARCHIVE") {
  */
 private fun Route.unarchiveFlag() = delete("{id}$PATH_ARCHIVE") {
     val id = call.parameters.getOrFail<Long>("id")
-    application.database.flags.unarchive(id = id)
+    database.flags.unarchive(id = id)
     call.respond(HttpStatusCode.NoContent)
 }
 
@@ -214,7 +215,7 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
     val projectId = call.principal<ProjectPrincipal>()!!.id
     val env = json.decodeFromString<JsonObject>(queryParameters.getOrFail<String>("env"))
 
-    val query = application.database.flags.selectByProject(projectId)
+    val query = database.flags.selectByProject(projectId)
     val sse = call.request.acceptItems().any { ContentType.Text.EventStream.match(it.value) }
     if (sse) {
         val channel = produce {

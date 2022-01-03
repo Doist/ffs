@@ -6,7 +6,6 @@ import doist.ffs.plugins.database
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
-import io.ktor.server.application.application
 import io.ktor.server.application.call
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.receiveParameters
@@ -49,7 +48,7 @@ fun Application.installOrganizationRoutes() {
  */
 private fun Route.createOrganization() = post {
     val name = call.receiveParameters().getOrFail("name")
-    val id = application.database.capturingLastInsertId {
+    val id = database.capturingLastInsertId {
         organizations.insert(name)
     }
     call.run {
@@ -64,7 +63,7 @@ private fun Route.createOrganization() = post {
  * On success, responds `200 OK` with a JSON array containing all organizations.
  */
 private fun Route.getOrganizations() = get {
-    val organizations = application.database.organizations.selectAll().executeAsList()
+    val organizations = database.organizations.selectAll().executeAsList()
     call.respond(HttpStatusCode.OK, organizations)
 }
 
@@ -79,7 +78,7 @@ private fun Route.getOrganizations() = get {
  */
 private fun Route.getOrganization() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
-    val organization = application.database.organizations.select(id = id).executeAsOneOrNull()
+    val organization = database.organizations.select(id = id).executeAsOneOrNull()
         ?: throw NotFoundException()
     call.respond(HttpStatusCode.OK, organization)
 }
@@ -97,7 +96,7 @@ private fun Route.getOrganization() = get("{id}") {
 private fun Route.updateOrganization() = put("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
     val name = call.receiveParameters()["name"]
-    application.database.organizations.run {
+    database.organizations.run {
         val organization = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
         update(id = id, name = name ?: organization.name)
     }
@@ -115,6 +114,6 @@ private fun Route.updateOrganization() = put("{id}") {
  */
 private fun Route.deleteOrganization() = delete("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
-    application.database.organizations.delete(id = id)
+    database.organizations.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
 }

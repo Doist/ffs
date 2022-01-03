@@ -4,11 +4,14 @@ import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import doist.ffs.db.Database
 import io.ktor.events.Events
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.ApplicationPlugin
 import io.ktor.server.application.ApplicationStopped
+import io.ktor.server.application.call
 import io.ktor.server.application.log
 import io.ktor.server.application.plugin
 import io.ktor.util.AttributeKey
+import io.ktor.util.pipeline.PipelineContext
 import org.slf4j.Logger
 
 /**
@@ -40,5 +43,8 @@ class Database(log: Logger, monitor: Events, configuration: Configuration) {
     }
 }
 
-val Application.database: doist.ffs.Database
+inline val Application.database: doist.ffs.Database
     get() = plugin(Database).instance
+
+inline val PipelineContext<*, ApplicationCall>.database: doist.ffs.Database
+    get() = call.application.database
