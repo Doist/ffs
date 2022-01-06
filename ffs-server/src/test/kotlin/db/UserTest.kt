@@ -35,6 +35,14 @@ internal class UserTest {
     }
 
     @Test
+    fun testSelectByEmail(): Unit = testDatabase.run {
+        users.insert(name = NAME, email = EMAIL, password = PASSWORD)
+        val user = users.selectByEmail(EMAIL).executeAsOne()
+        assert(user.name == NAME)
+        assert(user.email == EMAIL)
+    }
+
+    @Test
     fun testSelectByOrganization(): Unit = testDatabase.run {
         usersOrganizations.insert(
             user_id = capturingLastInsertId {
@@ -57,6 +65,15 @@ internal class UserTest {
     }
 
     @Test
+    fun testSelectPasswordById(): Unit = testDatabase.run {
+        val id = capturingLastInsertId {
+            users.insert(name = NAME, email = EMAIL, password = PASSWORD)
+        }
+        val password = users.selectPasswordById(id).executeAsOne()
+        assert(password == PASSWORD)
+    }
+
+    @Test
     fun testUpdateName(): Unit = testDatabase.users.run {
         val id = testDatabase.capturingLastInsertId {
             insert(name = NAME, email = EMAIL, password = PASSWORD)
@@ -71,19 +88,9 @@ internal class UserTest {
         val id = testDatabase.capturingLastInsertId {
             insert(name = NAME, email = EMAIL, password = PASSWORD)
         }
-        updateEmail(id = id, email = EMAIL_OTHER, current_password = PASSWORD)
+        updateEmail(id = id, email = EMAIL_OTHER)
         val user = select(id).executeAsOne()
         assert(user.email == EMAIL_OTHER)
-    }
-
-    @Test
-    fun testUpdateEmailInvalidPassword(): Unit = testDatabase.users.run {
-        val id = testDatabase.capturingLastInsertId {
-            insert(name = NAME, email = EMAIL, password = PASSWORD)
-        }
-        updateEmail(id = id, email = EMAIL_OTHER, current_password = PASSWORD_OTHER)
-        val user = select(id).executeAsOne()
-        assert(user.email == EMAIL)
     }
 
     @Test
@@ -91,29 +98,8 @@ internal class UserTest {
         val id = testDatabase.capturingLastInsertId {
             insert(name = NAME, email = EMAIL, password = PASSWORD)
         }
-        var user = selectByEmailPassword(email = EMAIL, password = PASSWORD).executeAsOne()
-        assert(user.id == id)
-        updatePassword(id = id, current_password = PASSWORD, password = PASSWORD_OTHER)
-        user = selectByEmailPassword(email = EMAIL, password = PASSWORD_OTHER).executeAsOne()
-        assert(user.id == id)
-    }
-
-    @Test
-    fun testUpdatePasswordInvalidPassword(): Unit = testDatabase.users.run {
-        val id = testDatabase.capturingLastInsertId {
-            insert(name = NAME, email = EMAIL, password = PASSWORD)
-        }
-        var user = selectByEmailPassword(
-            email = EMAIL,
-            password = PASSWORD_OTHER
-        ).executeAsOneOrNull()
-        assert(user == null)
-        updatePassword(id = id, password = PASSWORD_OTHER, current_password = PASSWORD_OTHER)
-        user = selectByEmailPassword(
-            email = EMAIL,
-            password = PASSWORD_OTHER
-        ).executeAsOneOrNull()
-        assert(user == null)
+        updatePassword(id = id, password = PASSWORD_OTHER)
+        assert(selectPasswordById(id).executeAsOne() == PASSWORD_OTHER)
     }
 
     @Test

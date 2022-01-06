@@ -17,8 +17,8 @@ BEGIN
     WHERE id = old.id;
 END;
 
-CREATE INDEX index_user_email_password
-ON user(email, password);
+CREATE INDEX index_user_email
+ON user(email);
 
 insert:
 INSERT INTO user(name, email, password)
@@ -29,10 +29,25 @@ SELECT id, name, email, created_at, updated_at
 FROM user
 WHERE id = ?;
 
-selectByEmailPassword:
+selectById:
 SELECT id, name, email, created_at, updated_at
 FROM user
-WHERE email = ? AND password = ?;
+WHERE id = ?;
+
+selectByEmail:
+SELECT id, name, email, created_at, updated_at
+FROM user
+WHERE email = ?;
+
+selectIdByEmail:
+SELECT id
+FROM user
+WHERE email = ?;
+
+selectPasswordById:
+SELECT password
+FROM user
+WHERE id = ?;
 
 selectByOrganization:
 SELECT id, name, email, created_at, updated_at, organization_id, role
@@ -47,12 +62,12 @@ WHERE id = ?;
 updateEmail:
 UPDATE user
 SET email = ?
-WHERE id = ? AND password = :current_password;
+WHERE id = ?;
 
 updatePassword:
 UPDATE user
 SET password = ?
-WHERE id = ? AND password = :current_password;
+WHERE id = ?;
 
 delete:
 DELETE FROM user

@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.sqldelight.driver.sqlite)
     implementation(libs.sqldelight.coroutines.extensions)
     implementation(libs.kotlinx.datetime)
+    implementation(libs.bouncycastle)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.ktor.server.test.host)

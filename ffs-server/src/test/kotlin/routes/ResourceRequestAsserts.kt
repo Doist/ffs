@@ -38,13 +38,13 @@ inline fun TestApplicationEngine.assertResourceCreates(
     args: List<Pair<String, String?>> = emptyList(),
 ) = with(
     handleRequest(HttpMethod.Post, uri) {
+        token?.let {
+            addHeader(HttpHeaders.Authorization, "${AuthScheme.Bearer} $it")
+        }
         addHeader(
             HttpHeaders.ContentType,
             ContentType.Application.FormUrlEncoded.toString()
         )
-        token?.let {
-            addHeader(HttpHeaders.Authorization, "${AuthScheme.Bearer} $it")
-        }
         setBody(args.formUrlEncode())
     }
 ) {
@@ -56,12 +56,21 @@ inline fun TestApplicationEngine.assertResourceCreates(
 
 inline fun <reified T> TestApplicationEngine.assertResource(
     uri: String,
+    method: HttpMethod = HttpMethod.Get,
+    args: List<Pair<String, String?>>? = null,
     token: String? = null,
     block: (T) -> Unit = {},
 ) = with(
-    handleRequest(HttpMethod.Get, uri) {
+    handleRequest(method, uri) {
         token?.let {
             addHeader(HttpHeaders.Authorization, "${AuthScheme.Bearer} $it")
+        }
+        args?.let {
+            addHeader(
+                HttpHeaders.ContentType,
+                ContentType.Application.FormUrlEncoded.toString()
+            )
+            setBody(args.formUrlEncode())
         }
     }
 ) {
@@ -73,45 +82,45 @@ inline fun <reified T> TestApplicationEngine.assertResource(
 
 inline fun TestApplicationEngine.assertResourceUpdates(
     uri: String,
+    args: List<Pair<String, String?>>? = null,
     token: String? = null,
-    args: List<Pair<String, String?>>,
-) = with(
-    handleRequest(HttpMethod.Put, uri) {
-        addHeader(
-            HttpHeaders.ContentType,
-            ContentType.Application.FormUrlEncoded.toString()
-        )
-        token?.let {
-            addHeader(HttpHeaders.Authorization, "${AuthScheme.Bearer} $it")
-        }
-        setBody(args.formUrlEncode())
-    }
-) {
-    assert(response.status() == HttpStatusCode.NoContent)
-}
+) = assertStatus(
+    uri = uri,
+    method = HttpMethod.Put,
+    args = args,
+    token = token,
+    status = HttpStatusCode.NoContent
+)
 
 inline fun TestApplicationEngine.assertResourceDeletes(
     uri: String,
+    args: List<Pair<String, String?>>? = null,
     token: String? = null,
-) = with(
-    handleRequest(HttpMethod.Delete, uri) {
-        token?.let {
-            addHeader(HttpHeaders.Authorization, "${AuthScheme.Bearer} $it")
-        }
-    }
-) {
-    assert(response.status() == HttpStatusCode.NoContent)
-}
+) = assertStatus(
+    uri = uri,
+    method = HttpMethod.Delete,
+    args = args,
+    token = token,
+    status = HttpStatusCode.NoContent
+)
 
 inline fun TestApplicationEngine.assertStatus(
     uri: String,
     method: HttpMethod = HttpMethod.Get,
+    args: List<Pair<String, String?>>? = null,
     token: String? = null,
     status: HttpStatusCode,
 ) = with(
     handleRequest(method, uri) {
         token?.let {
             addHeader(HttpHeaders.Authorization, "${AuthScheme.Bearer} $it")
+        }
+        args?.let {
+            addHeader(
+                HttpHeaders.ContentType,
+                ContentType.Application.FormUrlEncoded.toString()
+            )
+            setBody(args.formUrlEncode())
         }
     }
 ) {

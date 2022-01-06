@@ -10,6 +10,7 @@ import doist.ffs.plugins.database
 import doist.ffs.routes.installFlagRoutes
 import doist.ffs.routes.installOrganizationRoutes
 import doist.ffs.routes.installProjectRoutes
+import doist.ffs.routes.installUserRoutes
 import doist.ffs.serialization.cbor
 import doist.ffs.serialization.json
 import io.ktor.http.ContentType
@@ -61,4 +62,5 @@ fun Application.module() {
     installOrganizationRoutes()
     installProjectRoutes()
     installFlagRoutes()
+    installUserRoutes()
 }
