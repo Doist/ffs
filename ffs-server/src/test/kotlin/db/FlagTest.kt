@@ -18,10 +18,6 @@ internal class FlagTest {
     @Test
     fun testInsertValid(): Unit = testDatabase.flags.run {
         insert(project_id = projectId, name = NAME, rule = RULE)
-        val flag = selectByProject(projectId).executeAsList()[0]
-        assert(flag.project_id == projectId)
-        assert(flag.name == NAME)
-        assert(flag.rule == RULE)
     }
 
     @Test

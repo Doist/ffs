@@ -1,0 +1,47 @@
+import doist.ffs.db.RoleEnum;
+
+CREATE TABLE role(
+    user_id INTEGER NOT NULL,
+    organization_id INTEGER NOT NULL,
+    role TEXT AS RoleEnum NOT NULL DEFAULT 'USER',
+    FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY(organization_id) REFERENCES organization(id) ON DELETE CASCADE,
+    PRIMARY KEY(user_id, organization_id)
+);
+
+CREATE TRIGGER trigger_user_organization_updated_at
+AFTER UPDATE ON role
+BEGIN
+    UPDATE user
+    SET updated_at = CURRENT_TIMESTAMP
+    WHERE id = old.user_id;
+END;
+
+CREATE INDEX index_user_organization_user_id_organization_id
+ON role(user_id, organization_id);
+
+insert:
+INSERT INTO role(user_id, organization_id, role)
+VALUES (?, ?, ?);
+
+selectOrganizationByUser:
+SELECT organization.id, organization.name, role.role
+FROM organization
+INNER JOIN role ON organization.id = role.organization_id
+WHERE role.user_id = ?;
+
+selectOrganizationIdProjectIdByUser:
+SELECT organization.id, project.id AS project_id, role.role
+FROM organization
+LEFT JOIN project ON organization.id = project.organization_id
+INNER JOIN role ON organization.id = role.organization_id
+WHERE role.user_id = ?;
+
+update:
+UPDATE role
+SET role = ?
+WHERE user_id = ? AND organization_id = ?;
+
+delete:
+DELETE FROM role
+WHERE user_id = ? AND organization_id = ?;

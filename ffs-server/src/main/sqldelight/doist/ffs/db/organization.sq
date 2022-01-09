@@ -19,10 +19,6 @@ insert:
 INSERT INTO organization(name)
 VALUES (?);
 
-selectAll:
-SELECT *
-FROM organization;
-
 select:
 SELECT *
 FROM organization

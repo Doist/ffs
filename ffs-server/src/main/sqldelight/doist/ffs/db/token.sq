@@ -9,8 +9,8 @@ CREATE TABLE token (
     FOREIGN KEY(project_id) REFERENCES project(id) ON DELETE CASCADE
 );
 
-CREATE INDEX index_token_token
-ON token(token);
+CREATE INDEX index_token_project_id_token
+ON token(project_id, token);
 
 CREATE INDEX index_token_project_id
 ON token(project_id);
@@ -25,9 +25,10 @@ FROM token
 WHERE project_id = ?;
 
 selectProjectIdByToken:
-SELECT project_id
+SELECT project.id
 FROM token
-WHERE token = ?;
+INNER JOIN project
+WHERE token.project_id = project.id AND token = ?;
 
 delete:
 DELETE FROM token

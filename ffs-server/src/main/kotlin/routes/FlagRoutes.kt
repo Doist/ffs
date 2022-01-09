@@ -4,7 +4,8 @@ package doist.ffs.routes
 
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
-import doist.ffs.auth.ProjectPrincipal
+import doist.ffs.auth.Permission
+import doist.ffs.auth.TokenPrincipal
 import doist.ffs.db.Flag
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags
@@ -20,6 +21,7 @@ import io.ktor.server.application.application
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.principal
+import io.ktor.server.plugins.MissingRequestParameterException
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.acceptItems
 import io.ktor.server.request.receiveParameters
@@ -54,17 +56,20 @@ fun PATH_FLAG(id: Any) = "$PATH_FLAGS/$id"
 fun Application.installFlagRoutes() {
     routing {
         route(PATH_FLAGS) {
-            createFlag()
-            getFlag()
-            updateFlag()
+            authenticate("session") {
+                createFlag()
+                getFlag()
+                updateFlag()
 
-            archiveFlag()
-            unarchiveFlag()
+                archiveFlag()
+                unarchiveFlag()
+            }
 
-            authenticate("token-read") {
+            authenticate("session", "token") {
                 getFlags()
             }
-            authenticate("token-eval") {
+
+            authenticate("token") {
                 getFlagsEval()
             }
         }
@@ -87,7 +92,9 @@ private fun Route.createFlag() = post {
     val projectId = params.getOrFail<Long>("project_id")
     val name = params.getOrFail("name")
     val rule = params.getOrFail("rule")
-    application
+
+    authorizeForProject(id = projectId, permission = Permission.WRITE)
+
     val id = database.capturingLastInsertId {
         flags.insert(project_id = projectId, name = name, rule = rule)
     }
@@ -108,7 +115,13 @@ private fun Route.createFlag() = post {
  */
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlags() = get {
-    val projectId = call.principal<ProjectPrincipal>()!!.id
+    val projectId = call.request.queryParameters["project_id"]?.toLong()
+        // Exceptional case, where endpoint is used from client SDK without parameter.
+        ?: call.principal<TokenPrincipal>()?.projectId
+        ?: throw MissingRequestParameterException("project_id")
+
+    authorizeForProject(id = projectId, permission = Permission.READ)
+
     val query = database.flags.selectByProject(projectId)
     val sse = call.request.acceptItems().any { ContentType.Text.EventStream.match(it.value) }
     if (sse) {
@@ -141,9 +154,11 @@ private fun Route.getFlags() = get {
  */
 private fun Route.getFlag() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
-    val project = database.flags.select(id = id).executeAsOneOrNull()
-        ?: throw NotFoundException()
-    call.respond(HttpStatusCode.OK, project)
+    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+
+    authorizeForProject(id = flag.project_id, permission = Permission.READ)
+
+    call.respond(HttpStatusCode.OK, flag)
 }
 
 /**
@@ -162,10 +177,11 @@ private fun Route.updateFlag() = put("{id}") {
     val params = call.receiveParameters()
     val name = params["name"]
     val rule = params["rule"]
-    database.flags.run {
-        val flag = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
-        update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
-    }
+
+    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+    authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
+
+    database.flags.update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
     call.respond(HttpStatusCode.NoContent)
 }
 
@@ -180,6 +196,10 @@ private fun Route.updateFlag() = put("{id}") {
  */
 private fun Route.archiveFlag() = put("{id}$PATH_ARCHIVE") {
     val id = call.parameters.getOrFail<Long>("id")
+
+    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+    authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
+
     database.flags.archive(id = id)
     call.respond(HttpStatusCode.NoContent)
 }
@@ -195,6 +215,10 @@ private fun Route.archiveFlag() = put("{id}$PATH_ARCHIVE") {
  */
 private fun Route.unarchiveFlag() = delete("{id}$PATH_ARCHIVE") {
     val id = call.parameters.getOrFail<Long>("id")
+
+    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+    authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
+
     database.flags.unarchive(id = id)
     call.respond(HttpStatusCode.NoContent)
 }
@@ -212,8 +236,13 @@ private fun Route.unarchiveFlag() = delete("{id}$PATH_ARCHIVE") {
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlagsEval() = get(PATH_EVAL) {
     val queryParameters = call.request.queryParameters
-    val projectId = call.principal<ProjectPrincipal>()!!.id
+    val projectId = queryParameters["project_id"]?.toLong()
+        // Exceptional case, where endpoint is used from client SDK without parameter.
+        ?: call.principal<TokenPrincipal>()?.projectId
+        ?: throw MissingRequestParameterException("project_id")
     val env = json.decodeFromString<JsonObject>(queryParameters.getOrFail<String>("env"))
+
+    authorizeForProject(id = projectId, permission = Permission.EVAL)
 
     val query = database.flags.selectByProject(projectId)
     val sse = call.request.acceptItems().any { ContentType.Text.EventStream.match(it.value) }

@@ -8,69 +8,49 @@ internal class OrganizationTest {
     private val testDatabase = Database(JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY))
 
     @Test
-    fun testInsertValid(): Unit = testDatabase.organizations.run {
-        insert(name = NAME)
-        val organization = selectAll().executeAsList()[0]
-        assert(organization.name == NAME)
+    fun testInsertValid(): Unit = testDatabase.run {
+        organizations.insert(name = ORG_NAME)
     }
 
     @Test
-    fun testInsertDuplicatedName(): Unit = testDatabase.organizations.run {
-        insert(name = NAME)
+    fun testInsertDuplicatedName(): Unit = testDatabase.run {
+        organizations.insert(name = ORG_NAME)
         assertFails {
-            insert(name = NAME)
+            organizations.insert(name = ORG_NAME)
         }
     }
 
     @Test
-    fun testSelectAll(): Unit = testDatabase.organizations.run {
-        val namePrefix = "$NAME-"
-        for (i in 0..9) {
-            insert(name = "$namePrefix-$i")
+    fun testSelect(): Unit = testDatabase.run {
+        val id = capturingLastInsertId {
+            organizations.insert(name = ORG_NAME)
         }
-        val organizations = selectAll().executeAsList()
-        assert(organizations.size == 10)
-        organizations.forEachIndexed { index, organization ->
-            assert(organization.name.startsWith(namePrefix))
-            assert(
-                organizations.subList(index + 1, organizations.size).none {
-                    organization.name == it.name
-                }
-            )
-        }
+        val organization = organizations.select(id = id).executeAsOne()
+        assert(organization.name == ORG_NAME)
     }
 
     @Test
-    fun testSelect(): Unit = testDatabase.organizations.run {
-        val id = testDatabase.capturingLastInsertId {
-            insert(name = NAME)
+    fun testUpdateName(): Unit = testDatabase.run {
+        val id = capturingLastInsertId {
+            organizations.insert(name = ORG_NAME)
         }
-        val organization = select(id).executeAsOne()
-        assert(organization.name == NAME)
+        organizations.update(id = id, name = ORG_NAME_UPDATED)
+        val organization = organizations.select(id = id).executeAsOne()
+        assert(organization.name == ORG_NAME_UPDATED)
     }
 
     @Test
-    fun testUpdateName(): Unit = testDatabase.organizations.run {
-        val id = testDatabase.capturingLastInsertId {
-            insert(name = NAME)
+    fun testDelete(): Unit = testDatabase.run {
+        val id = capturingLastInsertId {
+            organizations.insert(name = ORG_NAME)
         }
-        update(id = id, name = NAME_UPDATED)
-        val organization = select(id).executeAsOne()
-        assert(organization.name == NAME_UPDATED)
-    }
-
-    @Test
-    fun testDelete(): Unit = testDatabase.organizations.run {
-        val id = testDatabase.capturingLastInsertId {
-            insert(name = NAME)
-        }
-        delete(id)
-        val organization = select(id).executeAsOneOrNull()
+        organizations.delete(id)
+        val organization = organizations.select(id = id).executeAsOneOrNull()
         assert(organization == null)
     }
 
     companion object {
-        private const val NAME = "test-organization"
-        private const val NAME_UPDATED = "new-test-organization"
+        private const val ORG_NAME = "test-organization"
+        private const val ORG_NAME_UPDATED = "new-test-organization"
     }
 }

@@ -1,12 +1,17 @@
 package doist.ffs.routes
 
+import doist.ffs.auth.Permission
+import doist.ffs.auth.UserPrincipal
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.organizations
+import doist.ffs.db.roles
 import doist.ffs.plugins.database
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.principal
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.header
@@ -28,11 +33,13 @@ fun PATH_ORGANIZATION(id: Any) = "$PATH_ORGANIZATIONS/$id"
 fun Application.installOrganizationRoutes() {
     routing {
         route(PATH_ORGANIZATIONS) {
-            createOrganization()
-            getOrganizations()
-            getOrganization()
-            updateOrganization()
-            deleteOrganization()
+            authenticate("session") {
+                createOrganization()
+                getOrganizations()
+                getOrganization()
+                updateOrganization()
+                deleteOrganization()
+            }
         }
     }
 }
@@ -48,6 +55,7 @@ fun Application.installOrganizationRoutes() {
  */
 private fun Route.createOrganization() = post {
     val name = call.receiveParameters().getOrFail("name")
+
     val id = database.capturingLastInsertId {
         organizations.insert(name)
     }
@@ -58,12 +66,16 @@ private fun Route.createOrganization() = post {
 }
 
 /**
- * Lists existing organizations.
+ * Lists organizations for the current user.
  *
  * On success, responds `200 OK` with a JSON array containing all organizations.
  */
 private fun Route.getOrganizations() = get {
-    val organizations = database.organizations.selectAll().executeAsList()
+    val id = call.principal<UserPrincipal>()!!.id
+
+    authorizeForUser(id = id)
+
+    val organizations = database.roles.selectOrganizationByUser(user_id = id).executeAsList()
     call.respond(HttpStatusCode.OK, organizations)
 }
 
@@ -78,6 +90,9 @@ private fun Route.getOrganizations() = get {
  */
 private fun Route.getOrganization() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
+
+    authorizeForOrganization(id, Permission.READ)
+
     val organization = database.organizations.select(id = id).executeAsOneOrNull()
         ?: throw NotFoundException()
     call.respond(HttpStatusCode.OK, organization)
@@ -95,7 +110,11 @@ private fun Route.getOrganization() = get("{id}") {
  */
 private fun Route.updateOrganization() = put("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
-    val name = call.receiveParameters()["name"]
+    val params = call.receiveParameters()
+    val name = params["name"]
+
+    authorizeForOrganization(id, Permission.WRITE)
+
     database.organizations.run {
         val organization = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
         update(id = id, name = name ?: organization.name)
@@ -114,6 +133,9 @@ private fun Route.updateOrganization() = put("{id}") {
  */
 private fun Route.deleteOrganization() = delete("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
+
+    authorizeForOrganization(id, Permission.DELETE)
+
     database.organizations.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
 }

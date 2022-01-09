@@ -2,24 +2,24 @@
 
 package doist.ffs.db
 
+import doist.ffs.auth.Permission
 import java.util.zip.CRC32
 import kotlin.random.Random
 import kotlin.random.nextULong
 
-enum class TokenScope(val letter: Char) {
-    SCOPE_READ('r'),
-    SCOPE_EVAL('x');
-
-    /**
-     * Returns true if [token] is of this [TokenScope].
-     */
-    fun includes(token: String) = token.startsWith("ffs${letter}_")
-
-    companion object {
-        val VALUES = values()
-        val LETTERS = VALUES.map { it.letter }
+private val Permission.tokenChar: Char
+    get() = when (this) {
+        Permission.READ -> 'r'
+        Permission.EVAL -> 'x'
+        else -> throw IllegalArgumentException("No tokens for permission $this")
     }
-}
+
+/**
+ * Returns the [Permission] for [token], or `null` if none is applicable.
+ */
+fun Permission.Companion.fromToken(token: String) = Permission.values().firstOrNull {
+    token.startsWith("ffs${it.tokenChar}_")
+} ?: throw IllegalArgumentException("Invalid token: $token")
 
 object TokenGenerator {
     /**
@@ -30,10 +30,10 @@ object TokenGenerator {
      *
      * Entropy is log2(36/log2(2)) * 48 = ~248 bits. For reference, GitHub tokens have ~178 bits.
      */
-    fun generate(scope: TokenScope) = buildString {
+    fun generate(permission: Permission) = buildString {
         // Prefix with token scope (5 characters).
         append("ffs")
-        append(scope.letter)
+        append(permission.tokenChar)
         append("_")
 
         // Add randomness (48 characters).
@@ -51,7 +51,7 @@ object TokenGenerator {
      */
     fun isFormatValid(token: String): Boolean {
         if (token.length != 60) return false
-        val regex = Regex("(ffs[${TokenScope.LETTERS.joinToString("")}]_[0-9a-z]{48})([0-9a-z]{7})")
+        val regex = Regex("(ffs[rx]_[0-9a-z]{48})([0-9a-z]{7})")
         val match = regex.matchEntire(token) ?: return false
         val (value, crc) = match.destructured
         return crc.toUInt(36) == CRC32().apply { update(value.encodeToByteArray()) }.value.toUInt()

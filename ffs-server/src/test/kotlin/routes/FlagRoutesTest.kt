@@ -1,8 +1,8 @@
 package doist.ffs.routes
 
+import doist.ffs.auth.Permission
 import doist.ffs.db.Flag
 import doist.ffs.db.TokenGenerator
-import doist.ffs.db.TokenScope
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags
 import doist.ffs.db.organizations
@@ -353,8 +353,8 @@ class FlagRoutesTest {
             put("number", 3)
         }
 
-        private val TOKEN_READ = TokenGenerator.generate(TokenScope.SCOPE_READ)
-        private val TOKEN_EVAL = TokenGenerator.generate(TokenScope.SCOPE_EVAL)
+        private val TOKEN_EVAL = TokenGenerator.generate(Permission.EVAL)
+        private val TOKEN_READ = TokenGenerator.generate(Permission.READ)
 
         private fun setupProject(application: Application): Long {
             val organizationId = application.database.capturingLastInsertId {

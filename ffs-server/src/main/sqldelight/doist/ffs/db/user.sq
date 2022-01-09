@@ -49,10 +49,10 @@ SELECT password
 FROM user
 WHERE id = ?;
 
-selectByOrganization:
+selectByOrganizationId:
 SELECT id, name, email, created_at, updated_at, organization_id, role
-FROM user INNER JOIN user_organization ON user.id = user_organization.user_id
-WHERE user_organization.organization_id = ?;
+FROM user INNER JOIN role ON user.id = role.user_id
+WHERE role.organization_id = ?;
 
 updateName:
 UPDATE user

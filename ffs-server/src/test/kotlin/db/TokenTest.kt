@@ -1,6 +1,7 @@
 package doist.ffs.db
 
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
+import doist.ffs.auth.Permission
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFails
 
@@ -22,25 +23,27 @@ internal class TokenTest {
     @Test
     fun testTokenGeneratorFormat() {
         repeat(100) {
-            for (scope in TokenScope.VALUES) {
-                assert(TokenGenerator.isFormatValid(TokenGenerator.generate(scope)))
-            }
+            assert(TokenGenerator.isFormatValid(TokenGenerator.generate(Permission.EVAL)))
+            assert(TokenGenerator.isFormatValid(TokenGenerator.generate(Permission.READ)))
         }
     }
 
     @Test
     fun testTokenGeneratorScope() {
         repeat(100) {
-            for (scope in TokenScope.VALUES) {
-                assert(scope.includes(TokenGenerator.generate(scope)))
-            }
+            assert(
+                Permission.fromToken(TokenGenerator.generate(Permission.EVAL)) == Permission.EVAL
+            )
+            assert(
+                Permission.fromToken(TokenGenerator.generate(Permission.READ)) == Permission.READ
+            )
         }
     }
 
     @Test
     fun testInsertValid(): Unit = testDatabase.tokens.run {
         insert(token = TOKEN_EVAL, project_id = projectId, description = DESCRIPTION)
-        val token = selectByProject(projectId).executeAsList()[0]
+        val token = selectByProject(projectId).executeAsOne()
         assert(token.project_id == projectId)
         assert(token.description == DESCRIPTION)
     }
@@ -105,8 +108,8 @@ internal class TokenTest {
     }
 
     companion object {
-        private val TOKEN_EVAL = TokenGenerator.generate(TokenScope.SCOPE_EVAL)
-        private val TOKEN_READ = TokenGenerator.generate(TokenScope.SCOPE_READ)
+        private val TOKEN_EVAL = TokenGenerator.generate(Permission.EVAL)
+        private val TOKEN_READ = TokenGenerator.generate(Permission.READ)
 
         private const val DESCRIPTION = "test token"
         private const val OTHER_DESCRIPTION = "other test token"

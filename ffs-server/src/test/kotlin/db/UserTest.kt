@@ -2,6 +2,7 @@ package doist.ffs.db
 
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import org.junit.jupiter.api.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertFails
 
 internal class UserTest {
@@ -44,24 +45,25 @@ internal class UserTest {
 
     @Test
     fun testSelectByOrganization(): Unit = testDatabase.run {
-        usersOrganizations.insert(
+        roles.insert(
             user_id = capturingLastInsertId {
                 users.insert(name = NAME, email = EMAIL, password = PASSWORD)
             },
             organization_id = organizationId,
-            role = ROLE_ADMIN
+            role = RoleEnum.ADMIN
         )
-        usersOrganizations.insert(
+        roles.insert(
             user_id = capturingLastInsertId {
                 users.insert(name = NAME_OTHER, email = EMAIL_OTHER, password = PASSWORD)
             },
             organization_id = organizationId,
-            role = ROLE_ADMIN
+            role = RoleEnum.ADMIN
         )
-        val users = users.selectByOrganization(organizationId).executeAsList()
+        val users = users.selectByOrganizationId(organizationId).executeAsList()
         assert(users.size == 2)
         assert(users.map { it.name }.containsAll(listOf(NAME, NAME_OTHER)))
         assert(users.map { it.email }.containsAll(listOf(EMAIL, EMAIL_OTHER)))
+        assertContentEquals(users.map { it.role }, listOf(RoleEnum.ADMIN, RoleEnum.ADMIN))
     }
 
     @Test

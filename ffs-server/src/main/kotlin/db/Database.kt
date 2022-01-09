@@ -11,7 +11,7 @@ val Database.projects get() = projectQueries
 val Database.flags get() = flagQueries
 val Database.tokens get() = tokenQueries
 val Database.users get() = userQueries
-val Database.usersOrganizations get() = user_organizationQueries
+val Database.roles get() = roleQueries
 
 /**
  * Runs [block], typically an insert, and returns the id of the last inserted row.
@@ -40,8 +40,10 @@ internal fun Database(driver: SqlDriver, log: Logger? = null): Database {
         Database.Schema.migrate(driver, oldVersion, newVersion)
         driver.execute(null, "PRAGMA user_version=$newVersion", 0)
     }
+
     // Enable foreign key support.
     driver.execute(null, "PRAGMA foreign_keys=ON", 0)
+
     // Instantiate and return database.
     return Database(
         driver = driver,
@@ -50,10 +52,16 @@ internal fun Database(driver: SqlDriver, log: Logger? = null): Database {
         flagAdapter = Flag.Adapter(instantAdapter, instantAdapter, instantAdapter),
         tokenAdapter = Token.Adapter(instantAdapter),
         userAdapter = User.Adapter(instantAdapter, instantAdapter),
+        roleAdapter = Role.Adapter(roleAdapter),
     )
 }
 
 private val instantAdapter = object : ColumnAdapter<Instant, Long> {
     override fun decode(databaseValue: Long) = Instant.fromEpochSeconds(databaseValue, 0)
     override fun encode(value: Instant) = value.epochSeconds
+}
+
+private val roleAdapter = object : ColumnAdapter<RoleEnum, String> {
+    override fun decode(databaseValue: String): RoleEnum = RoleEnum.valueOf(databaseValue)
+    override fun encode(value: RoleEnum): String = value.toString()
 }

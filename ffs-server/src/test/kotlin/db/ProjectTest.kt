@@ -13,62 +13,59 @@ internal class ProjectTest {
     }
 
     @Test
-    fun testInsertValid(): Unit = testDatabase.projects.run {
-        insert(organization_id = organizationId, name = NAME)
-        val project = selectByOrganization(organizationId).executeAsList()[0]
+    fun testInsertValid(): Unit = testDatabase.run {
+        projects.insert(organization_id = organizationId, name = NAME)
+    }
+
+    @Test
+    fun testInsertDuplicatedName(): Unit = testDatabase.run {
+        projects.insert(organization_id = organizationId, name = NAME)
+        assertFails {
+            projects.insert(organization_id = organizationId, name = NAME)
+        }
+    }
+
+    @Test
+    fun testSelect(): Unit = testDatabase.run {
+        val id = capturingLastInsertId {
+            projects.insert(organization_id = organizationId, name = NAME)
+        }
+        val project = projects.select(id).executeAsOne()
         assert(project.organization_id == organizationId)
         assert(project.name == NAME)
     }
 
     @Test
-    fun testInsertDuplicatedName(): Unit = testDatabase.projects.run {
-        insert(organization_id = organizationId, name = NAME)
-        assertFails {
-            insert(organization_id = organizationId, name = NAME)
-        }
-    }
-
-    @Test
-    fun testSelectByOrganization(): Unit = testDatabase.projects.run {
+    fun testSelectByOrganization(): Unit = testDatabase.run {
         val namePrefix = "$NAME-"
         for (i in 0..9) {
-            insert(organization_id = organizationId, name = "$namePrefix-$i")
+            projects.insert(organization_id = organizationId, name = "$namePrefix-$i")
         }
-        val projects = selectByOrganization(organizationId).executeAsList()
+        val projects = projects.selectByOrganization(organizationId).executeAsList()
         assert(projects.size == 10)
-        projects.forEachIndexed { index, project ->
+        projects.forEachIndexed { i, project ->
             assert(project.name.startsWith(namePrefix))
-            assert(projects.subList(index + 1, projects.size).none { project.name == it.name })
+            assert(projects.subList(i + 1, projects.size).none { project.name == it.name })
         }
     }
 
     @Test
-    fun testSelect(): Unit = testDatabase.projects.run {
-        val id = testDatabase.capturingLastInsertId {
-            insert(organization_id = organizationId, name = NAME)
+    fun testUpdate(): Unit = testDatabase.run {
+        val id = capturingLastInsertId {
+            projects.insert(organization_id = organizationId, name = NAME)
         }
-        val project = select(id).executeAsOne()
-        assert(project.organization_id == organizationId)
-        assert(project.name == NAME)
-    }
-
-    @Test
-    fun testUpdate(): Unit = testDatabase.projects.run {
-        val id = testDatabase.capturingLastInsertId {
-            insert(organization_id = organizationId, name = NAME)
-        }
-        update(id = id, name = NAME_UPDATED)
-        val project = select(id).executeAsOne()
+        projects.update(id = id, name = NAME_UPDATED)
+        val project = projects.select(id).executeAsOne()
         assert(project.name == NAME_UPDATED)
     }
 
     @Test
-    fun testDelete(): Unit = testDatabase.projects.run {
-        val id = testDatabase.capturingLastInsertId {
-            insert(organization_id = organizationId, name = NAME)
+    fun testDelete(): Unit = testDatabase.run {
+        val id = capturingLastInsertId {
+            projects.insert(organization_id = organizationId, name = NAME)
         }
-        delete(id)
-        val project = select(id).executeAsOneOrNull()
+        projects.delete(id)
+        val project = projects.select(id).executeAsOneOrNull()
         assert(project == null)
     }
 
