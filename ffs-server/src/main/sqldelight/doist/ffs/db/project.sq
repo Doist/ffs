@@ -7,7 +7,7 @@ CREATE TABLE project (
     created_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(organization_id) REFERENCES organization(id) ON DELETE CASCADE,
-    UNIQUE(name, organization_id)
+    UNIQUE(organization_id, name)
 );
 
 CREATE TRIGGER trigger_project_updated_at
@@ -17,9 +17,6 @@ BEGIN
     SET updated_at = CURRENT_TIMESTAMP
     WHERE id = old.id;
 END;
-
-CREATE INDEX index_project_organization_id
-ON project(organization_id);
 
 insert:
 INSERT INTO project(organization_id, name)

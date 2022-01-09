@@ -12,9 +12,6 @@ CREATE TABLE token (
 CREATE INDEX index_token_project_id_token
 ON token(project_id, token);
 
-CREATE INDEX index_token_project_id
-ON token(project_id);
-
 insert:
 INSERT INTO token(token, project_id, description)
 VALUES ( ?, ?, ?);
