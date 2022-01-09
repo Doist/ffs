@@ -49,11 +49,6 @@ SELECT password
 FROM user
 WHERE id = ?;
 
-selectByOrganizationId:
-SELECT id, name, email, created_at, updated_at, organization_id, role
-FROM user INNER JOIN role ON user.id = role.user_id
-WHERE role.organization_id = ?;
-
 updateName:
 UPDATE user
 SET name = ?
