@@ -17,9 +17,6 @@ BEGIN
     WHERE id = old.id;
 END;
 
-CREATE INDEX index_user_email
-ON user(email);
-
 insert:
 INSERT INTO user(name, email, password)
 VALUES (?,?,?);

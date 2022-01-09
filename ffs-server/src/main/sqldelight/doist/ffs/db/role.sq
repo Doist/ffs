@@ -17,9 +17,6 @@ BEGIN
     WHERE id = old.user_id;
 END;
 
-CREATE INDEX index_user_organization_user_id_organization_id
-ON role(user_id, organization_id);
-
 insert:
 INSERT INTO role(user_id, organization_id, role)
 VALUES (?, ?, ?);
