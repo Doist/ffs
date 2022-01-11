@@ -1,76 +1,175 @@
 package doist.ffs.routes
 
 import doist.ffs.db.Organization
-import doist.ffs.db.capturingLastInsertId
-import doist.ffs.db.organizations
-import doist.ffs.module
-import doist.ffs.plugins.database
-import io.ktor.server.application.Application
-import io.ktor.server.testing.withTestApplication
+import doist.ffs.db.Project
+import doist.ffs.db.RoleEnum
+import doist.ffs.db.SelectOrganizationByUser
+import doist.ffs.ext.bodyAsJson
+import doist.ffs.ext.setBodyForm
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.RedirectResponseException
+import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.testing.testApplication
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class OrganizationRoutesTest {
     @Test
-    fun testOrganizationCreate() = withTestApplication(Application::module) {
-        assertResourceCreates(uri = PATH_ORGANIZATIONS, args = listOf("name" to NAME))
-        val organizations = application.database.organizations.selectAll().executeAsList()
-        assert(organizations.size == 1)
-        assert(organizations[0].name == NAME)
+    fun testCreate() = testApplication {
+        val client = createUserClient()
+        val createResponse = client.client.post(PATH_ORGANIZATIONS) {
+            setBodyForm("name" to "Test")
+        }
+        assert(createResponse.status == HttpStatusCode.Created)
+        val resource = createResponse.headers[HttpHeaders.Location]
+        assert(resource != null)
+
+        val organization = client.client.get(resource!!).bodyAsJson<Organization>()
+        assert(organization.name == "Test")
     }
 
     @Test
-    fun testOrganizationCreateLocation() = withTestApplication(Application::module) {
-        val location = assertResourceCreates(
-            uri = PATH_ORGANIZATIONS,
-            args = listOf("name" to NAME)
-        )
-        assertResource<Organization>(uri = location)
+    fun testGet() = testApplication {
+        val client = createUserClient()
+        val roles = RoleEnum.values().toList()
+        val ids = roles.map { client.withOrganization(it) }
+
+        val organizations = client.client
+            .get(PATH_ORGANIZATIONS)
+            .bodyAsJson<List<SelectOrganizationByUser>>()
+        assert(ids.size == organizations.size)
+        assert(ids.toSet() == organizations.map { it.id }.toSet())
+        assert(roles.toSet() == organizations.map { it.role }.toSet())
     }
 
     @Test
-    fun testOrganizationCount() = withTestApplication(Application::module) {
-        assertResourceCount<Organization>(uri = PATH_ORGANIZATIONS, count = 0)
-        val id = application.database.capturingLastInsertId {
-            organizations.insert(name = NAME)
+    fun testUpdate() = testApplication {
+        val client = createUserClient()
+        val id = client.withOrganization()
+        var organization = client.client.get(PATH_ORGANIZATION(id)).bodyAsJson<Organization>()
+
+        val name = "${organization.name} updated"
+        client.client.put(PATH_ORGANIZATION(id)) {
+            setBodyForm("name" to name)
         }
-        assertResourceCount<Organization>(uri = PATH_ORGANIZATIONS, count = 1)
-        application.database.organizations.delete(id)
-        assertResourceCount<Organization>(uri = PATH_ORGANIZATIONS, count = 0)
+
+        organization = client.client.get(PATH_ORGANIZATION(id)).bodyAsJson()
+        assert(organization.name == name)
     }
 
     @Test
-    fun testOrganizationRead() = withTestApplication(Application::module) {
-        val id = application.database.capturingLastInsertId {
-            organizations.insert(name = NAME)
+    fun testUserManagement() = testApplication {
+        val client = createUserClient()
+        val roles = RoleEnum.values().toList()
+        assert(roles[0] == RoleEnum.ADMIN)
+        val ids = List(roles.size) { client.withOrganization(RoleEnum.ADMIN) }
+
+        for (i in 1 until roles.size) {
+            client.client.put("${PATH_ORGANIZATION(ids[i - 1])}$PATH_USERS") {
+                setBodyForm("user_id" to client.userId, "role" to roles[i])
+            }
         }
-        assertResource<Organization>(uri = PATH_ORGANIZATION(id)) { organization ->
-            assert(organization.id == id)
-            assert(organization.name == NAME)
+        client.client.delete("${PATH_ORGANIZATION(ids[roles.size - 1])}$PATH_USERS") {
+            setBodyForm("user_id" to client.userId)
+        }
+
+        val organizations = client.client
+            .get(PATH_ORGANIZATIONS)
+            .bodyAsJson<List<SelectOrganizationByUser>>()
+
+        assert(organizations.size == ids.size - 1)
+        assert(roles.drop(1).toSet() == organizations.map { it.role }.toSet())
+        assert(ids.dropLast(1).toSet() == organizations.map { it.id }.toSet())
+    }
+
+    @Test
+    fun testProjectManagement() = testApplication {
+        val client = createUserClient()
+        val organizationId = client.withOrganization()
+        val projectIds = List(2) { client.withProject(organizationId) }
+
+        val projects = client.client
+            .get("${PATH_ORGANIZATION(organizationId)}$PATH_PROJECTS")
+            .bodyAsJson<List<Project>>()
+
+        assertEquals(projectIds.toSet(), projects.map { it.id }.toSet())
+    }
+
+    @Test
+    fun testDelete() = testApplication {
+        val client = createUserClient()
+        val id = client.withOrganization()
+
+        client.client.delete(PATH_ORGANIZATION(id)) {
+            setBodyForm("user_id" to client.userId)
+        }
+
+        assertFailsWith<ClientRequestException> {
+            client.client.get(PATH_ORGANIZATION(id)).bodyAsJson<Organization?>()
         }
     }
 
     @Test
-    fun testOrganizationUpdate() = withTestApplication(Application::module) {
-        val id = application.database.capturingLastInsertId {
-            organizations.insert(name = NAME)
+    fun testIncorrectParams() = testApplication {
+        val client = createUserClient()
+
+        // Nonexistent id.
+        assertFailsWith<ClientRequestException> {
+            client.client.get(PATH_ORGANIZATION(42))
         }
-        assertResourceUpdates(uri = PATH_ORGANIZATION(id), args = listOf("name" to NAME_UPDATED))
-        val organization = application.database.organizations.select(id).executeAsOne()
-        assert(organization.name == NAME_UPDATED)
+        assertFailsWith<ClientRequestException> {
+            client.client.delete(PATH_ORGANIZATION(42))
+        }
+
+        // Missing user_id.
+        val id = client.withOrganization()
+        assertFailsWith<ClientRequestException> {
+            client.client.put("${PATH_ORGANIZATION(id)}$PATH_USERS") {
+                setBodyForm("role" to RoleEnum.USER)
+            }
+        }
+        assertFailsWith<ClientRequestException> {
+            client.client.delete("${PATH_ORGANIZATION(id)}$PATH_USERS")
+        }
+
+        // Missing name.
+        assertFailsWith<ClientRequestException> {
+            client.client.put("${PATH_ORGANIZATION(id)}$PATH_PROJECTS")
+        }
     }
 
     @Test
-    fun testOrganizationDelete() = withTestApplication(Application::module) {
-        val id = application.database.capturingLastInsertId {
-            organizations.insert(name = NAME)
+    fun testUnauthenticatedAccess() = testApplication {
+        val client = createClient {
+            install(HttpCookies)
+            followRedirects = false
         }
-        assertResourceDeletes(uri = PATH_ORGANIZATION(id))
-        val organization = application.database.organizations.select(id).executeAsOneOrNull()
-        assert(organization == null)
-    }
-
-    companion object {
-        private const val NAME = "test-organization"
-        private const val NAME_UPDATED = "new-test-organization"
+        assertFailsWith<RedirectResponseException> {
+            client.post(PATH_ORGANIZATIONS) {
+                setBodyForm("name" to "Test")
+            }
+        }
+        assertFailsWith<RedirectResponseException> {
+            client.get(PATH_ORGANIZATIONS)
+        }
+        val id = createUserClient().withOrganization()
+        assertFailsWith<RedirectResponseException> {
+            client.get(PATH_ORGANIZATION(id))
+        }
+        assertFailsWith<RedirectResponseException> {
+            client.put(PATH_ORGANIZATION(id)) {
+                setBodyForm("name" to "Test")
+            }
+        }
+        assertFailsWith<RedirectResponseException> {
+            client.delete(PATH_ORGANIZATION(id))
+        }
     }
 }

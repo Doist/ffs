@@ -1,197 +1,201 @@
 package doist.ffs.routes
 
-import doist.ffs.auth.Argon2Password
 import doist.ffs.db.SelectById
-import doist.ffs.db.capturingLastInsertId
-import doist.ffs.db.users
-import doist.ffs.module
-import doist.ffs.plugins.database
-import io.ktor.http.HttpMethod
+import doist.ffs.ext.bodyAsJson
+import doist.ffs.ext.setBodyForm
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.client.request.delete
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.Application
-import io.ktor.server.testing.withTestApplication
+import io.ktor.server.testing.testApplication
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 class UserRoutesTest {
     @Test
-    fun testUserRegister() = withTestApplication(Application::module) {
-        assertResourceCreates(
-            uri = "$PATH_USERS/$PATH_REGISTER",
-            args = listOf("name" to NAME, "email" to EMAIL, "password" to PASSWORD)
-        )
-        val user = application.database.users.selectByEmail(EMAIL).executeAsOne()
-        assert(user.name == NAME)
+    fun testRegisterLogin() = testApplication {
+        val client = createClient { }
+
+        // Register a user and verify it was created.
+        val registerResponse = client.post("$PATH_USERS$PATH_REGISTER") {
+            setBodyForm(
+                "name" to "Gonçalo Silva",
+                "email" to "goncalo@doist.com",
+                "password" to "password123"
+            )
+        }
+        assert(registerResponse.status == HttpStatusCode.Created)
+
+        // Login as the user and verify the details match.
+        val loginResponse = client.post("$PATH_USERS$PATH_LOGIN") {
+            setBodyForm("email" to "goncalo@doist.com", "password" to "password123")
+        }
+        assert(loginResponse.status == HttpStatusCode.OK)
+        val user = loginResponse.bodyAsJson<SelectById>()
+        assert(user.name == "Gonçalo Silva")
+        assert(user.email == "goncalo@doist.com")
     }
 
     @Test
-    fun testUserRegisterInvalidEmail() = withTestApplication(Application::module) {
-        assertStatus(
-            uri = "$PATH_USERS/$PATH_REGISTER",
-            method = HttpMethod.Post,
-            args = listOf("name" to NAME, "email" to "goncalo@doist.c", "password" to PASSWORD),
-            status = HttpStatusCode.BadRequest
-        )
-    }
-
-    @Test
-    fun testUserRegisterInvalidPassword() = withTestApplication(Application::module) {
-        assertStatus(
-            uri = "$PATH_USERS/$PATH_REGISTER",
-            method = HttpMethod.Post,
-            args = listOf("name" to NAME, "email" to EMAIL, "password" to "1234567"),
-            status = HttpStatusCode.BadRequest
-        )
-    }
-
-    @Test
-    fun testUserLogin() = withTestApplication(Application::module) {
-        application.database.users.insert(
-            name = NAME,
-            email = EMAIL,
-            password = Argon2Password.encode(PASSWORD)
-        )
-        assertResource<SelectById>(
-            uri = "$PATH_USERS$PATH_LOGIN",
-            method = HttpMethod.Post,
-            args = listOf("email" to EMAIL, "password" to PASSWORD),
-        ) { user ->
-            assert(user.name == NAME)
-            assert(user.email == EMAIL)
+    fun testRegisterInvalidEmail() = testApplication {
+        listOf("goncalo@doist.c", "goncalo@127.0.0.1", "@doist.com").forEach { email ->
+            assertFailsWith<ClientRequestException> {
+                client.post("$PATH_USERS$PATH_REGISTER") {
+                    setBodyForm("name" to "Gonçalo", "email" to email, "password" to "password123")
+                }
+            }
         }
     }
 
     @Test
-    fun testUserLoginInvalid() = withTestApplication(Application::module) {
-        application.database.users.insert(
-            name = NAME,
-            email = EMAIL,
-            password = Argon2Password.encode(PASSWORD)
-        )
-        assertStatus(
-            uri = "$PATH_USERS$PATH_LOGIN",
-            method = HttpMethod.Post,
-            args = listOf("email" to EMAIL, "password" to "124567"),
-            status = HttpStatusCode.Unauthorized
-        )
+    fun testRegisterInvalidPassword() = testApplication {
+        assertFailsWith<ClientRequestException> {
+            client.post("$PATH_USERS$PATH_REGISTER") {
+                setBodyForm(
+                    "name" to "Gonçalo",
+                    "email" to "goncalo@doist.com",
+                    "password" to "1234567"
+                )
+            }
+        }
     }
 
     @Test
-    fun testUserUpdate() = withTestApplication(Application::module) {
-        val id = application.database.capturingLastInsertId {
-            users.insert(name = NAME, email = EMAIL, password = Argon2Password.encode(PASSWORD))
+    fun testUpdate() = testApplication {
+        val client = createClient {
+            install(HttpCookies)
         }
-        assertResourceUpdates(
-            uri = PATH_USER(id),
-            args = listOf("name" to NAME_UDPATED)
-        )
-        var user = application.database.users.selectById(id).executeAsOne()
-        assert(user.name == NAME_UDPATED)
-        assertResourceUpdates(
-            uri = PATH_USER(id),
-            args = listOf("email" to EMAIL_UPDATED, "current_password" to PASSWORD)
-        )
-        user = application.database.users.selectById(id).executeAsOne()
-        assert(user.email == EMAIL_UPDATED)
-        assertResourceUpdates(
-            uri = PATH_USER(id),
-            args = listOf("password" to PASSWORD_UPDATED, "current_password" to PASSWORD)
-        )
+        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+            setBodyForm(
+                "name" to "Gonçalo",
+                "email" to "goncalo@doist.com",
+                "password" to "password123"
+            )
+        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+
+        // Update various user details.
+        client.put(PATH_USER(id)) {
+            setBodyForm("name" to "Gonçalo")
+        }
+        client.put(PATH_USER(id)) {
+            setBodyForm("email" to "goncalo@doist.io", "current_password" to "password123")
+        }
+        client.put(PATH_USER(id)) {
+            setBodyForm("name" to "Gonçalo", "current_password" to "password123")
+        }
+
+        // Login to obtain user info again, and verify it.
+        val loginResponse = client.post("$PATH_USERS$PATH_LOGIN") {
+            setBodyForm("email" to "goncalo@doist.io", "password" to "password123")
+        }
+        val user = loginResponse.bodyAsJson<SelectById>()
+        assert(user.name == "Gonçalo")
+        assert(user.email == "goncalo@doist.io")
     }
 
     @Test
-    fun testUserUpdateInvalidEmail() = withTestApplication(Application::module) {
-        val id = application.database.capturingLastInsertId {
-            users.insert(name = NAME, email = EMAIL, password = Argon2Password.encode(PASSWORD))
+    fun testUpdateEmailInvalid() = testApplication {
+        val client = createClient {
+            install(HttpCookies)
         }
-        assertStatus(
-            uri = PATH_USER(id),
-            method = HttpMethod.Put,
-            args = listOf("email" to "goncalo@doist.c", "current_password" to PASSWORD),
-            status = HttpStatusCode.BadRequest
-        )
+        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+            setBodyForm(
+                "name" to "Gonçalo",
+                "email" to "goncalo@doist.com",
+                "password" to "password123"
+            )
+        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+
+        listOf("goncalo@doist.c", "goncalo@127.0.0.1", "@doist.com").forEach { email ->
+            assertFailsWith<ClientRequestException> {
+                client.put(PATH_USER(id)) {
+                    setBodyForm("email" to email, "current_password" to "password123")
+                }
+            }
+        }
     }
 
     @Test
-    fun testUserUpdateInvalidCurrentPassword() = withTestApplication(Application::module) {
-        val id = application.database.capturingLastInsertId {
-            users.insert(name = NAME, email = EMAIL, password = Argon2Password.encode(PASSWORD))
+    fun testUpdateCurrentPasswordInvalid() = testApplication {
+        val client = createClient {
+            install(HttpCookies)
         }
-        assertStatus(
-            uri = PATH_USER(id),
-            method = HttpMethod.Put,
-            status = HttpStatusCode.UnsupportedMediaType
-        )
-        assertStatus(
-            uri = PATH_USER(id),
-            method = HttpMethod.Put,
-            args = listOf("email" to EMAIL_UPDATED),
-            status = HttpStatusCode.Forbidden
-        )
-        var user = application.database.users.select(id).executeAsOne()
-        assert(user.email != EMAIL_UPDATED)
-        assertStatus(
-            uri = PATH_USER(id),
-            method = HttpMethod.Put,
-            args = listOf("email" to EMAIL_UPDATED, "current_password" to PASSWORD_UPDATED),
-            status = HttpStatusCode.Forbidden
-        )
-        user = application.database.users.select(id).executeAsOne()
-        assert(user.email != EMAIL_UPDATED)
-        assertStatus(
-            uri = PATH_USER(id),
-            method = HttpMethod.Put,
-            args = listOf("password" to PASSWORD_UPDATED),
-            status = HttpStatusCode.Forbidden
-        )
-        assertStatus(
-            uri = PATH_USER(id),
-            method = HttpMethod.Put,
-            args = listOf("password" to PASSWORD_UPDATED, "current_password" to PASSWORD_UPDATED),
-            status = HttpStatusCode.Forbidden
-        )
+        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+            setBodyForm(
+                "name" to "Gonçalo",
+                "email" to "goncalo@doist.com",
+                "password" to "password123"
+            )
+        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+
+        assertFailsWith<ClientRequestException> {
+            client.put(PATH_USER(id)) {
+                setBodyForm("email" to "goncalo@doist.io")
+            }
+        }
+        assertFailsWith<ClientRequestException> {
+            client.put(PATH_USER(id)) {
+                setBodyForm("email" to "goncalo@doist.io", "current_password" to "wrongpassword")
+            }
+        }
+        assertFailsWith<ClientRequestException> {
+            client.put(PATH_USER(id)) {
+                setBodyForm("password" to "newpassword")
+            }
+        }
+        assertFailsWith<ClientRequestException> {
+            client.put(PATH_USER(id)) {
+                setBodyForm("password" to "newpassword", "current_password" to "wrongpassword")
+            }
+        }
     }
 
     @Test
-    fun testUserDelete() = withTestApplication(Application::module) {
-        val id = application.database.capturingLastInsertId {
-            users.insert(name = NAME, email = EMAIL, password = Argon2Password.encode(PASSWORD))
+    fun testDelete() = testApplication {
+        val client = createClient {
+            install(HttpCookies)
         }
-        assertResourceDeletes(
-            uri = PATH_USER(id),
-            args = listOf("current_password" to PASSWORD),
-        )
-        val user = application.database.users.select(id).executeAsOneOrNull()
-        assert(user == null)
+        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+            setBodyForm(
+                "name" to "Gonçalo",
+                "email" to "goncalo@doist.com",
+                "password" to "password123"
+            )
+        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+
+        val deleteResponse = client.delete(PATH_USER(id)) {
+            setBodyForm("current_password" to "password123")
+        }
+        assert(deleteResponse.status == HttpStatusCode.NoContent)
+
+        // Ensure one can't login as a deleted user.
+        assertFailsWith<ClientRequestException> {
+            client.post("$PATH_USERS$PATH_LOGIN") {
+                setBodyForm("email" to "goncalo@doist.com", "password" to "password123")
+            }
+        }
     }
 
     @Test
-    fun testUserDeleteInvalidCurrentPassword() = withTestApplication(Application::module) {
-        val id = application.database.capturingLastInsertId {
-            users.insert(name = NAME, email = EMAIL, password = Argon2Password.encode(PASSWORD))
+    fun testDeleteCurrentPasswordInvalid() = testApplication {
+        val client = createClient {
+            install(HttpCookies)
         }
-        assertStatus(
-            uri = PATH_USER(id),
-            method = HttpMethod.Delete,
-            status = HttpStatusCode.UnsupportedMediaType
-        )
-        var user = application.database.users.select(id).executeAsOneOrNull()
-        assert(user != null)
-        assertStatus(
-            uri = PATH_USER(id),
-            method = HttpMethod.Delete,
-            args = listOf("current_password" to PASSWORD_UPDATED),
-            status = HttpStatusCode.Forbidden
-        )
-        user = application.database.users.select(id).executeAsOneOrNull()
-        assert(user != null)
-    }
+        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+            setBodyForm(
+                "name" to "Gonçalo",
+                "email" to "goncalo@doist.com",
+                "password" to "password123"
+            )
+        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
 
-    companion object {
-        private const val NAME = "Gonçalo"
-        private const val NAME_UDPATED = "Gonçalo Silva"
-        private const val EMAIL = "goncalo@doist.com"
-        private const val EMAIL_UPDATED = "goncalo@doist.io"
-        private const val PASSWORD = "password123"
-        private const val PASSWORD_UPDATED = "password1234"
+        assertFailsWith<ClientRequestException> {
+            client.delete(PATH_USER(id)) {
+                setBodyForm("current_password" to "wrongpassword")
+            }
+        }
     }
 }

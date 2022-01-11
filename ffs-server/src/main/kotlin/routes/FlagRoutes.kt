@@ -55,22 +55,32 @@ fun PATH_FLAG(id: Any) = "$PATH_FLAGS/$id"
 
 fun Application.installFlagRoutes() {
     routing {
-        route(PATH_FLAGS) {
+        route("$PATH_PROJECTS/{id}/$PATH_FLAGS") {
             authenticate("session") {
                 createFlag()
-                getFlag()
-                updateFlag()
-
-                archiveFlag()
-                unarchiveFlag()
-            }
-
-            authenticate("session", "token") {
                 getFlags()
             }
 
             authenticate("token") {
+                getFlags()
+            }
+        }
+
+        route(PATH_FLAGS) {
+            authenticate("session") {
+                getFlag()
+                updateFlag()
+            }
+
+            authenticate("token") {
                 getFlagsEval()
+            }
+        }
+
+        route("$PATH_FLAGS/{id}/$PATH_ARCHIVE") {
+            authenticate("session") {
+                archiveFlag()
+                unarchiveFlag()
             }
         }
     }
@@ -83,13 +93,12 @@ fun Application.installFlagRoutes() {
  *
  * | Parameter         | Required | Description        |
  * | ----------------- | -------- | ------------------ |
- * | `project_id`      | Yes      | ID of the project. |
  * | `name`            | Yes      | Name of the flag.  |
  * | `rule`            | Yes      | Rule of the flag.  |
  */
 private fun Route.createFlag() = post {
+    val projectId = call.parameters.getOrFail<Long>("id")
     val params = call.receiveParameters()
-    val projectId = params.getOrFail<Long>("project_id")
     val name = params.getOrFail("name")
     val rule = params.getOrFail("rule")
 
@@ -98,25 +107,19 @@ private fun Route.createFlag() = post {
     val id = database.capturingLastInsertId {
         flags.insert(project_id = projectId, name = name, rule = rule)
     }
-    call.run {
-        response.header(HttpHeaders.Location, PATH_FLAG(id))
-        respond(HttpStatusCode.Created)
-    }
+    call.response.header(HttpHeaders.Location, PATH_FLAG(id))
+    call.respond(HttpStatusCode.Created)
 }
 
 /**
  * Lists existing flags for the project.
  *
  * On success, responds `200 OK` with a JSON array containing all flags for the project.
- *
- * | Parameter         | Required | Description        |
- * | ----------------- | -------- | ------------------ |
- * | `project_id`      | Yes      | ID of the project. |
  */
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlags() = get {
-    val projectId = call.request.queryParameters["project_id"]?.toLong()
-        // Exceptional case, where endpoint is used from client SDK without parameter.
+    val projectId = call.parameters["project_id"]?.toLong()
+    // Exceptional case, where endpoint is used with token authentication without parameter.
         ?: call.principal<TokenPrincipal>()?.projectId
         ?: throw MissingRequestParameterException("project_id")
 
@@ -182,44 +185,6 @@ private fun Route.updateFlag() = put("{id}") {
     authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
 
     database.flags.update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
-    call.respond(HttpStatusCode.NoContent)
-}
-
-/**
- * Archive a flag.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description     |
- * | --------- | -------- | --------------- |
- * | `id`      | Yes      | ID of the flag. |
- */
-private fun Route.archiveFlag() = put("{id}$PATH_ARCHIVE") {
-    val id = call.parameters.getOrFail<Long>("id")
-
-    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
-    authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
-
-    database.flags.archive(id = id)
-    call.respond(HttpStatusCode.NoContent)
-}
-
-/**
- * Unarchive a flag.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description     |
- * | --------- | -------- | --------------- |
- * | `id`      | Yes      | ID of the flag. |
- */
-private fun Route.unarchiveFlag() = delete("{id}$PATH_ARCHIVE") {
-    val id = call.parameters.getOrFail<Long>("id")
-
-    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
-    authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
-
-    database.flags.unarchive(id = id)
     call.respond(HttpStatusCode.NoContent)
 }
 
@@ -294,12 +259,50 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
     }
 }
 
+/**
+ * Archive a flag.
+ *
+ * On success, responds `204 No Content` with an empty body.
+ *
+ * | Parameter | Required | Description     |
+ * | --------- | -------- | --------------- |
+ * | `id`      | Yes      | ID of the flag. |
+ */
+private fun Route.archiveFlag() = put {
+    val id = call.parameters.getOrFail<Long>("id")
+
+    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+    authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
+
+    database.flags.archive(id = id)
+    call.respond(HttpStatusCode.NoContent)
+}
+
+/**
+ * Unarchive a flag.
+ *
+ * On success, responds `204 No Content` with an empty body.
+ *
+ * | Parameter | Required | Description     |
+ * | --------- | -------- | --------------- |
+ * | `id`      | Yes      | ID of the flag. |
+ */
+private fun Route.unarchiveFlag() = delete {
+    val id = call.parameters.getOrFail<Long>("id")
+
+    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+    authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
+
+    database.flags.unarchive(id = id)
+    call.respond(HttpStatusCode.NoContent)
+}
+
 private fun Flag.isEnabled(env: JsonObject): Boolean {
     if (archived_at != null) return false
     return doist.ffs.rule.isEnabled(rule, env, id)
 }
 
-private suspend fun collectUpdatedFlags(
+internal suspend fun collectUpdatedFlags(
     flow: Flow<List<Flag>>,
     collect: suspend (Instant, List<Flag>) -> Unit
 ) {

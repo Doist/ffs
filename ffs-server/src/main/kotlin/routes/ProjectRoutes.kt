@@ -29,16 +29,19 @@ const val PATH_PROJECTS = "/projects"
 @Suppress("FunctionName")
 fun PATH_PROJECT(id: Any) = "$PATH_PROJECTS/$id"
 
-fun Application.installProjectRoutes() {
-    routing {
-        route(PATH_PROJECTS) {
-            authenticate("session") {
-                createProject()
-                getProjects()
-                getProject()
-                updateProject()
-                deleteProject()
-            }
+fun Application.installProjectRoutes() = routing {
+    route("$PATH_ORGANIZATIONS/{id}/$PATH_PROJECTS") {
+        authenticate("session") {
+            createProject()
+            getProjects()
+        }
+    }
+
+    route(PATH_PROJECTS) {
+        authenticate("session") {
+            getProject()
+            updateProject()
+            deleteProject()
         }
     }
 }
@@ -50,12 +53,11 @@ fun Application.installProjectRoutes() {
  *
  * | Parameter         | Required | Description             |
  * | ----------------- | -------- | ----------------------- |
- * | `organization_id` | Yes      | ID of the organization. |
  * | `name`            | Yes      | Name of the project.    |
  */
 private fun Route.createProject() = post {
+    val organizationId = call.parameters.getOrFail<Long>("id")
     val params = call.receiveParameters()
-    val organizationId = params.getOrFail<Long>("organization_id")
     val name = params.getOrFail("name")
 
     authorizeForOrganization(id = organizationId, permission = Permission.WRITE)
@@ -63,10 +65,8 @@ private fun Route.createProject() = post {
     val id = database.capturingLastInsertId {
         projects.insert(organization_id = organizationId, name = name)
     }
-    call.run {
-        response.header(HttpHeaders.Location, PATH_PROJECT(id))
-        respond(HttpStatusCode.Created)
-    }
+    call.response.header(HttpHeaders.Location, PATH_PROJECT(id))
+    call.respond(HttpStatusCode.Created)
 }
 
 /**
@@ -79,7 +79,7 @@ private fun Route.createProject() = post {
  * | `organization_id` | Yes      | ID of the organization. |
  */
 private fun Route.getProjects() = get {
-    val organizationId = call.request.queryParameters.getOrFail<Long>("organization_id")
+    val organizationId = call.parameters.getOrFail<Long>("id")
 
     authorizeForOrganization(id = organizationId, permission = Permission.READ)
 
@@ -93,10 +93,6 @@ private fun Route.getProjects() = get {
  * Get an existing project.
  *
  * On success, responds `200 OK` with a JSON object for the project.
- *
- * | Parameter | Required | Description        |
- * | --------- | -------- | ------------------ |
- * | `id`      | Yes      | ID of the project. |
  */
 private fun Route.getProject() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
@@ -115,7 +111,6 @@ private fun Route.getProject() = get("{id}") {
  *
  * | Parameter | Required | Description          |
  * | --------- | -------- | -------------------- |
- * | `id`      | Yes      | ID of the project.   |
  * | `name`    | No       | Name of the project. |
  */
 private fun Route.updateProject() = put("{id}") {

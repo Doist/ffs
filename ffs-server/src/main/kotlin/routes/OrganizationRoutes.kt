@@ -2,6 +2,7 @@ package doist.ffs.routes
 
 import doist.ffs.auth.Permission
 import doist.ffs.auth.UserPrincipal
+import doist.ffs.db.RoleEnum
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.organizations
 import doist.ffs.db.roles
@@ -30,16 +31,22 @@ const val PATH_ORGANIZATIONS = "/organizations"
 @Suppress("FunctionName")
 fun PATH_ORGANIZATION(id: Any) = "$PATH_ORGANIZATIONS/$id"
 
-fun Application.installOrganizationRoutes() {
-    routing {
-        route(PATH_ORGANIZATIONS) {
-            authenticate("session") {
-                createOrganization()
-                getOrganizations()
-                getOrganization()
-                updateOrganization()
-                deleteOrganization()
-            }
+fun Application.installOrganizationRoutes() = routing {
+    route(PATH_ORGANIZATIONS) {
+        authenticate("session") {
+            createOrganization()
+            getOrganizations()
+            getOrganization()
+            updateOrganization()
+            deleteOrganization()
+        }
+    }
+
+    route("$PATH_ORGANIZATIONS/{id}/$PATH_USERS") {
+        authenticate("session") {
+            addUser()
+            updateUser()
+            removeUser()
         }
     }
 }
@@ -54,15 +61,21 @@ fun Application.installOrganizationRoutes() {
  * | `name`    | Yes      | Name of the organization. |
  */
 private fun Route.createOrganization() = post {
+    val userId = call.principal<UserPrincipal>()!!.id
     val name = call.receiveParameters().getOrFail("name")
 
-    val id = database.capturingLastInsertId {
-        organizations.insert(name)
+    val id = database.run {
+        transactionWithResult<Long> {
+            capturingLastInsertId {
+                organizations.insert(name)
+            }.also {
+                roles.insert(user_id = userId, organization_id = it, role = RoleEnum.ADMIN)
+            }
+        }
     }
-    call.run {
-        response.header(HttpHeaders.Location, PATH_ORGANIZATION(id))
-        respond(HttpStatusCode.Created)
-    }
+
+    call.response.header(HttpHeaders.Location, PATH_ORGANIZATION(id))
+    call.respond(HttpStatusCode.Created)
 }
 
 /**
@@ -71,11 +84,11 @@ private fun Route.createOrganization() = post {
  * On success, responds `200 OK` with a JSON array containing all organizations.
  */
 private fun Route.getOrganizations() = get {
-    val id = call.principal<UserPrincipal>()!!.id
+    val userId = call.principal<UserPrincipal>()!!.id
 
-    authorizeForUser(id = id)
+    authorizeForUser(id = userId)
 
-    val organizations = database.roles.selectOrganizationByUser(user_id = id).executeAsList()
+    val organizations = database.roles.selectOrganizationByUser(user_id = userId).executeAsList()
     call.respond(HttpStatusCode.OK, organizations)
 }
 
@@ -137,5 +150,72 @@ private fun Route.deleteOrganization() = delete("{id}") {
     authorizeForOrganization(id, Permission.DELETE)
 
     database.organizations.delete(id = id)
+    call.respond(HttpStatusCode.NoContent)
+}
+
+/**
+ * Add user to an organization.
+ *
+ * On success, responds `204 No Content` with an empty body.
+ *
+ * | Parameter | Required | Description                 |
+ * | --------- | -------- | --------------------------- |
+ * | `id`      | Yes      | ID of the organization.     |
+ * | `user_id` | Yes      | ID of user to add.          |
+ * | `role`    | Yes      | Role to assign to the user. |
+ */
+private fun Route.addUser() = post {
+    val id = call.parameters.getOrFail<Long>("id")
+    val params = call.receiveParameters()
+    val userId = params.getOrFail<Long>("user_id")
+    val role = RoleEnum.valueOf(params.getOrFail("role").uppercase())
+
+    authorizeForOrganization(id, Permission.WRITE)
+
+    database.roles.insert(user_id = userId, organization_id = id, role = role)
+    call.respond(HttpStatusCode.Created)
+}
+
+/**
+ * Update user role within organization.
+ *
+ * On success, responds `204 No Content` with an empty body.
+ *
+ * | Parameter | Required | Description                 |
+ * | --------- | -------- | --------------------------- |
+ * | `id`      | Yes      | ID of the organization.     |
+ * | `user_id` | Yes      | ID of user to add.          |
+ * | `role`    | Yes      | Role to assign to the user. |
+ */
+private fun Route.updateUser() = put {
+    val id = call.parameters.getOrFail<Long>("id")
+    val params = call.receiveParameters()
+    val userId = params.getOrFail<Long>("user_id")
+    val role = RoleEnum.valueOf(params.getOrFail("role").uppercase())
+
+    authorizeForOrganization(id, Permission.WRITE)
+
+    database.roles.update(user_id = userId, organization_id = id, role = role)
+    call.respond(HttpStatusCode.NoContent)
+}
+
+/**
+ * Remove user from organization.
+ *
+ * On success, responds `204 No Content` with an empty body.
+ *
+ * | Parameter | Required | Description                 |
+ * | --------- | -------- | --------------------------- |
+ * | `id`      | Yes      | ID of the organization.     |
+ * | `user_id` | Yes      | ID of user to add.          |
+ */
+private fun Route.removeUser() = delete {
+    val id = call.parameters.getOrFail<Long>("id")
+    val params = call.receiveParameters()
+    val userId = params.getOrFail<Long>("user_id")
+
+    authorizeForOrganization(id, Permission.WRITE)
+
+    database.roles.delete(user_id = userId, organization_id = id)
     call.respond(HttpStatusCode.NoContent)
 }

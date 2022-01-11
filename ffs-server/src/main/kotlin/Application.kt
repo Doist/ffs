@@ -101,8 +101,8 @@ fun Application.installPlugins() {
 }
 
 fun Application.installRoutes() {
+    installUserRoutes()
     installOrganizationRoutes()
     installProjectRoutes()
     installFlagRoutes()
-    installUserRoutes()
 }

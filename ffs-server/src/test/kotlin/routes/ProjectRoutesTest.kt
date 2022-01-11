@@ -1,97 +1,125 @@
 package doist.ffs.routes
 
 import doist.ffs.db.Project
-import doist.ffs.db.capturingLastInsertId
-import doist.ffs.db.organizations
-import doist.ffs.db.projects
-import doist.ffs.module
-import doist.ffs.plugins.database
-import io.ktor.server.application.Application
-import io.ktor.server.testing.withTestApplication
+import doist.ffs.ext.bodyAsJson
+import doist.ffs.ext.setBodyForm
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.RedirectResponseException
+import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.testing.testApplication
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 class ProjectRoutesTest {
     @Test
-    fun testProjectCreate() = withTestApplication(Application::module) {
-        val organizationId = setupOrganization(application)
-        assertResourceCreates(
-            uri = PATH_PROJECTS,
-            args = listOf("organization_id" to organizationId.toString(), "name" to NAME)
-        )
-        val organizations =
-            application.database.projects.selectByOrganization(organizationId).executeAsList()
-        assert(organizations.size == 1)
-        assert(organizations[0].name == NAME)
+    fun testCreate() = testApplication {
+        val client = createUserClient()
+        val organizationId = client.withOrganization()
+        val createResponse = client.client.post(
+            "${PATH_ORGANIZATION(organizationId)}$PATH_PROJECTS"
+        ) {
+            setBodyForm("name" to "Test")
+        }
+        assert(createResponse.status == HttpStatusCode.Created)
+        val resource = createResponse.headers[HttpHeaders.Location]
+        assert(resource != null)
+
+        val project = client.client.get(resource!!).bodyAsJson<Project>()
+        assert(project.name == "Test")
     }
 
     @Test
-    fun testProjectCreateLocation() = withTestApplication(Application::module) {
-        val organizationId = setupOrganization(application)
-        val location = assertResourceCreates(
-            uri = PATH_PROJECTS,
-            args = listOf("organization_id" to organizationId.toString(), "name" to NAME)
-        )
-        assertResource<Project>(uri = location)
+    fun testGet() = testApplication {
+        val client = createUserClient()
+        val organizationId = client.withOrganization()
+        val ids = List(3) { client.withProject(organizationId) }
+
+        val projects = client.client
+            .get("${PATH_ORGANIZATION(organizationId)}$PATH_PROJECTS")
+            .bodyAsJson<List<Project>>()
+        assert(ids.size == projects.size)
+        assert(ids.toSet() == projects.map { it.id }.toSet())
     }
 
     @Test
-    fun testProjectCount() = withTestApplication(Application::module) {
-        val organizationId = setupOrganization(application)
-        val path = "$PATH_PROJECTS?organization_id=$organizationId"
-        assertResourceCount<Project>(uri = path, count = 0)
-        val id = application.database.capturingLastInsertId {
-            projects.insert(organization_id = organizationId, name = NAME)
+    fun testUpdate() = testApplication {
+        val client = createUserClient()
+        val organizationId = client.withOrganization()
+
+        val id = client.withProject(organizationId)
+        var project = client.client.get(PATH_PROJECT(id)).bodyAsJson<Project>()
+
+        val name = "${project.name} updated"
+        client.client.put(PATH_PROJECT(id)) {
+            setBodyForm("name" to name)
         }
-        assertResourceCount<Project>(uri = path, count = 1)
-        application.database.projects.delete(id)
-        assertResourceCount<Project>(path, count = 0)
+
+        project = client.client.get(PATH_PROJECT(id)).bodyAsJson()
+        assert(project.name == name)
     }
 
     @Test
-    fun testProjectRead() = withTestApplication(Application::module) {
-        val organizationId = setupOrganization(application)
-        val id = application.database.capturingLastInsertId {
-            projects.insert(organization_id = organizationId, name = NAME)
-        }
-        assertResource<Project>(uri = PATH_PROJECT(id)) { project ->
-            assert(project.id == id)
-            assert(project.organization_id == organizationId)
-            assert(project.name == NAME)
+    fun testDelete() = testApplication {
+        val client = createUserClient()
+        val id = client.withProject(client.withOrganization())
+
+        client.client.delete(PATH_PROJECT(id))
+
+        assertFailsWith<ClientRequestException> {
+            client.client.get(PATH_PROJECT(id)).bodyAsJson<Project?>()
         }
     }
 
     @Test
-    fun testProjectUpdate() = withTestApplication(Application::module) {
-        val organizationId = setupOrganization(application)
-        val id = application.database.capturingLastInsertId {
-            projects.insert(organization_id = organizationId, name = NAME)
+    fun testIncorrectParams() = testApplication {
+        val client = createUserClient()
+
+        // Nonexistent id.
+        assertFailsWith<ClientRequestException> {
+            client.client.get(PATH_PROJECT(42))
         }
-        assertResourceUpdates(uri = PATH_PROJECT(id), args = listOf("name" to NAME_UPDATED))
-        val project = application.database.projects.select(id).executeAsOne()
-        assert(project.id == id)
-        assert(project.organization_id == organizationId)
-        assert(project.name == NAME_UPDATED)
-    }
-
-    @Test
-    fun testProjectDelete() = withTestApplication(Application::module) {
-        val organizationId = setupOrganization(application)
-        val id = application.database.capturingLastInsertId {
-            projects.insert(organization_id = organizationId, name = NAME)
+        assertFailsWith<ClientRequestException> {
+            client.client.delete(PATH_PROJECT(42))
         }
-        assertResourceDeletes(uri = PATH_PROJECT(id))
-        val project = application.database.projects.select(id).executeAsOneOrNull()
-        assert(project == null)
-    }
 
-    companion object {
-        private const val NAME = "test-project"
-        private const val NAME_UPDATED = "new-test-project"
-
-        private fun setupOrganization(application: Application): Long {
-            return application.database.capturingLastInsertId {
-                organizations.insert(name = "test-organization")
+        // Duplicate name.
+        val organizationId = client.withOrganization()
+        val projectId = client.withProject(organizationId)
+        val project = client.client.get(PATH_PROJECT(projectId)).bodyAsJson<Project>()
+        assertFailsWith<ClientRequestException> {
+            val id = client.withProject(organizationId)
+            client.client.put("${PATH_ORGANIZATION(id)}$PATH_USERS") {
+                setBodyForm("name" to project.name)
             }
+        }
+    }
+
+    @Test
+    fun testUnauthenticatedAccess() = testApplication {
+        val client = createClient {
+            install(HttpCookies)
+            followRedirects = false
+        }
+        val id = createUserClient().run {
+            val organizationId = withOrganization()
+            withProject(organizationId)
+        }
+        assertFailsWith<RedirectResponseException> {
+            client.get(PATH_PROJECT(id))
+        }
+        assertFailsWith<RedirectResponseException> {
+            client.put(PATH_PROJECT(id)) {
+                setBodyForm("name" to "Test")
+            }
+        }
+        assertFailsWith<RedirectResponseException> {
+            client.delete(PATH_PROJECT(id))
         }
     }
 }
