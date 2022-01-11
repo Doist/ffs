@@ -1,7 +1,7 @@
 package doist.ffs.api
 
-import doist.ffs.ext.stream
 import doist.ffs.sse.SseEvent
+import ext.stream
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine

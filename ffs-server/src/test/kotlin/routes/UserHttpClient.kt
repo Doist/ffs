@@ -7,9 +7,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngineConfig
-import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.cookies.HttpCookies
-import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.http.HttpHeaders
@@ -20,7 +18,7 @@ import kotlin.random.Random
 
 class UserHttpClient(val client: HttpClient, val userId: Long)
 
-class TokenHttpClient(val client: HttpClient, val projectId: Long)
+// class TokenHttpClient(val client: HttpClient, val projectId: Long, val userClient: UserHttpClient)
 
 suspend fun ApplicationTestBuilder.createUserClient(
     block: (HttpClientConfig<out HttpClientEngineConfig>.() -> Unit)? = null
@@ -31,7 +29,7 @@ suspend fun ApplicationTestBuilder.createUserClient(
     }
 
     val registerUserResponse = client.post("$PATH_USERS$PATH_REGISTER") {
-        val random = 2
+        val random = Random.nextInt()
         setBodyForm(
             "name" to "Test $random",
             "email" to "test+$random@test.test",
@@ -69,17 +67,8 @@ suspend fun UserHttpClient.withProject(organizationId: Long): Long {
     return id.toLong()
 }
 
-suspend fun ApplicationTestBuilder.createTokenClient(
-    permission: Permission,
-    block: (HttpClientConfig<out HttpClientEngineConfig>.() -> Unit)? = null
-): TokenHttpClient {
-    val userClient = createUserClient {
-        block?.invoke(this)
-    }
-    val organizationId = userClient.withOrganization()
-    val projectId = userClient.withProject(organizationId)
-
-    val createTokenResponse = userClient.client.post(PATH_TOKENS) {
+suspend fun UserHttpClient.withToken(projectId: Long, permission: Permission): String {
+    val createTokenResponse = client.post("${PATH_PROJECT(projectId)}$PATH_TOKENS") {
         setBodyForm(
             "project_id" to projectId,
             "permission" to permission,
@@ -87,14 +76,36 @@ suspend fun ApplicationTestBuilder.createTokenClient(
         )
     }
     assert(createTokenResponse.status == HttpStatusCode.Created)
-    val token = createTokenResponse.body<String>()
-
-    return TokenHttpClient(
-        client = createClient {
-            install(DefaultRequest) {
-                header(HttpHeaders.Authorization, "Bearer $token")
-            }
-        },
-        projectId = projectId
-    )
+    return createTokenResponse.body()
 }
+
+// suspend fun ApplicationTestBuilder.createTokenClient(
+//     permission: Permission,
+//     block: (HttpClientConfig<out HttpClientEngineConfig>.() -> Unit)? = null
+// ): TokenHttpClient {
+//     val userClient = createUserClient {
+//         block?.invoke(this)
+//     }
+//     val organizationId = userClient.withOrganization()
+//     val projectId = userClient.withProject(organizationId)
+//
+//     val createTokenResponse = userClient.client.post("${PATH_PROJECT(projectId)}$PATH_TOKENS") {
+//         setBodyForm(
+//             "project_id" to projectId,
+//             "permission" to permission,
+//             "description" to permission.toString().lowercase()
+//         )
+//     }
+//     assert(createTokenResponse.status == HttpStatusCode.Created)
+//     val token = createTokenResponse.body<String>()
+//
+//     return TokenHttpClient(
+//         client = createClient {
+//             install(DefaultRequest) {
+//                 header(HttpHeaders.Authorization, "Bearer $token")
+//             }
+//         },
+//         projectId = projectId,
+//         userClient = userClient
+//     )
+// }

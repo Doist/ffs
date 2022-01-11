@@ -61,10 +61,6 @@ fun Application.installFlagRoutes() {
                 createFlag()
                 getFlags()
             }
-
-            authenticate("token") {
-                getFlags()
-            }
         }
 
         route(PATH_FLAGS) {
@@ -74,6 +70,7 @@ fun Application.installFlagRoutes() {
             }
 
             authenticate("token") {
+                getFlags()
                 getFlagsEval()
             }
         }
@@ -123,15 +120,17 @@ private fun Route.createFlag() = post {
  */
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlags() = get {
-    val projectId = call.parameters["id"]?.toLong()
     // Exceptional case, where endpoint is used with token authentication without parameter.
+    val projectId = call.parameters["id"]?.toLong()
         ?: call.principal<TokenPrincipal>()?.projectId
         ?: throw MissingRequestParameterException("project_id")
 
     authorizeForProject(id = projectId, permission = Permission.READ)
 
     val query = database.flags.selectByProject(projectId)
-    val sse = call.request.acceptItems().any { ContentType.Text.EventStream.equals(it.value) }
+    val sse = call.request.acceptItems().any {
+        ContentType.parse(it.value) == ContentType.Text.EventStream
+    }
     if (sse) {
         val channel = produce {
             val flow = query.asFlow().mapToList(application.coroutineContext)
@@ -210,8 +209,8 @@ private fun Route.updateFlag() = put("{id}") {
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlagsEval() = get(PATH_EVAL) {
     val queryParameters = call.request.queryParameters
-    val projectId = queryParameters["id"]?.toLong()
     // Exceptional case, where endpoint is used from client SDK without parameter.
+    val projectId = queryParameters["id"]?.toLong()
         ?: call.principal<TokenPrincipal>()?.projectId
         ?: throw MissingRequestParameterException("project_id")
     val env = json.decodeFromString<JsonObject>(queryParameters.getOrFail<String>("env"))
@@ -219,7 +218,9 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
     authorizeForProject(id = projectId, permission = Permission.EVAL)
 
     val query = database.flags.selectByProject(projectId)
-    val sse = call.request.acceptItems().any { ContentType.Text.EventStream.equals(it.value) }
+    val sse = call.request.acceptItems().any {
+        ContentType.parse(it.value) == ContentType.Text.EventStream
+    }
     if (sse) {
         val channel = produce {
             val lastFlagsEval = mutableMapOf<String, Boolean>().withDefault { false }

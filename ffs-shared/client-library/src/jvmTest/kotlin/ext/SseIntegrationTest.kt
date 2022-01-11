@@ -3,6 +3,7 @@ package doist.ffs.ext
 import doist.ffs.sse.HEADER_LAST_EVENT_ID
 import doist.ffs.sse.SSE_FIELD_PREFIX_RETRY
 import doist.ffs.sse.SseEvent
+import ext.stream
 import io.ktor.client.HttpClient
 import io.ktor.client.utils.EmptyContent.status
 import io.ktor.http.CacheControl
@@ -58,8 +59,7 @@ class SseIntegrationTest {
         // Setup and start client.
         val client = HttpClient(CIOEngine)
         launch {
-            client.stream("http://localhost:$port") {
-            }
+            client.stream("http://localhost:$port") { }
         }
 
         // Wait for streaming, and a retry.

@@ -1,4 +1,4 @@
-package doist.ffs.ext
+package ext
 
 import doist.ffs.sse.HEADER_LAST_EVENT_ID
 import doist.ffs.sse.SSE_DEFAULT_RETRY
@@ -8,12 +8,10 @@ import doist.ffs.sse.SSE_FIELD_PREFIX_ID
 import doist.ffs.sse.SSE_FIELD_PREFIX_RETRY
 import doist.ffs.sse.SseEvent
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
 import io.ktor.client.request.prepareGet
-import io.ktor.client.statement.HttpResponse
 import io.ktor.http.CacheControl
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -40,9 +38,8 @@ internal suspend fun HttpClient.stream(
                     header(HEADER_LAST_EVENT_ID, lastEventId)
                 }
                 builder()
-            }.execute { response: HttpResponse ->
+            }.body<ByteReadChannel, Unit> { channel ->
                 // Read SseEvents and emit invoke block until the connection stops being active.
-                val channel = response.body<ByteReadChannel>()
                 while (isActive) {
                     // Read lines until blank line is found, parsing an SseEvent from them.
                     var id: String? = null
@@ -53,7 +50,7 @@ internal suspend fun HttpClient.stream(
                         val line = channel.readUTF8Line()
                         when {
                             // Line is null, the channel has been closed. Retry by reconnecting.
-                            line == null -> return@execute
+                            line == null -> return@body
 
                             // Line is not blank, read it.
                             line.isNotBlank() -> {
@@ -71,7 +68,7 @@ internal suspend fun HttpClient.stream(
                             }
 
                             // Line is blank, so send the event if complete.
-                            // Break from loop to reinitialize the state and restart reading.
+                            // Break from inner loop to reinitialize the state and restart reading.
                             line.isBlank() -> {
                                 if (data.isNotBlank()) {
                                     block(SseEvent(data.toString(), event, id))
