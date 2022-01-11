@@ -78,11 +78,17 @@ internal class TokenTest {
         assert(selectProjectIdByToken(token = TOKEN_EVAL).executeAsOneOrNull() == null)
         assert(selectProjectIdByToken(token = TOKEN_READ).executeAsOneOrNull() == null)
 
-        insert(token = TOKEN_EVAL, project_id = projectId, description = DESCRIPTION)
+        val idEval = testDatabase.capturingLastInsertId {
+            insert(token = TOKEN_EVAL, project_id = projectId, description = DESCRIPTION)
+        }
+        assert(selectProjectIdById(id = idEval).executeAsOne() == projectId)
         assert(selectProjectIdByToken(token = TOKEN_EVAL).executeAsOne() == projectId)
         assert(selectProjectIdByToken(token = TOKEN_READ).executeAsOneOrNull() == null)
 
-        insert(token = TOKEN_READ, project_id = projectId, description = DESCRIPTION)
+        val idRead = testDatabase.capturingLastInsertId {
+            insert(token = TOKEN_READ, project_id = projectId, description = DESCRIPTION)
+        }
+        assert(selectProjectIdById(id = idRead).executeAsOne() == projectId)
         assert(selectProjectIdByToken(token = TOKEN_EVAL).executeAsOne() == projectId)
         assert(selectProjectIdByToken(token = TOKEN_READ).executeAsOne() == projectId)
     }
@@ -95,14 +101,20 @@ internal class TokenTest {
         val idRead = testDatabase.capturingLastInsertId {
             insert(token = TOKEN_READ, project_id = projectId, description = DESCRIPTION)
         }
+        assert(selectProjectIdById(id = idEval).executeAsOne() == projectId)
+        assert(selectProjectIdById(id = idRead).executeAsOne() == projectId)
         assert(selectProjectIdByToken(token = TOKEN_EVAL).executeAsOne() == projectId)
         assert(selectProjectIdByToken(token = TOKEN_READ).executeAsOne() == projectId)
 
-        delete(idEval)
+        delete(id = idEval)
+        assert(selectProjectIdById(id = idEval).executeAsOneOrNull() == null)
+        assert(selectProjectIdById(id = idRead).executeAsOne() == projectId)
         assert(selectProjectIdByToken(token = TOKEN_EVAL).executeAsOneOrNull() == null)
         assert(selectProjectIdByToken(token = TOKEN_READ).executeAsOne() == projectId)
 
-        delete(idRead)
+        delete(id = idRead)
+        assert(selectProjectIdById(id = idEval).executeAsOneOrNull() == null)
+        assert(selectProjectIdById(id = idRead).executeAsOneOrNull() == null)
         assert(selectProjectIdByToken(token = TOKEN_EVAL).executeAsOneOrNull() == null)
         assert(selectProjectIdByToken(token = TOKEN_READ).executeAsOneOrNull() == null)
     }

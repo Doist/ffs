@@ -21,11 +21,22 @@ SELECT id, project_id, description, created_at
 FROM token
 WHERE project_id = ?;
 
+selectProjectIdById:
+SELECT project.id
+FROM token
+INNER JOIN project
+WHERE token.project_id = project.id AND token.id = ?;
+
 selectProjectIdByToken:
 SELECT project.id
 FROM token
 INNER JOIN project
 WHERE token.project_id = project.id AND token = ?;
+
+update:
+UPDATE token
+SET description = ?
+WHERE id = ?;
 
 delete:
 DELETE FROM token
