@@ -40,21 +40,21 @@ class ClientTest {
     }
 
     @Test
-    fun testApiToken() = runTest {
+    fun apiToken() = runTest {
         MockClient().initialize(engine).join()
         val request = engine.requestHistory.last()
         assertEquals("Bearer $TOKEN", request.headers[HttpHeaders.Authorization])
     }
 
     @Test
-    fun testParams() = runTest {
+    fun params() = runTest {
         MockClient().initialize(engine).join()
         val request = engine.requestHistory.last()
         assertContains(request.url.parameters.names(), "env")
     }
 
     @Test
-    fun testEnv() = runTest {
+    fun env() = runTest {
         MockClient().apply {
             setRolloutId(ROLLOUT_ID)
             setUserId(USER_ID)
@@ -78,7 +78,7 @@ class ClientTest {
     }
 
     @Test
-    fun testLiveUpdatesFlag() = runTest {
+    fun liveUpdatesFlag() = runTest {
         MockClient().initialize(engine).join()
         var request = engine.requestHistory.last()
         assertTrue(

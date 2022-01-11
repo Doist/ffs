@@ -16,12 +16,12 @@ internal class FlagTest {
     }
 
     @Test
-    fun testInsertValid(): Unit = testDatabase.flags.run {
+    fun insertValid(): Unit = testDatabase.flags.run {
         insert(project_id = projectId, name = NAME, rule = RULE)
     }
 
     @Test
-    fun testInsertDuplicatedName(): Unit = testDatabase.flags.run {
+    fun insertDuplicatedName(): Unit = testDatabase.flags.run {
         insert(project_id = projectId, name = NAME, rule = RULE)
         assertFails {
             insert(project_id = projectId, name = NAME, rule = RULE)
@@ -29,7 +29,7 @@ internal class FlagTest {
     }
 
     @Test
-    fun testSelectByOrganization(): Unit = testDatabase.flags.run {
+    fun selectByOrganization(): Unit = testDatabase.flags.run {
         val namePrefix = "$NAME-"
         for (i in 0..9) {
             insert(project_id = projectId, name = "$namePrefix-$i", rule = RULE)
@@ -43,7 +43,7 @@ internal class FlagTest {
     }
 
     @Test
-    fun testSelect(): Unit = testDatabase.flags.run {
+    fun select(): Unit = testDatabase.flags.run {
         val id = testDatabase.capturingLastInsertId {
             insert(project_id = projectId, name = NAME, rule = RULE)
         }
@@ -54,7 +54,7 @@ internal class FlagTest {
     }
 
     @Test
-    fun testUpdateName(): Unit = testDatabase.flags.run {
+    fun updateName(): Unit = testDatabase.flags.run {
         val id = testDatabase.capturingLastInsertId {
             insert(project_id = projectId, name = NAME, rule = RULE)
         }
@@ -64,7 +64,7 @@ internal class FlagTest {
     }
 
     @Test
-    fun testUpdateRule(): Unit = testDatabase.flags.run {
+    fun updateRule(): Unit = testDatabase.flags.run {
         val id = testDatabase.capturingLastInsertId {
             insert(project_id = projectId, name = NAME, rule = RULE)
         }
@@ -74,7 +74,7 @@ internal class FlagTest {
     }
 
     @Test
-    fun testArchive(): Unit = testDatabase.flags.run {
+    fun archive(): Unit = testDatabase.flags.run {
         val id = testDatabase.capturingLastInsertId {
             insert(project_id = projectId, name = NAME, rule = RULE)
         }
@@ -86,7 +86,7 @@ internal class FlagTest {
     }
 
     @Test
-    fun testUnarchive(): Unit = testDatabase.flags.run {
+    fun unarchive(): Unit = testDatabase.flags.run {
         val id = testDatabase.capturingLastInsertId {
             insert(project_id = projectId, name = NAME, rule = RULE)
         }

@@ -22,7 +22,7 @@ import kotlin.test.assertFailsWith
 
 class OrganizationRoutesTest {
     @Test
-    fun testCreate() = testApplication {
+    fun create() = testApplication {
         val client = createUserClient()
         val createResponse = client.client.post(PATH_ORGANIZATIONS) {
             setBodyForm("name" to "Test")
@@ -36,7 +36,7 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun testGet() = testApplication {
+    fun get() = testApplication {
         val client = createUserClient()
         val roles = RoleEnum.values().toList()
         val ids = roles.map { client.withOrganization(it) }
@@ -50,7 +50,7 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun testGetNonexistentId() = testApplication {
+    fun getNonexistentId() = testApplication {
         val client = createUserClient()
 
         // Nonexistent id.
@@ -63,7 +63,7 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun testUpdate() = testApplication {
+    fun update() = testApplication {
         val client = createUserClient()
         val id = client.withOrganization()
         var organization = client.client.get(PATH_ORGANIZATION(id)).bodyAsJson<Organization>()
@@ -78,7 +78,7 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun testUserManagement() = testApplication {
+    fun userManagement() = testApplication {
         val client = createUserClient()
         val roles = RoleEnum.values().toList()
         assert(roles[0] == RoleEnum.ADMIN)
@@ -103,7 +103,7 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun testUpdateUserMissingUserId() = testApplication {
+    fun updateUserMissingUserId() = testApplication {
         val client = createUserClient()
         val id = client.withOrganization()
         assertFailsWith<ClientRequestException> {
@@ -114,7 +114,7 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun testUpdateUserMissingName() = testApplication {
+    fun updateUserMissingName() = testApplication {
         val client = createUserClient()
         val id = client.withOrganization()
         assertFailsWith<ClientRequestException> {
@@ -123,7 +123,7 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun testDeleteUserMissingUserId() = testApplication {
+    fun deleteUserMissingUserId() = testApplication {
         val client = createUserClient()
         val id = client.withOrganization()
         assertFailsWith<ClientRequestException> {
@@ -132,7 +132,7 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun testProjectManagement() = testApplication {
+    fun projectManagement() = testApplication {
         val client = createUserClient()
         val organizationId = client.withOrganization()
         val projectIds = List(2) { client.withProject(organizationId) }
@@ -145,7 +145,7 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun testDelete() = testApplication {
+    fun delete() = testApplication {
         val client = createUserClient()
         val id = client.withOrganization()
 
@@ -159,7 +159,7 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun testUnauthenticatedAccess() = testApplication {
+    fun unauthenticatedAccess() = testApplication {
         val client = createClient {
             install(HttpCookies)
             followRedirects = false

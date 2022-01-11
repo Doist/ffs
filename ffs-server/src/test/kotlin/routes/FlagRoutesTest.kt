@@ -16,7 +16,7 @@ import kotlin.test.assertFailsWith
 
 class FlagRoutesTest {
     @Test
-    fun testCreate() = testApplication {
+    fun create() = testApplication {
         val client = createUserClient()
         val projectId = client.withProject(client.withOrganization())
         val createResponse = client.client.post("${PATH_PROJECT(projectId)}$PATH_FLAGS") {
@@ -33,7 +33,7 @@ class FlagRoutesTest {
     }
 
     @Test
-    fun testCreateInvalidRule() = testApplication {
+    fun createInvalidRule() = testApplication {
         val client = createUserClient()
         val projectId = client.withProject(client.withOrganization())
 
@@ -45,7 +45,7 @@ class FlagRoutesTest {
     }
 
     @Test
-    fun testGet() = testApplication {
+    fun get() = testApplication {
         val client = createUserClient()
         val projectId = client.withProject(client.withOrganization())
         val ids = List(5) { i ->
@@ -64,7 +64,7 @@ class FlagRoutesTest {
     }
 
     @Test
-    fun testUpdate() = testApplication {
+    fun update() = testApplication {
         val client = createUserClient()
         val projectId = client.withProject(client.withOrganization())
 
@@ -86,7 +86,7 @@ class FlagRoutesTest {
     }
 
     @Test
-    fun testUpdateInvalidRule() = testApplication {
+    fun updateInvalidRule() = testApplication {
         val client = createUserClient()
         val projectId = client.withProject(client.withOrganization())
         val id = client.client.post("${PATH_PROJECT(projectId)}$PATH_FLAGS") {
@@ -101,7 +101,7 @@ class FlagRoutesTest {
     }
 
     @Test
-    fun testArchive() = testApplication {
+    fun archive() = testApplication {
         val client = createUserClient()
         val projectId = client.withProject(client.withOrganization())
 

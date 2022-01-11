@@ -79,7 +79,7 @@ import org.junit.jupiter.api.Test
 @Suppress("LongMethod")
 class SseRoutesTest {
     @Test
-    fun testFlagStream(): Unit = withTestApplication(Application::module) {
+    fun flagStream(): Unit = withTestApplication(Application::module) {
         val organizationId = application.database.capturingLastInsertId {
             organizations.insert(name = "test-organization")
         }
@@ -167,7 +167,7 @@ class SseRoutesTest {
     }
 
     @Test
-    fun testFlagEvalStream(): Unit = withTestApplication(Application::module) {
+    fun flagEvalStream(): Unit = withTestApplication(Application::module) {
         val organizationId = application.database.capturingLastInsertId {
             organizations.insert(name = "test-organization")
         }

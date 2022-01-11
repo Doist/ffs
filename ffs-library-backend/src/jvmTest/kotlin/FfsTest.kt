@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 // See: https://youtrack.jetbrains.com/issue/KT-50222
 class FfsTest {
     @Test
-    fun testFlagEnabled() = runTest {
+    fun flagEnabled() = runTest {
         val ffs = Ffs("apitoken", liveUpdates = false)
         assertFalse(ffs.isEnabled("test"))
         ffs.initializeInternal(

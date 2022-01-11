@@ -24,7 +24,7 @@ import kotlin.test.assertFailsWith
 
 class ProjectRoutesTest {
     @Test
-    fun testCreate() = testApplication {
+    fun create() = testApplication {
         val client = createUserClient()
         val organizationId = client.withOrganization()
         val createResponse = client.client.post(
@@ -41,7 +41,7 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testGet() = testApplication {
+    fun get() = testApplication {
         val client = createUserClient()
         val organizationId = client.withOrganization()
         val ids = List(3) { client.withProject(organizationId) }
@@ -54,7 +54,7 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testGetNonexistentId() = testApplication {
+    fun getNonexistentId() = testApplication {
         val client = createUserClient()
         assertFailsWith<ClientRequestException> {
             client.client.get(PATH_PROJECT(42))
@@ -65,7 +65,7 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testUpdate() = testApplication {
+    fun update() = testApplication {
         val client = createUserClient()
         val organizationId = client.withOrganization()
 
@@ -82,7 +82,7 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testUpdateDuplicateName() = testApplication {
+    fun updateDuplicateName() = testApplication {
         val client = createUserClient()
         val organizationId = client.withOrganization()
         val projectId = client.withProject(organizationId)
@@ -96,7 +96,7 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testDelete() = testApplication {
+    fun delete() = testApplication {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
@@ -108,7 +108,7 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testTokenCreate() = testApplication {
+    fun tokenCreate() = testApplication {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
@@ -131,7 +131,7 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testTokenCreateInvalidPermission() = testApplication {
+    fun tokenCreateInvalidPermission() = testApplication {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
@@ -145,7 +145,7 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testTokenUpdate() = testApplication {
+    fun tokenUpdate() = testApplication {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
@@ -165,7 +165,7 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testTokenUpdatePermissionDoes() = testApplication {
+    fun tokenUpdatePermissionDoes() = testApplication {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
@@ -185,7 +185,7 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testTokenDelete() = testApplication {
+    fun tokenDelete() = testApplication {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
@@ -203,7 +203,7 @@ class ProjectRoutesTest {
     }
 
     @Test
-    fun testUnauthenticatedAccess() = testApplication {
+    fun unauthenticatedAccess() = testApplication {
         val client = createClient {
             install(HttpCookies)
             followRedirects = false

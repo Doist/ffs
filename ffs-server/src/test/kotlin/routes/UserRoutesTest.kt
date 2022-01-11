@@ -16,7 +16,7 @@ import kotlin.test.assertFailsWith
 
 class UserRoutesTest {
     @Test
-    fun testRegisterLogin() = testApplication {
+    fun registerLogin() = testApplication {
         val client = createClient { }
 
         // Register a user and verify it was created.
@@ -40,7 +40,7 @@ class UserRoutesTest {
     }
 
     @Test
-    fun testRegisterInvalidEmail() = testApplication {
+    fun registerInvalidEmail() = testApplication {
         listOf("goncalo@doist.c", "goncalo@127.0.0.1", "@doist.com").forEach { email ->
             assertFailsWith<ClientRequestException> {
                 client.post("$PATH_USERS$PATH_REGISTER") {
@@ -51,7 +51,7 @@ class UserRoutesTest {
     }
 
     @Test
-    fun testRegisterInvalidPassword() = testApplication {
+    fun registerInvalidPassword() = testApplication {
         assertFailsWith<ClientRequestException> {
             client.post("$PATH_USERS$PATH_REGISTER") {
                 setBodyForm(
@@ -64,7 +64,7 @@ class UserRoutesTest {
     }
 
     @Test
-    fun testUpdate() = testApplication {
+    fun update() = testApplication {
         val client = createClient {
             install(HttpCookies)
         }
@@ -97,7 +97,7 @@ class UserRoutesTest {
     }
 
     @Test
-    fun testUpdateEmailInvalid() = testApplication {
+    fun updateEmailInvalid() = testApplication {
         val client = createClient {
             install(HttpCookies)
         }
@@ -119,7 +119,7 @@ class UserRoutesTest {
     }
 
     @Test
-    fun testUpdateCurrentPasswordInvalid() = testApplication {
+    fun updateCurrentPasswordInvalid() = testApplication {
         val client = createClient {
             install(HttpCookies)
         }
@@ -154,7 +154,7 @@ class UserRoutesTest {
     }
 
     @Test
-    fun testDelete() = testApplication {
+    fun delete() = testApplication {
         val client = createClient {
             install(HttpCookies)
         }
@@ -180,7 +180,7 @@ class UserRoutesTest {
     }
 
     @Test
-    fun testDeleteCurrentPasswordInvalid() = testApplication {
+    fun deleteCurrentPasswordInvalid() = testApplication {
         val client = createClient {
             install(HttpCookies)
         }

@@ -7,12 +7,12 @@ internal class OrganizationTest {
     private val testDatabase = Database(JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY))
 
     @Test
-    fun testInsertValid(): Unit = testDatabase.run {
+    fun insertValid(): Unit = testDatabase.run {
         organizations.insert(name = ORG_NAME)
     }
 
     @Test
-    fun testSelect(): Unit = testDatabase.run {
+    fun select(): Unit = testDatabase.run {
         val id = capturingLastInsertId {
             organizations.insert(name = ORG_NAME)
         }
@@ -21,7 +21,7 @@ internal class OrganizationTest {
     }
 
     @Test
-    fun testUpdateName(): Unit = testDatabase.run {
+    fun updateName(): Unit = testDatabase.run {
         val id = capturingLastInsertId {
             organizations.insert(name = ORG_NAME)
         }
@@ -31,7 +31,7 @@ internal class OrganizationTest {
     }
 
     @Test
-    fun testDelete(): Unit = testDatabase.run {
+    fun delete(): Unit = testDatabase.run {
         val id = capturingLastInsertId {
             organizations.insert(name = ORG_NAME)
         }

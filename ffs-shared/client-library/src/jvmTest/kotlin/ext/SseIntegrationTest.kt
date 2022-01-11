@@ -32,7 +32,7 @@ import io.ktor.client.engine.cio.CIO as CIOEngine
 
 class SseIntegrationTest {
     @Test
-    fun testSseIntegration() = runTest {
+    fun sseIntegration() = runTest {
         var lastId = 0
         val batch = 5
 

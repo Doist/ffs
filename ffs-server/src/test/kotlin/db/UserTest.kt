@@ -13,7 +13,7 @@ internal class UserTest {
     }
 
     @Test
-    fun testInsertValid(): Unit = testDatabase.run {
+    fun insertValid(): Unit = testDatabase.run {
         val id = capturingLastInsertId {
             users.insert(name = NAME, email = EMAIL, password = PASSWORD)
         }
@@ -23,7 +23,7 @@ internal class UserTest {
     }
 
     @Test
-    fun testInsertDuplicate(): Unit = testDatabase.run {
+    fun insertDuplicate(): Unit = testDatabase.run {
         users.insert(name = NAME, email = EMAIL, password = PASSWORD)
         assertFails {
             users.insert(name = NAME_OTHER, email = EMAIL, password = PASSWORD)
@@ -35,7 +35,7 @@ internal class UserTest {
     }
 
     @Test
-    fun testSelectByEmail(): Unit = testDatabase.run {
+    fun selectByEmail(): Unit = testDatabase.run {
         users.insert(name = NAME, email = EMAIL, password = PASSWORD)
         val user = users.selectByEmail(EMAIL).executeAsOne()
         assert(user.name == NAME)
@@ -43,7 +43,7 @@ internal class UserTest {
     }
 
     @Test
-    fun testSelectPasswordById(): Unit = testDatabase.run {
+    fun selectPasswordById(): Unit = testDatabase.run {
         val id = capturingLastInsertId {
             users.insert(name = NAME, email = EMAIL, password = PASSWORD)
         }
@@ -52,7 +52,7 @@ internal class UserTest {
     }
 
     @Test
-    fun testUpdateName(): Unit = testDatabase.users.run {
+    fun updateName(): Unit = testDatabase.users.run {
         val id = testDatabase.capturingLastInsertId {
             insert(name = NAME, email = EMAIL, password = PASSWORD)
         }
@@ -62,7 +62,7 @@ internal class UserTest {
     }
 
     @Test
-    fun testUpdateEmail(): Unit = testDatabase.users.run {
+    fun updateEmail(): Unit = testDatabase.users.run {
         val id = testDatabase.capturingLastInsertId {
             insert(name = NAME, email = EMAIL, password = PASSWORD)
         }
@@ -72,7 +72,7 @@ internal class UserTest {
     }
 
     @Test
-    fun testUpdatePassword(): Unit = testDatabase.users.run {
+    fun updatePassword(): Unit = testDatabase.users.run {
         val id = testDatabase.capturingLastInsertId {
             insert(name = NAME, email = EMAIL, password = PASSWORD)
         }
@@ -81,7 +81,7 @@ internal class UserTest {
     }
 
     @Test
-    fun testDelete(): Unit = testDatabase.users.run {
+    fun delete(): Unit = testDatabase.users.run {
         val id = testDatabase.capturingLastInsertId {
             insert(name = NAME, email = EMAIL, password = PASSWORD)
         }

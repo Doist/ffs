@@ -20,7 +20,7 @@ class RuleEvalTest {
     private val baseEnv = JsonObject(mapOf(ENV_INTERNAL_ROLLOUT_ID to JsonPrimitive("rollout-id")))
 
     @Test
-    fun testEnabled() {
+    fun enabled() {
         assertEquals(true, isEnabled("1", baseEnv, ""))
         assertEquals(false, isEnabled("0", baseEnv, ""))
         assertEquals(false, isEnabled("0.6", baseEnv, ""))
@@ -28,7 +28,7 @@ class RuleEvalTest {
     }
 
     @Test
-    fun testEnabledDistribution() {
+    fun enabledDistribution() {
         val samples = 5000
         val distributions = arrayOf(0.2, 0.5, 0.9)
         for (distribution in distributions) {
@@ -45,13 +45,13 @@ class RuleEvalTest {
     }
 
     @Test
-    fun testBooleans() {
+    fun booleans() {
         assertEquals(1f, eval("true"))
         assertEquals(0f, eval("false"))
     }
 
     @Test
-    fun testNumbers() {
+    fun numbers() {
         assertEquals(0f, eval("0"))
         assertEquals(0.14159265f, eval("0.14159265"), 0.00001f)
         assertEquals(0.5f, eval("0.5"))
@@ -59,14 +59,14 @@ class RuleEvalTest {
     }
 
     @Test
-    fun testStrings() {
+    fun strings() {
         assertEquals(0f, eval("\"abc\""))
         assertEquals(0.5f, eval("\"0.5\""))
         assertEquals(1f, eval("\"1\""))
     }
 
     @Test
-    fun testEnv() {
+    fun env() {
         assertEquals(0f, eval("""env["n"]"""))
         assertEquals(
             1f,
@@ -129,13 +129,13 @@ class RuleEvalTest {
     }
 
     @Test
-    fun testInfo() {
+    fun info() {
         assertEquals(1f, eval("""isblank("")"""))
         assertEquals(0f, eval("""isblank("notblank")"""))
     }
 
     @Test
-    fun testOperators() {
+    fun operators() {
         assertEquals(0f, eval("""eq(1, 0)"""))
         assertEquals(1f, eval("""eq(0, 0)"""))
         assertEquals(0f, eval("""eq(1, 0)"""))
@@ -181,7 +181,7 @@ class RuleEvalTest {
     }
 
     @Test
-    fun testDates() {
+    fun dates() {
         val now = Clock.System.now().epochSeconds.toFloat()
         assertTrue(eval("""now()""") in now..now + 1)
 
@@ -201,7 +201,7 @@ class RuleEvalTest {
     }
 
     @Test
-    fun testText() {
+    fun text() {
         assertEquals(0f, eval("""matches(".+@doist.com", "goncalo@doist.io")"""))
         assertEquals(1f, eval("""matches(".+@doist.com", "goncalo@doist.com")"""))
 
@@ -213,7 +213,7 @@ class RuleEvalTest {
     }
 
     @Test
-    fun testArrays() {
+    fun arrays() {
         assertEquals(0f, eval("""contains(["+01:00", "+02:00"], "+00:00")"""))
         assertEquals(1f, eval("""contains(["+01:00", "+02:00"], "+01:00")"""))
 
@@ -226,7 +226,7 @@ class RuleEvalTest {
     }
 
     @Test
-    fun testLogic() {
+    fun logic() {
         assertEquals(0f, eval("""not(true)"""))
         assertEquals(1f, eval("""not(false)"""))
         assertEquals(1f, eval("""and(true, true)"""))
@@ -245,7 +245,7 @@ class RuleEvalTest {
     }
 
     @Test
-    fun testArithmetic() {
+    fun arithmetic() {
         assertEquals(3f, eval("""plus(1, 2)"""))
         assertEquals(3f, eval("""plus(1.0, 2.0)"""))
         assertEquals(-1f, eval("""minus(3, 4)"""))
@@ -264,7 +264,7 @@ class RuleEvalTest {
     }
 
     @Test
-    fun testMath() {
+    fun math() {
         assertEquals(0.3010299f, eval("""log(2)"""), 0.00001f)
         assertEquals(0.63092977f, eval("""log(2, 3)"""), 0.00001f)
         assertEquals(0.6931472f, eval("""ln(2)"""), 0.00001f)
@@ -281,12 +281,12 @@ class RuleEvalTest {
     }
 
     @Test
-    fun testUnsupportedFunctions() {
+    fun unsupportedFunctions() {
         assertFailsWith<IllegalArgumentException> { eval("""log10(2)""") }
     }
 
     @Test
-    fun testComposition() {
+    fun composition() {
         assertEquals(0f, eval("""if(gte(datetime("2021-06-01"), datetime("2021-05-31")), 0, 1)"""))
         assertEquals(0f, eval("""log(if(gte(datetime("2021-06-01"), now()), 0, 1))"""))
         assertEquals(1f, eval("""if(gt(plus(now(), 1), div(now(), 1)), minus(2, 1), 0)"""))

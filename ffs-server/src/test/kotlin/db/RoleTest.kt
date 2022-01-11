@@ -17,12 +17,12 @@ internal class RoleTest {
     }
 
     @Test
-    fun testInsertValid(): Unit = testDatabase.run {
+    fun insertValid(): Unit = testDatabase.run {
         roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
     }
 
     @Test
-    fun testInsertDuplicate(): Unit = testDatabase.run {
+    fun insertDuplicate(): Unit = testDatabase.run {
         roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
         assertFails {
             roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.ADMIN)
@@ -30,7 +30,7 @@ internal class RoleTest {
     }
 
     @Test
-    fun testSelectOrganizationByUser(): Unit = testDatabase.run {
+    fun selectOrganizationByUser(): Unit = testDatabase.run {
         roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
         val organizations = roles.selectOrganizationByUser(user_id = userId).executeAsList()
         assert(organizations.size == 1)
@@ -39,7 +39,7 @@ internal class RoleTest {
     }
 
     @Test
-    fun testSelectOrganizationIdProjectIdByUser(): Unit = testDatabase.run {
+    fun selectOrganizationIdProjectIdByUser(): Unit = testDatabase.run {
         roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.READER)
         val projectId = capturingLastInsertId {
             projects.insert(organization_id = organizationId, name = "ffs")
@@ -54,7 +54,7 @@ internal class RoleTest {
     }
 
     @Test
-    fun testUpdate(): Unit = testDatabase.run {
+    fun update(): Unit = testDatabase.run {
         roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
         roles.update(user_id = userId, organization_id = organizationId, role = RoleEnum.ADMIN)
         val organization = roles.selectOrganizationByUser(user_id = userId).executeAsOne()
@@ -62,7 +62,7 @@ internal class RoleTest {
     }
 
     @Test
-    fun testDelete(): Unit = testDatabase.run {
+    fun delete(): Unit = testDatabase.run {
         roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.READER)
         roles.delete(user_id = userId, organization_id = organizationId)
         val organization = roles.selectOrganizationByUser(user_id = userId).executeAsOneOrNull()

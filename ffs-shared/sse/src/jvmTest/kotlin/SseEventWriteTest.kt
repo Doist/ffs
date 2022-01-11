@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 
 class SseEventWriteTest {
     @Test
-    fun testSseEventWriteEndsWithBlankLine() {
+    fun sseEventWriteEndsWithBlankLine() {
         val result = StringWriter().let {
             SseEvent(data = "test").write(it)
             it.toString()
@@ -18,7 +18,7 @@ class SseEventWriteTest {
     }
 
     @Test
-    fun testSseEventWriteIncludesData() {
+    fun sseEventWriteIncludesData() {
         val result = StringWriter().let {
             SseEvent(data = "l1\nl2").write(it)
             it.toString()
@@ -27,7 +27,7 @@ class SseEventWriteTest {
     }
 
     @Test
-    fun testSseEventWriteIncludesId() {
+    fun sseEventWriteIncludesId() {
         val result = StringWriter().let {
             SseEvent(data = "test", id = "id").write(it)
             it.toString()
@@ -36,7 +36,7 @@ class SseEventWriteTest {
     }
 
     @Test
-    fun testSseEventWriteIncludesEvent() {
+    fun sseEventWriteIncludesEvent() {
         val result = StringWriter().let {
             SseEvent(data = "test", event = "event").write(it)
             it.toString()

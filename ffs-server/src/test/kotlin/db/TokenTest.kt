@@ -21,7 +21,7 @@ internal class TokenTest {
     }
 
     @Test
-    fun testTokenGeneratorFormat() {
+    fun tokenGeneratorFormat() {
         repeat(100) {
             assert(TokenGenerator.isFormatValid(TokenGenerator.generate(Permission.EVAL)))
             assert(TokenGenerator.isFormatValid(TokenGenerator.generate(Permission.READ)))
@@ -29,7 +29,7 @@ internal class TokenTest {
     }
 
     @Test
-    fun testTokenGeneratorScope() {
+    fun tokenGeneratorScope() {
         repeat(100) {
             assert(
                 Permission.fromToken(TokenGenerator.generate(Permission.EVAL)) == Permission.EVAL
@@ -41,7 +41,7 @@ internal class TokenTest {
     }
 
     @Test
-    fun testInsertValid(): Unit = testDatabase.tokens.run {
+    fun insertValid(): Unit = testDatabase.tokens.run {
         insert(token = TOKEN_EVAL, project_id = projectId, description = DESCRIPTION)
         val token = selectByProject(projectId).executeAsOne()
         assert(token.project_id == projectId)
@@ -49,7 +49,7 @@ internal class TokenTest {
     }
 
     @Test
-    fun testInsertDuplicate(): Unit = testDatabase.tokens.run {
+    fun insertDuplicate(): Unit = testDatabase.tokens.run {
         insert(token = TOKEN_EVAL, project_id = projectId, description = DESCRIPTION)
         insert(token = TOKEN_READ, project_id = otherProjectId, description = DESCRIPTION)
         assertFails {
@@ -64,7 +64,7 @@ internal class TokenTest {
     }
 
     @Test
-    fun testSelectByProject(): Unit = testDatabase.tokens.run {
+    fun selectByProject(): Unit = testDatabase.tokens.run {
         insert(token = TOKEN_EVAL, project_id = projectId, description = DESCRIPTION)
         insert(token = TOKEN_READ, project_id = projectId, description = OTHER_DESCRIPTION)
         val tokens = selectByProject(projectId).executeAsList()
@@ -74,7 +74,7 @@ internal class TokenTest {
     }
 
     @Test
-    fun testSelectProject(): Unit = testDatabase.tokens.run {
+    fun selectProject(): Unit = testDatabase.tokens.run {
         assert(selectProjectIdByToken(token = TOKEN_EVAL).executeAsOneOrNull() == null)
         assert(selectProjectIdByToken(token = TOKEN_READ).executeAsOneOrNull() == null)
 
@@ -94,7 +94,7 @@ internal class TokenTest {
     }
 
     @Test
-    fun testDelete(): Unit = testDatabase.tokens.run {
+    fun delete(): Unit = testDatabase.tokens.run {
         val idEval = testDatabase.capturingLastInsertId {
             insert(token = TOKEN_EVAL, project_id = projectId, description = DESCRIPTION)
         }

@@ -13,12 +13,12 @@ internal class ProjectTest {
     }
 
     @Test
-    fun testInsertValid(): Unit = testDatabase.run {
+    fun insertValid(): Unit = testDatabase.run {
         projects.insert(organization_id = organizationId, name = NAME)
     }
 
     @Test
-    fun testInsertDuplicatedName(): Unit = testDatabase.run {
+    fun insertDuplicatedName(): Unit = testDatabase.run {
         projects.insert(organization_id = organizationId, name = NAME)
         assertFails {
             projects.insert(organization_id = organizationId, name = NAME)
@@ -26,7 +26,7 @@ internal class ProjectTest {
     }
 
     @Test
-    fun testSelect(): Unit = testDatabase.run {
+    fun select(): Unit = testDatabase.run {
         val id = capturingLastInsertId {
             projects.insert(organization_id = organizationId, name = NAME)
         }
@@ -36,7 +36,7 @@ internal class ProjectTest {
     }
 
     @Test
-    fun testSelectByOrganization(): Unit = testDatabase.run {
+    fun selectByOrganization(): Unit = testDatabase.run {
         val namePrefix = "$NAME-"
         for (i in 0..9) {
             projects.insert(organization_id = organizationId, name = "$namePrefix-$i")
@@ -50,7 +50,7 @@ internal class ProjectTest {
     }
 
     @Test
-    fun testUpdate(): Unit = testDatabase.run {
+    fun update(): Unit = testDatabase.run {
         val id = capturingLastInsertId {
             projects.insert(organization_id = organizationId, name = NAME)
         }
@@ -60,7 +60,7 @@ internal class ProjectTest {
     }
 
     @Test
-    fun testDelete(): Unit = testDatabase.run {
+    fun delete(): Unit = testDatabase.run {
         val id = capturingLastInsertId {
             projects.insert(organization_id = organizationId, name = NAME)
         }
