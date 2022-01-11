@@ -32,6 +32,8 @@ import kotlin.math.ln
 import kotlin.math.log
 import kotlin.math.pow
 
+fun validateFormula(formula: String) = runCatching { RuleGrammar.parseToEnd(formula) }.isSuccess
+
 /**
  * Evaluates the given [formula] resulting in unit interval [0, 1], the frequency of returning true.
  * 0 is always false, 1 is always true, 0.5 is true ~50% of the time, depending on the environment.

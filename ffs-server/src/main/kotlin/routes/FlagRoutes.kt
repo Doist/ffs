@@ -11,6 +11,7 @@ import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags
 import doist.ffs.ext.stream
 import doist.ffs.plugins.database
+import doist.ffs.rule.validateFormula
 import doist.ffs.serialization.json
 import doist.ffs.sse.SseEvent
 import io.ktor.http.ContentType
@@ -104,11 +105,15 @@ private fun Route.createFlag() = post {
 
     authorizeForProject(id = projectId, permission = Permission.WRITE)
 
-    val id = database.capturingLastInsertId {
-        flags.insert(project_id = projectId, name = name, rule = rule)
+    if (validateFormula(rule)) {
+        val id = database.capturingLastInsertId {
+            flags.insert(project_id = projectId, name = name, rule = rule)
+        }
+        call.response.header(HttpHeaders.Location, PATH_FLAG(id))
+        call.respond(HttpStatusCode.Created)
+    } else {
+        call.respond(HttpStatusCode.BadRequest)
     }
-    call.response.header(HttpHeaders.Location, PATH_FLAG(id))
-    call.respond(HttpStatusCode.Created)
 }
 
 /**
@@ -119,7 +124,7 @@ private fun Route.createFlag() = post {
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlags() = get {
     val projectId = call.parameters["id"]?.toLong()
-        // Exceptional case, where endpoint is used with token authentication without parameter.
+    // Exceptional case, where endpoint is used with token authentication without parameter.
         ?: call.principal<TokenPrincipal>()?.projectId
         ?: throw MissingRequestParameterException("project_id")
 
@@ -184,8 +189,12 @@ private fun Route.updateFlag() = put("{id}") {
     val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
     authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
 
-    database.flags.update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
-    call.respond(HttpStatusCode.NoContent)
+    if (rule != null && validateFormula(rule)) {
+        database.flags.update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
+        call.respond(HttpStatusCode.NoContent)
+    } else {
+        call.respond(HttpStatusCode.BadRequest)
+    }
 }
 
 /**
@@ -201,8 +210,8 @@ private fun Route.updateFlag() = put("{id}") {
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlagsEval() = get(PATH_EVAL) {
     val queryParameters = call.request.queryParameters
-    val projectId = queryParameters["project_id"]?.toLong()
-        // Exceptional case, where endpoint is used from client SDK without parameter.
+    val projectId = queryParameters["id"]?.toLong()
+    // Exceptional case, where endpoint is used from client SDK without parameter.
         ?: call.principal<TokenPrincipal>()?.projectId
         ?: throw MissingRequestParameterException("project_id")
     val env = json.decodeFromString<JsonObject>(queryParameters.getOrFail<String>("env"))
