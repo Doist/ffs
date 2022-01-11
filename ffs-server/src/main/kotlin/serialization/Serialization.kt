@@ -4,6 +4,7 @@ import doist.ffs.db.Flag
 import doist.ffs.db.Organization
 import doist.ffs.db.Project
 import doist.ffs.db.SelectById
+import doist.ffs.db.SelectByProject
 import doist.ffs.db.SelectOrganizationByUser
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.cbor.Cbor
@@ -26,12 +27,16 @@ private object FlagSerializer
 @Serializer(forClass = SelectById::class)
 private object UserSelectByIdSerializer
 
+@Serializer(forClass = SelectByProject::class)
+private object TokenSelectByProjectSerializer
+
 private val modules = SerializersModule {
     contextual(OrganizationSerializer)
     contextual(OrganizationSelectByUserSerializer)
     contextual(ProjectSerializer)
     contextual(FlagSerializer)
     contextual(UserSelectByIdSerializer)
+    contextual(TokenSelectByProjectSerializer)
 }
 
 val json = Json {

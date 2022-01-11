@@ -37,6 +37,7 @@ import io.ktor.server.plugins.StatusPages
 import io.ktor.server.response.respond
 import io.ktor.server.sessions.Sessions
 import io.ktor.server.sessions.cookie
+import routes.installTokenRoutes
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
@@ -97,6 +98,9 @@ fun Application.installPlugins() {
         exception<AuthorizationException> { call, _ ->
             call.respond(HttpStatusCode.Forbidden)
         }
+        exception<IllegalArgumentException> { call, _ ->
+            call.respond(HttpStatusCode.BadRequest)
+        }
     }
 }
 
@@ -105,4 +109,5 @@ fun Application.installRoutes() {
     installOrganizationRoutes()
     installProjectRoutes()
     installFlagRoutes()
+    installTokenRoutes()
 }
