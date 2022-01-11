@@ -50,6 +50,19 @@ class OrganizationRoutesTest {
     }
 
     @Test
+    fun testGetNonexistentId() = testApplication {
+        val client = createUserClient()
+
+        // Nonexistent id.
+        assertFailsWith<ClientRequestException> {
+            client.client.get(PATH_ORGANIZATION(42))
+        }
+        assertFailsWith<ClientRequestException> {
+            client.client.delete(PATH_ORGANIZATION(42))
+        }
+    }
+
+    @Test
     fun testUpdate() = testApplication {
         val client = createUserClient()
         val id = client.withOrganization()
@@ -90,6 +103,35 @@ class OrganizationRoutesTest {
     }
 
     @Test
+    fun testUpdateUserMissingUserId() = testApplication {
+        val client = createUserClient()
+        val id = client.withOrganization()
+        assertFailsWith<ClientRequestException> {
+            client.client.put("${PATH_ORGANIZATION(id)}$PATH_USERS") {
+                setBodyForm("role" to RoleEnum.USER)
+            }
+        }
+    }
+
+    @Test
+    fun testUpdateUserMissingName() = testApplication {
+        val client = createUserClient()
+        val id = client.withOrganization()
+        assertFailsWith<ClientRequestException> {
+            client.client.put("${PATH_ORGANIZATION(id)}$PATH_USERS")
+        }
+    }
+
+    @Test
+    fun testDeleteUserMissingUserId() = testApplication {
+        val client = createUserClient()
+        val id = client.withOrganization()
+        assertFailsWith<ClientRequestException> {
+            client.client.delete("${PATH_ORGANIZATION(id)}$PATH_USERS")
+        }
+    }
+
+    @Test
     fun testProjectManagement() = testApplication {
         val client = createUserClient()
         val organizationId = client.withOrganization()
@@ -113,35 +155,6 @@ class OrganizationRoutesTest {
 
         assertFailsWith<ClientRequestException> {
             client.client.get(PATH_ORGANIZATION(id)).bodyAsJson<Organization?>()
-        }
-    }
-
-    @Test
-    fun testIncorrectParams() = testApplication {
-        val client = createUserClient()
-
-        // Nonexistent id.
-        assertFailsWith<ClientRequestException> {
-            client.client.get(PATH_ORGANIZATION(42))
-        }
-        assertFailsWith<ClientRequestException> {
-            client.client.delete(PATH_ORGANIZATION(42))
-        }
-
-        // Missing user_id.
-        val id = client.withOrganization()
-        assertFailsWith<ClientRequestException> {
-            client.client.put("${PATH_ORGANIZATION(id)}$PATH_USERS") {
-                setBodyForm("role" to RoleEnum.USER)
-            }
-        }
-        assertFailsWith<ClientRequestException> {
-            client.client.delete("${PATH_ORGANIZATION(id)}$PATH_USERS")
-        }
-
-        // Missing name.
-        assertFailsWith<ClientRequestException> {
-            client.client.put("${PATH_ORGANIZATION(id)}$PATH_PROJECTS")
         }
     }
 
