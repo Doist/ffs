@@ -140,10 +140,6 @@ private fun Route.updateProject() = put("{id}") {
  * Delete a project.
  *
  * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description        |
- * | --------- | -------- | ------------------ |
- * | `id`      | Yes      | ID of the project. |
  */
 private fun Route.deleteProject() = delete("{id}") {
     val id = call.parameters.getOrFail<Long>("id")

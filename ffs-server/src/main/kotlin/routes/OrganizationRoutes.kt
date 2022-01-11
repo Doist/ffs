@@ -96,10 +96,6 @@ private fun Route.getOrganizations() = get {
  * Get an existing organization.
  *
  * On success, responds `200 OK` with a JSON object for the organization.
- *
- * | Parameter | Required | Description             |
- * | --------- | -------- | ----------------------- |
- * | `id`      | Yes      | ID of the organization. |
  */
 private fun Route.getOrganization() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
@@ -118,7 +114,6 @@ private fun Route.getOrganization() = get("{id}") {
  *
  * | Parameter | Required | Description               |
  * | --------- | -------- | ------------------------- |
- * | `id`      | Yes      | ID of the organization.   |
  * | `name`    | No       | Name of the organization. |
  */
 private fun Route.updateOrganization() = put("{id}") {
@@ -139,10 +134,6 @@ private fun Route.updateOrganization() = put("{id}") {
  * Delete an organization.
  *
  * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description             |
- * | --------- | -------- | ----------------------- |
- * | `id`      | Yes      | ID of the organization. |
  */
 private fun Route.deleteOrganization() = delete("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
@@ -160,7 +151,6 @@ private fun Route.deleteOrganization() = delete("{id}") {
  *
  * | Parameter | Required | Description                 |
  * | --------- | -------- | --------------------------- |
- * | `id`      | Yes      | ID of the organization.     |
  * | `user_id` | Yes      | ID of user to add.          |
  * | `role`    | Yes      | Role to assign to the user. |
  */
@@ -183,7 +173,6 @@ private fun Route.addUser() = post {
  *
  * | Parameter | Required | Description                 |
  * | --------- | -------- | --------------------------- |
- * | `id`      | Yes      | ID of the organization.     |
  * | `user_id` | Yes      | ID of user to add.          |
  * | `role`    | Yes      | Role to assign to the user. |
  */
@@ -206,7 +195,6 @@ private fun Route.updateUser() = put {
  *
  * | Parameter | Required | Description                 |
  * | --------- | -------- | --------------------------- |
- * | `id`      | Yes      | ID of the organization.     |
  * | `user_id` | Yes      | ID of user to add.          |
  */
 private fun Route.removeUser() = delete {
