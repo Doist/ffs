@@ -2,7 +2,6 @@ package doist.ffs.db
 
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import kotlin.test.Test
-import kotlin.test.assertFails
 
 internal class OrganizationTest {
     private val testDatabase = Database(JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY))
@@ -10,14 +9,6 @@ internal class OrganizationTest {
     @Test
     fun testInsertValid(): Unit = testDatabase.run {
         organizations.insert(name = ORG_NAME)
-    }
-
-    @Test
-    fun testInsertDuplicatedName(): Unit = testDatabase.run {
-        organizations.insert(name = ORG_NAME)
-        assertFails {
-            organizations.insert(name = ORG_NAME)
-        }
     }
 
     @Test

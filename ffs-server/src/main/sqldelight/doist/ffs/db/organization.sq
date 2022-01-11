@@ -2,7 +2,7 @@ import kotlinx.datetime.Instant;
 
 CREATE TABLE organization (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
     created_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at INTEGER AS Instant NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
