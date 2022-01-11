@@ -19,7 +19,7 @@ enum class Permission {
     WRITE,
 
     /**
-     * Delete permission allows irreversably deleting the resource.
+     * Delete permission allows irreversibly deleting the resource.
      */
     DELETE;
 
