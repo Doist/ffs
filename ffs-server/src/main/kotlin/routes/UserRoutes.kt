@@ -1,6 +1,7 @@
 package doist.ffs.routes
 
 import doist.ffs.auth.Argon2Password
+import doist.ffs.auth.Session
 import doist.ffs.db.UserQueries
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.users
@@ -67,7 +68,7 @@ private fun Route.registerUser() = post(PATH_REGISTER) {
         val id = database.capturingLastInsertId {
             users.insert(name = name, email = email, password = Argon2Password.encode(password))
         }
-        call.sessions.set(id)
+        call.sessions.set(Session(id))
         call.response.header(HttpHeaders.Location, PATH_USER(id))
         call.respond(HttpStatusCode.Created)
     } else {
@@ -92,7 +93,7 @@ private fun Route.loginUser() = post(PATH_LOGIN) {
 
     val id = database.users.selectIdByEmail(email = email).executeAsOneOrNull()
     if (id != null && database.users.testPassword(id, password)) {
-        call.sessions.set(id)
+        call.sessions.set(Session(id))
         call.respond(HttpStatusCode.OK, database.users.selectById(id = id).executeAsOne())
         return@post
     } else {

@@ -3,6 +3,7 @@ package doist.ffs
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import doist.ffs.auth.AuthorizationException
 import doist.ffs.auth.Permission
+import doist.ffs.auth.Session
 import doist.ffs.auth.TokenPrincipal
 import doist.ffs.auth.UserPrincipal
 import doist.ffs.auth.bearer
@@ -56,30 +57,27 @@ fun Application.installPlugins() {
     }
     install(Compression)
     install(Sessions) {
-        cookie<Long>("user_session")
+        cookie<Session>("session")
     }
     install(Authentication) {
-        session<Long>("session") {
-            validate { id ->
+        session<Session>("session") {
+            validate { (id) ->
                 val userRoles = database.roles.selectOrganizationIdProjectIdByUser(
                     user_id = id
                 ).executeAsList()
-                if (userRoles.isNotEmpty()) {
-                    return@validate UserPrincipal(
-                        id = id,
-                        organizationPermissions = userRoles.associate {
-                            it.id to it.role.permissions
-                        },
-                        projectPermissions = userRoles.filter {
-                            it.project_id != null
-                        }.associate {
-                            it.project_id!! to it.role.permissions
-                        }
-                    )
-                }
-                return@validate null
+                return@validate UserPrincipal(
+                    id = id,
+                    organizationPermissions = userRoles.associate {
+                        it.id to it.role.permissions
+                    },
+                    projectPermissions = userRoles.filter {
+                        it.project_id != null
+                    }.associate {
+                        it.project_id!! to it.role.permissions
+                    }
+                )
             }
-            challenge("$PATH_USERS/$PATH_LOGIN")
+            challenge("$PATH_USERS$PATH_LOGIN")
         }
         bearer("token") {
             validate { credential ->

@@ -9,5 +9,5 @@ sealed class Resource(open val id: Long) {
     /**
      * Projects include themselves and related resources, such as flags.
      */
-    class Project(override val id: Long) : Resource(id)
+    data class Project(override val id: Long) : Resource(id)
 }
