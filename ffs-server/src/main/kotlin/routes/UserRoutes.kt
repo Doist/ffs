@@ -193,7 +193,7 @@ private fun Route.deleteUser() = delete("{id}") {
  * Validates the email.
  */
 private val EMAIL_REGEXP = (
-    "^(?=.{1,64}@)[\\p{L}0-9_-]+(\\.[\\p{L}0-9_-]+)*" +
+    "^(?=.{1,64}@)[\\p{L}0-9_-]+([\\.+][\\p{L}0-9_-]+)*" +
         "@[^-][\\p{L}0-9-]+(\\.[\\p{L}0-9-]+)*" +
         "(\\.[\\p{L}]{2,})\$"
     ).toRegex()
