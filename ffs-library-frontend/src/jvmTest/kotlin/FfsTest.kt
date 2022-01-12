@@ -1,5 +1,5 @@
+package doist.ffs
 
-import doist.ffs.initializeInternal
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders

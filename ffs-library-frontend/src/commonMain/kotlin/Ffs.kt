@@ -1,6 +1,5 @@
+package doist.ffs
 
-import doist.ffs.Client
-import doist.ffs.DEFAULT_URL
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
