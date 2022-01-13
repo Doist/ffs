@@ -50,7 +50,9 @@ subprojects {
         apply(plugin = libs.plugins.kotlin.power.assert.get().pluginId)
         configure<com.bnorm.power.PowerAssertGradleExtension> {
             functions = listOf(
-                "kotlin.assert", "kotlin.test.assertTrue", "kotlin.test.assertEquals"
+                "kotlin.assert",
+                "kotlin.test.assertEquals",
+                "kotlin.test.assertTrue",
             )
         }
 
