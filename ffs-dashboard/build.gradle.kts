@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.bundles.kotlin.react)
-    
+    implementation(libs.bundles.client.react)
+
     testImplementation(libs.kotlin.test)
 }
 

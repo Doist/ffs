@@ -8,7 +8,7 @@ kotlin {
             dependencies {
                 implementation(project(":ffs-shared:env"))
                 implementation(project(":ffs-shared:sse"))
-                implementation(libs.bundles.ktor.client)
+                implementation(libs.bundles.client.ktor)
                 api(libs.kotlinx.serialization.json)
             }
         }
@@ -23,8 +23,8 @@ kotlin {
 
         val jvmTest by getting {
             dependencies {
-                implementation(libs.bundles.ktor.server)
-                implementation(libs.ktor.engine.cio)
+                implementation(libs.bundles.server.ktor)
+                implementation(libs.ktor.client.engine.cio)
             }
         }
     }

@@ -33,21 +33,21 @@ kotlin {
             val cioPrefixes = listOf("jvm", "android", "ios", "watchos", "tvos", "macos", "linux")
             if (cioPrefixes.any { name.startsWith(it) } && name.endsWith("Main")) {
                 dependencies {
-                    implementation(libs.ktor.engine.cio)
+                    implementation(libs.ktor.client.engine.cio)
                 }
             }
 
             val jsPrefixes = listOf("js")
             if (jsPrefixes.any { name.startsWith(it) } && name.endsWith("Main")) {
                 dependencies {
-                    implementation(libs.ktor.engine.js)
+                    implementation(libs.ktor.client.engine.js)
                 }
             }
 
             val curlPrefixes = listOf("mingw")
             if (curlPrefixes.any { name.startsWith(it) } && name.endsWith("Main")) {
                 dependencies {
-                    implementation(libs.ktor.engine.curl)
+                    implementation(libs.ktor.client.engine.curl)
                 }
             }
         }

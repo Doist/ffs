@@ -15,12 +15,12 @@ dependencies {
     implementation(project(":ffs-shared:rule"))
     implementation(project(":ffs-shared:sse"))
 
-    implementation(libs.bundles.ktor.server)
 
     implementation(libs.sqldelight.driver.sqlite)
     implementation(libs.sqldelight.coroutines.extensions)
     implementation(libs.kotlinx.datetime)
     implementation(libs.bouncycastle)
+    implementation(libs.bundles.server.ktor)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.ktor.server.test.host)
