@@ -9,7 +9,10 @@ import doist.ffs.db.organizations
 import doist.ffs.db.projects
 import doist.ffs.db.tokens
 import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
-import doist.ffs.module
+import doist.ffs.installAuthentication
+import doist.ffs.installPlugins
+import doist.ffs.installRoutes
+import doist.ffs.plugins.Database
 import doist.ffs.plugins.database
 import doist.ffs.routes.PATH_EVAL
 import doist.ffs.routes.PATH_FLAGS
@@ -20,7 +23,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.encodeURLPath
 import io.ktor.http.isSuccess
-import io.ktor.server.application.Application
+import io.ktor.server.application.install
 import io.ktor.server.testing.TestApplicationCall
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.TestApplicationRequest
@@ -79,7 +82,7 @@ import org.junit.jupiter.api.Test
 @Suppress("LongMethod")
 class SseRoutesTest {
     @Test
-    fun flagStream(): Unit = withTestApplication(Application::module) {
+    fun flagStream(): Unit = routes.withTestApplication {
         val organizationId = application.database.capturingLastInsertId {
             organizations.insert(name = "test-organization")
         }
@@ -167,7 +170,7 @@ class SseRoutesTest {
     }
 
     @Test
-    fun flagEvalStream(): Unit = withTestApplication(Application::module) {
+    fun flagEvalStream(): Unit = routes.withTestApplication {
         val organizationId = application.database.capturingLastInsertId {
             organizations.insert(name = "test-organization")
         }
@@ -287,4 +290,16 @@ private fun TestApplicationEngine.handleSse(
     }
 
     return call
+}
+
+private fun withTestApplication(test: TestApplicationEngine.() -> Unit) = withTestApplication {
+    application.apply {
+        // Hikari configuration from application.conf won't be available in tests,
+        // so we need to replicate Application.module() without relying on it. Huh.
+        install(Database)
+        installAuthentication()
+        installPlugins()
+        installRoutes()
+    }
+    test()
 }

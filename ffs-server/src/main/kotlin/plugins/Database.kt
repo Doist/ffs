@@ -1,5 +1,6 @@
 package doist.ffs.plugins
 
+import com.squareup.sqldelight.sqlite.driver.JdbcDriver
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import doist.ffs.db.Database
 import io.ktor.events.Events
@@ -27,7 +28,7 @@ class Database(log: Logger, monitor: Events, configuration: Configuration) {
     }
 
     class Configuration {
-        var driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+        var driver: JdbcDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
     }
 
     companion object Plugin : ApplicationPlugin<Application, Configuration, Database> {

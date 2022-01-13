@@ -3,6 +3,7 @@ kotlin = "1.6.10"
 detekt = "1.19.0"
 ktor = "2.0.0-beta-1"
 logback = "1.2.10"
+hikari = "5.0.1"
 sqldelight = "1.5.3"
 bouncycastle = "1.70"
 kotlinx-coroutines = "1.6.0"
@@ -44,6 +45,7 @@ ktor-client-engine-curl = { module = "io.ktor:ktor-client-curl", version.ref = "
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-serialization-kotlinx-cbor = { module = "io.ktor:ktor-serialization-kotlinx-cbor", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 sqldelight-driver-sqlite = { module = "com.squareup.sqldelight:sqlite-driver", version.ref = "sqldelight" }
 sqldelight-coroutines-extensions = { module = "com.squareup.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
 bouncycastle = { module = "org.bouncycastle:bcprov-jdk15on", version.ref = "bouncycastle" }
@@ -61,6 +63,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 
 [bundles]
 server-ktor = ["ktor-server-core", "ktor-server-cio", "logback-classic", "ktor-serialization-kotlinx-json", "ktor-serialization-kotlinx-cbor", "ktor-server-content-negotiation", "ktor-server-call-logging", "ktor-server-default-headers", "ktor-server-compression", "ktor-server-auth", "ktor-server-status-pages", "ktor-server-sessions"]
+server-database = ["hikari", "sqldelight-driver-sqlite", "sqldelight-coroutines-extensions", "bouncycastle", "kotlinx-datetime"]
 client-ktor = ["ktor-client-core", "ktor-serialization-kotlinx-json", "ktor-client-content-negotiation"]
 client-react = ["kotlin-react", "kotlin-react-dom", "kotlin-react-router-dom", "kotlin-redux", "kotlin-react-redux"]
 
