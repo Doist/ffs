@@ -17,7 +17,7 @@ kotlinx-murmurhash = "0.3.0"
 kotlin-power-assert = "0.11.0"
 kotlinx-benchmark = "0.3.1"
 kotlinx-kover = "0.4.4"
-dokka = "1.6.0"
+dokka = "1.6.10"
 mkdocs = "2.2.0"
 mkdocs-plugin-awesome-pages = "2.6.1"
 
