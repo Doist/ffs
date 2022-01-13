@@ -5,6 +5,7 @@ plugins {
     id(libs.plugins.kotlin.serialization.get().pluginId)
     id(libs.plugins.sqldelight.get().pluginId)
     application
+    alias(libs.plugins.shadow)
     id(libs.plugins.kotlinx.benchmark.get().pluginId)
 }
 
@@ -28,15 +29,23 @@ dependencies {
 }
 
 application {
-    mainClass.set("ApplicationKt")
+    mainClass.set("doist.ffs.ApplicationKt")
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
+tasks {
+    shadowJar {
+        manifest {
+            attributes(Pair("Main-Class", "io.ktor.server.cio.EngineMain"))
+        }
+    }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "11"
+    test {
+        useJUnitPlatform()
+    }
+
+    withType<KotlinCompile> {
+        kotlinOptions.jvmTarget = "11"
+    }
 }
 
 kotlin.sourceSets.all {
