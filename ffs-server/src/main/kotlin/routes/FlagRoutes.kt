@@ -188,7 +188,7 @@ private fun Route.updateFlag() = put("{id}") {
     val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
     authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
 
-    if (rule != null && validateFormula(rule)) {
+    if (rule == null || validateFormula(rule)) {
         database.flags.update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
         call.respond(HttpStatusCode.NoContent)
     } else {
