@@ -9,13 +9,18 @@ import kotlinx.serialization.json.Json
 public class Ffs(
     apiToken: String,
     url: String = DEFAULT_URL,
-    liveUpdates: Boolean = true
+    liveUpdates: Boolean = DEFAULT_LIVE_UPDATES
 ) : Client<Map<String, Boolean>>(
     apiToken,
     url,
     "/flags/eval",
     liveUpdates
 ) {
+    public constructor(apiToken: String, url: String) :
+        this(apiToken, url, DEFAULT_LIVE_UPDATES)
+    public constructor(apiToken: String, liveUpdates: Boolean) :
+        this(apiToken, DEFAULT_URL, liveUpdates)
+
     protected override val data: MutableMap<String, Boolean> = mutableMapOf()
 
     protected override fun updateData(response: String): Unit =
