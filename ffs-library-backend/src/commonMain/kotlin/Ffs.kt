@@ -32,10 +32,11 @@ public class Ffs(
      *
      * Flag evaluation is done locally, after syncing the rules with the server.
      */
-    public override fun isEnabled(name: String): Boolean = data[name]?.isEnabled(env) ?: false
+    public override fun isEnabled(name: String, default: Boolean): Boolean =
+        data[name]?.isEnabled(env) ?: default
 }
 
-private fun Flag.isEnabled(env: JsonObject): Boolean {
-    if (archived_at != null) return false
+private fun Flag.isEnabled(env: JsonObject): Boolean? {
+    if (archived_at != null) return null
     return doist.ffs.rule.isEnabled(rule, env, id)
 }

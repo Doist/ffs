@@ -18,8 +18,10 @@ class FfsTest {
     fun isEnabled() = runTest {
         val ffs = Ffs("apitoken", liveUpdates = false)
         assertFalse(ffs.isEnabled("test"))
+        assertTrue(ffs.isEnabled("test", true))
         ffs.initializeForTesting()
         assertTrue(ffs.isEnabled("test"))
+        assertTrue(ffs.isEnabled("test", false))
     }
 
     @Test

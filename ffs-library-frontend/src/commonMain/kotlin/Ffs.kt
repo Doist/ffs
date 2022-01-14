@@ -26,5 +26,5 @@ public class Ffs(
      *
      * Flag evaluation is done on the server, which provides the results for all evaluations.
      */
-    public override fun isEnabled(name: String): Boolean = data[name] ?: false
+    public override fun isEnabled(name: String, default: Boolean): Boolean = data[name] ?: default
 }

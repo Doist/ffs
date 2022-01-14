@@ -223,7 +223,7 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
     }
     if (sse) {
         val channel = produce {
-            val lastFlagsEval = mutableMapOf<String, Boolean>().withDefault { false }
+            val lastFlagsEval = mutableMapOf<String, Boolean?>().withDefault { false }
             val sendUpdatedFlagsEval: suspend (flags: List<Flag>) -> Unit = { flags: List<Flag> ->
                 // Select flag evaluations that changed since the last send.
                 val updatedFlagsEval = flags.associateBy({ it.name }) {
@@ -307,8 +307,8 @@ private fun Route.unarchiveFlag() = delete {
     call.respond(HttpStatusCode.NoContent)
 }
 
-private fun Flag.isEnabled(env: JsonObject): Boolean {
-    if (archived_at != null) return false
+private fun Flag.isEnabled(env: JsonObject): Boolean? {
+    if (archived_at != null) return null
     return doist.ffs.rule.isEnabled(rule, env, id)
 }
 

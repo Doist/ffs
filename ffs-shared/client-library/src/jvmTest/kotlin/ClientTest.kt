@@ -29,7 +29,7 @@ class ClientTest {
         Client<Unit>(TOKEN, "https://doist.com", "/dummy", liveUpdates) {
         override val data = Unit
 
-        override fun isEnabled(name: String): Boolean = false
+        override fun isEnabled(name: String, default: Boolean) = default
 
         override fun updateData(response: String) = Unit
     }
