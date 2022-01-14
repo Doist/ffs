@@ -37,8 +37,6 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
     private var apiClient: ApiClient? = null
 
     // TODO: Store and read from storage.
-    // Could be immutable externally in Kotlin 1.7.0.
-    // See: https://youtrack.jetbrains.com/issue/KT-14663
     protected abstract val data: T
 
     protected abstract fun updateData(response: String)
@@ -92,6 +90,11 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
      * Returns true if flag named [name] exists and evaluates to true, false otherwise.
      */
     abstract fun isEnabled(name: String): Boolean
+
+    /**
+     * Returns all flag data.
+     */
+    fun all() = data
 
     /**
      * Shuts down the client, freeing associated resources.

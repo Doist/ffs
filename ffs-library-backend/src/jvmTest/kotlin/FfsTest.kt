@@ -1,6 +1,7 @@
 
 import doist.ffs.Ffs
 import doist.ffs.initializeInternal
+import doist.ffs.model.Flag
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
@@ -16,10 +17,24 @@ import kotlin.test.assertTrue
 // See: https://youtrack.jetbrains.com/issue/KT-50222
 class FfsTest {
     @Test
-    fun flagEnabled() = runTest {
+    fun isEnabled() = runTest {
         val ffs = Ffs("apitoken", liveUpdates = false)
         assertFalse(ffs.isEnabled("test"))
-        ffs.initializeInternal(
+        ffs.initializeForTesting()
+        assertTrue(ffs.isEnabled("test"))
+    }
+
+    @Test
+    fun all() = runTest {
+        val ffs = Ffs("apitoken", liveUpdates = false)
+        assert(ffs.all() == emptyMap<String, Flag>())
+        ffs.initializeForTesting()
+        assert(ffs.all() == mapOf("test" to Flag(1, "test", "1", null)))
+        assertTrue(ffs.isEnabled("test"))
+    }
+
+    private suspend fun Ffs.initializeForTesting() {
+        initializeInternal(
             MockEngine {
                 respond(
                     content = ByteReadChannel(
@@ -30,6 +45,5 @@ class FfsTest {
                 )
             }
         ).join()
-        assertTrue(ffs.isEnabled("test"))
     }
 }

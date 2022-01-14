@@ -15,10 +15,24 @@ import kotlin.test.assertTrue
 // See: https://youtrack.jetbrains.com/issue/KT-50222
 class FfsTest {
     @Test
-    fun flagEnabled() = runTest {
+    fun isEnabled() = runTest {
         val ffs = Ffs("apitoken", liveUpdates = false)
         assertFalse(ffs.isEnabled("test"))
-        ffs.initializeInternal(
+        ffs.initializeForTesting()
+        assertTrue(ffs.isEnabled("test"))
+    }
+
+    @Test
+    fun all() = runTest {
+        val ffs = Ffs("apitoken", liveUpdates = false)
+        assert(ffs.all() == emptyMap<String, Boolean>())
+        ffs.initializeForTesting()
+        assert(ffs.all() == mapOf("test" to true))
+        assertTrue(ffs.isEnabled("test"))
+    }
+
+    private suspend fun Ffs.initializeForTesting() {
+        initializeInternal(
             MockEngine {
                 respond(
                     content = ByteReadChannel("""{"test": true}"""),
@@ -27,6 +41,5 @@ class FfsTest {
                 )
             }
         ).join()
-        assertTrue(ffs.isEnabled("test"))
     }
 }
