@@ -25,6 +25,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlin.collections.set
 
 const val DEFAULT_URL: String = "https://ffs.doist.com"
+const val DEFAULT_LIVE_UPDATES: Boolean = true
 
 abstract class Client<T> private constructor(private val config: BaseConfig) : Config by config {
     constructor(
