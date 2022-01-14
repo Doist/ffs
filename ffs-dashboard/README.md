@@ -1,3 +1,3 @@
-# Dashboard
+# FFS dashboard
 
-Management dashboard.
+Dashboard for managing feature flags in FFS.
