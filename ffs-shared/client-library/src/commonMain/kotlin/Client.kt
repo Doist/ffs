@@ -46,16 +46,21 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
     /**
      * Asynchronously initializes the client by loading cached data and connecting with the server.
      */
-    open fun initialize() {
-        initialize(null)
+    open fun initialize(onInitialized: (() -> Unit)? = null) {
+        initialize(onInitialized, null)
     }
 
-    internal fun initialize(engine: HttpClientEngine?): Job {
+    internal fun initialize(engine: HttpClientEngine? = null) = initialize(null, engine)
+
+    internal fun initialize(
+        onInitialized: (() -> Unit)? = null,
+        engine: HttpClientEngine? = null
+    ): Job {
         shutdown()
 
         ApiClient(config.url, config.path, engine).let {
             apiClient = it
-            return it.launch {
+            val job = it.launch {
                 val configRequest: HttpRequestBuilder.() -> Unit = {
                     accept(ContentType.Application.Json)
                     bearerAuth(config.apiToken)
@@ -72,6 +77,14 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
                     updateData(response.body())
                 }
             }
+
+            onInitialized?.let {
+                job.invokeOnCompletion {
+                    onInitialized()
+                }
+            }
+
+            return job
         }
     }
 
