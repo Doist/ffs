@@ -89,7 +89,13 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
     /**
      * Returns true if flag named [name] exists and evaluates to true, false otherwise.
      */
-    abstract fun isEnabled(name: String): Boolean
+    fun isEnabled(name: String): Boolean = isEnabled(name, false)
+
+    /**
+     * Returns true if flag named [name] evaluates to true, false if it evaluates to false,
+     * and [default] if it does not exist or is archived.
+     */
+    abstract fun isEnabled(name: String, default: Boolean): Boolean
 
     /**
      * Returns all flag data.
