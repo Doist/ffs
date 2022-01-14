@@ -4,7 +4,7 @@ import kotlin.random.Random
 import kotlin.random.nextUBytes
 
 @Suppress("UnnecessaryAbstractClass", "MagicNumber", "ComplexCondition")
-public abstract class UUID private constructor(private val random: Random = Random.Default) {
+abstract class UUID private constructor(private val random: Random = Random.Default) {
     constructor(seed: Int) : this(Random(seed))
 
     /**

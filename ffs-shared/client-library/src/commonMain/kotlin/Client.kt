@@ -24,7 +24,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.collections.set
 
-public const val DEFAULT_URL: String = "https://ffs.doist.com"
+const val DEFAULT_URL: String = "https://ffs.doist.com"
 
 abstract class Client<T> private constructor(private val config: BaseConfig) : Config by config {
     constructor(
@@ -70,10 +70,11 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
         }
     }
 
-    protected abstract fun updateData(response: String): Unit
+    protected abstract fun updateData(response: String)
 
     abstract fun isEnabled(name: String): Boolean
 
+    @Suppress("MemberVisibilityCanBePrivate")
     fun shutdown() {
         if (apiClient == null) return
 

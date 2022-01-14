@@ -13,9 +13,10 @@ public class Ffs(
     "/flags/eval",
     liveUpdates
 ) {
-    override val data: MutableMap<String, Boolean> = mutableMapOf()
+    protected override val data: MutableMap<String, Boolean> = mutableMapOf()
 
-    override fun updateData(response: String): Unit = data.putAll(Json.decodeFromString(response))
+    protected override fun updateData(response: String): Unit =
+        data.putAll(Json.decodeFromString(response))
 
-    override fun isEnabled(name: String): Boolean = data[name] ?: false
+    public override fun isEnabled(name: String): Boolean = data[name] ?: false
 }

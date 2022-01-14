@@ -15,16 +15,16 @@ public class Ffs(
     "/flags",
     liveUpdates
 ) {
-    override val data: MutableMap<String, Flag> = mutableMapOf()
+    protected override val data: MutableMap<String, Flag> = mutableMapOf()
 
-    override fun updateData(response: String) {
+    protected override fun updateData(response: String) {
         val flags: List<Flag> = json.decodeFromString(response)
         flags.forEach {
             data[it.name] = it
         }
     }
 
-    override fun isEnabled(name: String): Boolean = data[name]?.isEnabled(env) ?: false
+    public override fun isEnabled(name: String): Boolean = data[name]?.isEnabled(env) ?: false
 }
 
 private fun Flag.isEnabled(env: JsonObject): Boolean {
