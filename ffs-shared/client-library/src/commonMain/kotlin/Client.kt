@@ -41,7 +41,12 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
     // See: https://youtrack.jetbrains.com/issue/KT-14663
     protected abstract val data: T
 
-    fun initialize() {
+    protected abstract fun updateData(response: String)
+
+    /**
+     * Asynchronously initializes the client by loading cached data and connecting with the server.
+     */
+    open fun initialize() {
         initialize(null)
     }
 
@@ -70,12 +75,15 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
         }
     }
 
-    protected abstract fun updateData(response: String)
-
+    /**
+     * Returns true if flag named [name] exists and evaluates to true, false otherwise.
+     */
     abstract fun isEnabled(name: String): Boolean
 
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun shutdown() {
+    /**
+     * Shuts down the client, freeing associated resources.
+     */
+    open fun shutdown() {
         if (apiClient == null) return
 
         apiClient.let {
