@@ -3,6 +3,9 @@ package doist.ffs
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
+/**
+ * Frontend library for FFS that synchronizes rules and their evaluations.
+ */
 public class Ffs(
     apiToken: String,
     url: String = DEFAULT_URL,
@@ -18,5 +21,10 @@ public class Ffs(
     protected override fun updateData(response: String): Unit =
         data.putAll(Json.decodeFromString(response))
 
+    /**
+     * @inheritDoc
+     *
+     * Flag evaluation is done on the server, which provides the results for all evaluations.
+     */
     public override fun isEnabled(name: String): Boolean = data[name] ?: false
 }
