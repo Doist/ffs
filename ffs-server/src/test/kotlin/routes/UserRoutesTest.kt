@@ -65,6 +65,24 @@ class UserRoutesTest {
     }
 
     @Test
+    fun logout() = testApplication {
+        val client = createClient {
+            install(HttpCookies)
+            expectSuccess = false
+        }
+        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+            setBodyForm(
+                "name" to "Gonçalo Silva",
+                "email" to "goncalo@doist.com",
+                "password" to "password123"
+            )
+        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+
+        // Verify logout redirects.
+        assert(client.post("$PATH_USERS$PATH_LOGOUT").status == HttpStatusCode.Found)
+    }
+
+    @Test
     fun update() = testApplication {
         val client = createClient {
             install(HttpCookies)

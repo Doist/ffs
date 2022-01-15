@@ -16,12 +16,14 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
 import io.ktor.server.util.getOrFail
@@ -32,6 +34,7 @@ import kotlin.random.Random
 const val PATH_USERS = "/users"
 const val PATH_REGISTER = "/register"
 const val PATH_LOGIN = "/login"
+const val PATH_LOGOUT = "/logout"
 
 @Suppress("FunctionName")
 fun PATH_USER(id: Any) = "$PATH_USERS/$id"
@@ -41,6 +44,7 @@ fun Application.installUserRoutes() = routing {
         route(PATH_USERS) {
             registerUser()
             loginUser()
+            logoutUser()
 
             authenticate("session") {
                 updateUser()
@@ -102,6 +106,16 @@ private fun Route.loginUser() = post(PATH_LOGIN) {
     } else {
         call.respond(HttpStatusCode.Unauthorized)
     }
+}
+
+/**
+ * Log out a user.
+ *
+ * Always responds with `200 OK`.
+ */
+private fun Route.logoutUser() = post(PATH_LOGOUT) {
+    call.sessions.clear<Session>()
+    call.respondRedirect("/")
 }
 
 /**
