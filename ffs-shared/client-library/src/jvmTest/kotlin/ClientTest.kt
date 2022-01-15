@@ -107,7 +107,7 @@ class ClientTest {
         const val ROLLOUT_ID = "a-random-string"
 
         const val USER_ID = "1"
-        const val USER_EMAIL = "goncalo@doist.com"
+        const val USER_EMAIL = "test@test.test"
 
         const val DEVICE_NAME = "Pixel 6 Pro"
         const val DEVICE_OS = "Android 12"

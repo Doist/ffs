@@ -91,11 +91,11 @@ internal class UserTest {
     }
 
     companion object {
-        private const val NAME = "Gonçalo Silva"
-        private const val NAME_OTHER = "Gonçalo Santarém"
-        private const val EMAIL = "goncalo@doist.com"
-        private const val EMAIL_OTHER = "goncalo@doist.io"
-        private const val PASSWORD = "password"
-        private const val PASSWORD_OTHER = "other password"
+        private const val NAME = "Test User"
+        private const val NAME_OTHER = "User Test"
+        private const val EMAIL = "test@test.test"
+        private const val EMAIL_OTHER = "test@test.com"
+        private const val PASSWORD = "password123"
+        private const val PASSWORD_OTHER = "123password"
     }
 }

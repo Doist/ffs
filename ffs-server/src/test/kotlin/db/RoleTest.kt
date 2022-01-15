@@ -70,8 +70,8 @@ internal class RoleTest {
     }
 
     companion object {
-        private const val USER_NAME = "Gonçalo Silva"
-        private const val USER_EMAIL = "goncalo@doist.com"
+        private const val USER_NAME = "Test User"
+        private const val USER_EMAIL = "test@test.test"
         private const val USER_PASSWORD = "password"
 
         private const val ORG_NAME = "Doist"

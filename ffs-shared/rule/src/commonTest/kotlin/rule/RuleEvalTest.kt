@@ -202,8 +202,9 @@ class RuleEvalTest {
 
     @Test
     fun text() {
-        assertEquals(0f, eval("""matches(".+@doist.com", "goncalo@doist.io")"""))
-        assertEquals(1f, eval("""matches(".+@doist.com", "goncalo@doist.com")"""))
+        assertEquals(0f, eval("""matches(".+@test.test", "test@test.com")"""))
+        assertEquals(0f, eval("""matches(".+@test.test", "test@com.test")"""))
+        assertEquals(1f, eval("""matches(".+@test.test", "test@test.test")"""))
 
         assertFailsWith<IllegalArgumentException> { eval("""matches("1", "1", "1")""") }
         assertFailsWith<IllegalArgumentException> { eval("""matches(1, 2)""") }

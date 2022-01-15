@@ -18,7 +18,7 @@ open class RuleEvalBenchmark {
     lateinit var formula: String
 
     private val env = mapOf(
-        "user.email" to JsonPrimitive("goncalo@doist.com"),
+        "user.email" to JsonPrimitive("test@test.test"),
         "user.utc_offset" to JsonPrimitive("+01:00"),
         "user.locale" to JsonPrimitive("pt-PT")
     )
