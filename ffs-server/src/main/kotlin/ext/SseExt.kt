@@ -1,6 +1,7 @@
 package doist.ffs.ext
 
 import doist.ffs.sse.SseEvent
+import doist.ffs.sse.write
 import io.ktor.http.CacheControl
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -8,7 +9,6 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.response.cacheControl
 import io.ktor.server.response.respondTextWriter
 import kotlinx.coroutines.channels.ReceiveChannel
-import sse.write
 
 /**
  * Reads [SseEvent] events from the specified [ReceiveChannel] and serializes them

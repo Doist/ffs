@@ -1,8 +1,5 @@
-import doist.ffs.sse.SSE_FIELD_PREFIX_DATA
-import doist.ffs.sse.SSE_FIELD_PREFIX_EVENT
-import doist.ffs.sse.SSE_FIELD_PREFIX_ID
-import doist.ffs.sse.SseEvent
-import sse.write
+package doist.ffs.sse
+
 import java.io.StringWriter
 import kotlin.test.Test
 import kotlin.test.assertTrue

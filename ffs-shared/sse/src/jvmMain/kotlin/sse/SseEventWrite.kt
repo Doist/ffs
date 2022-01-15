@@ -1,9 +1,5 @@
-package sse
+package doist.ffs.sse
 
-import doist.ffs.sse.SSE_FIELD_PREFIX_DATA
-import doist.ffs.sse.SSE_FIELD_PREFIX_EVENT
-import doist.ffs.sse.SSE_FIELD_PREFIX_ID
-import doist.ffs.sse.SseEvent
 import java.io.Writer
 
 fun SseEvent.write(writer: Writer) {

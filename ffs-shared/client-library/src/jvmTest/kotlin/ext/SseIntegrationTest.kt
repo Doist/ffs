@@ -3,6 +3,7 @@ package doist.ffs.ext
 import doist.ffs.sse.HEADER_LAST_EVENT_ID
 import doist.ffs.sse.SSE_FIELD_PREFIX_RETRY
 import doist.ffs.sse.SseEvent
+import doist.ffs.sse.write
 import ext.stream
 import io.ktor.client.HttpClient
 import io.ktor.client.utils.EmptyContent.status
@@ -25,7 +26,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
-import sse.write
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import io.ktor.client.engine.cio.CIO as CIOEngine
