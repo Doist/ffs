@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName")
+
 package doist.ffs.routes
 
 import doist.ffs.auth.Permission
@@ -64,6 +66,16 @@ suspend fun UserHttpClient.withProject(organizationId: Long): Long {
     assert(createProjectResponse.status == HttpStatusCode.Created)
 
     val id = createProjectResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+    return id.toLong()
+}
+
+suspend fun UserHttpClient.withFlag(projectId: Long): Long {
+    val createFlagResponse = client.post("${PATH_PROJECT(projectId)}$PATH_FLAGS") {
+        setBodyForm("name" to "test-${Random.nextInt()}", "rule" to "true")
+    }
+    assert(createFlagResponse.status == HttpStatusCode.Created)
+
+    val id = createFlagResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/')
     return id.toLong()
 }
 

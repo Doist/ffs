@@ -48,32 +48,21 @@ class FlagRoutesTest {
     fun get() = testApplication {
         val client = createUserClient()
         val projectId = client.withProject(client.withOrganization())
-        val ids = List(5) { i ->
-            client.client.post("${PATH_PROJECT(projectId)}$PATH_FLAGS") {
-                setBodyForm("name" to "Test $i", "rule" to "contains([1,2,3,4,5], $i)")
-            }.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
-        }
+        val ids = List(5) { client.withFlag(projectId) }
 
         val flags = client.client
             .get("${PATH_PROJECT(projectId)}$PATH_FLAGS")
             .bodyAsJson<List<Flag>>()
         assert(ids.size == flags.size)
         assert(ids.toSet() == flags.map { it.id }.toSet())
-        assert(flags.all { it.name.startsWith("Test") })
-        assert(flags.all { it.rule.startsWith("contains(") })
     }
 
     @Test
     fun update() = testApplication {
         val client = createUserClient()
-        val projectId = client.withProject(client.withOrganization())
+        val id = client.withFlag(client.withProject(client.withOrganization()))
 
-        val createResponse = client.client.post("${PATH_PROJECT(projectId)}$PATH_FLAGS") {
-            setBodyForm("name" to "test", "rule" to "true")
-        }
-        val id = createResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/')
         var flag = client.client.get(PATH_FLAG(id)).bodyAsJson<Flag>()
-
         val name = "${flag.name} updated"
         val rule = "0.667"
         client.client.put(PATH_FLAG(id)) {
@@ -88,10 +77,7 @@ class FlagRoutesTest {
     @Test
     fun updateInvalidRule() = testApplication {
         val client = createUserClient()
-        val projectId = client.withProject(client.withOrganization())
-        val id = client.client.post("${PATH_PROJECT(projectId)}$PATH_FLAGS") {
-            setBodyForm("name" to "test", "rule" to "true")
-        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+        val id = client.withFlag(client.withProject(client.withOrganization()))
 
         assertFailsWith<ClientRequestException> {
             client.client.put(PATH_FLAG(id)) {
@@ -103,12 +89,8 @@ class FlagRoutesTest {
     @Test
     fun archive() = testApplication {
         val client = createUserClient()
-        val projectId = client.withProject(client.withOrganization())
+        val id = client.withFlag(client.withProject(client.withOrganization()))
 
-        val createResponse = client.client.post("${PATH_PROJECT(projectId)}$PATH_FLAGS") {
-            setBodyForm("name" to "test", "rule" to "true")
-        }
-        val id = createResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/')
         var flag = client.client.get(PATH_FLAG(id)).bodyAsJson<Flag>()
         assert(flag.archived_at == null)
 

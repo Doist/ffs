@@ -67,11 +67,9 @@ class ProjectRoutesTest {
     @Test
     fun update() = testApplication {
         val client = createUserClient()
-        val organizationId = client.withOrganization()
+        val id = client.withProject(client.withOrganization())
 
-        val id = client.withProject(organizationId)
         var project = client.client.get(PATH_PROJECT(id)).bodyAsJson<Project>()
-
         val name = "${project.name} updated"
         client.client.put(PATH_PROJECT(id)) {
             setBodyForm("name" to name)
@@ -209,8 +207,7 @@ class ProjectRoutesTest {
             followRedirects = false
         }
         val id = createUserClient().run {
-            val organizationId = withOrganization()
-            withProject(organizationId)
+            withProject(withOrganization())
         }
         assertFailsWith<RedirectResponseException> {
             client.get(PATH_PROJECT(id))
