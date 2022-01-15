@@ -1,3 +1,5 @@
+_FFS is still in active development._
+
 # FFS
 
 Feature flags solution that is fast ⚡, lean 🤏, and open-source 🌍.
