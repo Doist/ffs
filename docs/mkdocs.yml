@@ -2,16 +2,16 @@ site_name: FFS
 
 # Meta tags (placed in header).
 site_description: FFS is a fast and lean open-source platform for managing and deploying feature flags.
-site_author: Gonçalo Silva
-site_url: https://github.com/goncalossilva/ffs
+site_author: Doist
+site_url: https://github.com/Doist/ffs
 
 # Repository (add link to repository on each page).
-repo_name: goncalossilva/ffs
-repo_url: https://github.com/goncalossilva/ffs
+repo_name: Doist/ffs
+repo_url: https://github.com/Doist/ffs
 edit_uri: edit/main/docs/src/doc/docs/
 
 # Copyright (shown at the footer).
-copyright: 'Copyright &copy; 2022 Gonçalo Silva'
+copyright: 'Copyright &copy; 2022 Doist'
 
 # Material theme.
 theme:
@@ -35,7 +35,7 @@ theme:
         name: Light mode
   social:
     - type: 'github'
-      link: 'https://github.com/goncalossilva/ffs'
+      link: 'https://github.com/Doist/ffs'
 
 # Plugins and extensions.
 plugins:
