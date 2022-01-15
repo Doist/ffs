@@ -7,7 +7,7 @@ kotlin {
 }
 
 subprojects {
-    // https://github.com/gradle/gradle/issues/16634
+    // https://github.com/gradle/gradle/issues/16634#issuecomment-809345790
     val libs = rootProject.libs
 
     apply(plugin = libs.plugins.kotlin.multiplatform.get().pluginId)
