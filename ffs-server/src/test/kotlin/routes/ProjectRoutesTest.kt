@@ -17,6 +17,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
+import routes.PATH_LATEST
 import routes.PATH_TOKEN
 import routes.PATH_TOKENS
 import kotlin.test.Test
@@ -225,5 +226,35 @@ class ProjectRoutesTest {
                 setBodyForm("permission" to Permission.EVAL, "description" to "Eval")
             }
         }
+    }
+
+    @Test
+    fun apiLatestOptional() = testApplication {
+        val client = createUserClient()
+        val versions = listOf(PATH_LATEST, "")
+
+        val createResponses = versions.map {
+            client.client.post(
+                "$it${PATH_ORGANIZATION(client.withOrganization())}$PATH_PROJECTS"
+            ) {
+                setBodyForm("name" to "Test")
+            }
+        }
+        assert(createResponses[0].status == createResponses[1].status)
+
+        val ids = createResponses.map {
+            it.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+        }
+        val updateResponses = versions.zip(ids).map { (version, id) ->
+            client.client.put("$version${PATH_PROJECT(id)}") {
+                setBodyForm("name" to "Test updated")
+            }
+        }
+        assert(updateResponses[0].status == updateResponses[1].status)
+
+        val deleteResponse = versions.zip(ids).map { (version, id) ->
+            client.client.delete("$version${PATH_PROJECT(id)}")
+        }
+        assert(deleteResponse[0].status == deleteResponse[1].status)
     }
 }

@@ -47,6 +47,7 @@ import kotlinx.datetime.Instant
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonObject
+import routes.PATH_LATEST
 import kotlin.time.Duration.Companion.minutes
 
 const val PATH_FLAGS = "/flags"
@@ -56,8 +57,8 @@ const val PATH_ARCHIVE = "/archive"
 @Suppress("FunctionName")
 fun PATH_FLAG(id: Any) = "$PATH_FLAGS/$id"
 
-fun Application.installFlagRoutes() {
-    routing {
+fun Application.installFlagRoutes() = routing {
+    optionalRoute(PATH_LATEST) {
         route("$PATH_PROJECTS/{id}/$PATH_FLAGS") {
             authenticate("session") {
                 createFlag()
@@ -75,12 +76,12 @@ fun Application.installFlagRoutes() {
                 getFlags()
                 getFlagsEval()
             }
-        }
 
-        route("$PATH_FLAGS/{id}/$PATH_ARCHIVE") {
-            authenticate("session") {
-                archiveFlag()
-                unarchiveFlag()
+            route("/{id}/$PATH_ARCHIVE") {
+                authenticate("session") {
+                    archiveFlag()
+                    unarchiveFlag()
+                }
             }
         }
     }

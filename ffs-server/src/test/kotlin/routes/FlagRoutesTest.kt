@@ -14,6 +14,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import org.junit.jupiter.api.Test
+import routes.PATH_LATEST
 import kotlin.test.assertFailsWith
 
 class FlagRoutesTest {
@@ -125,5 +126,35 @@ class FlagRoutesTest {
         assertFailsWith<RedirectResponseException> {
             client.put("${PATH_FLAG(id)}/$PATH_ARCHIVE")
         }
+    }
+
+    @Test
+    fun apiLatestOptional() = testApplication {
+        val client = createUserClient()
+        val versions = listOf(PATH_LATEST, "")
+
+        val createResponses = versions.map {
+            client.client.post(
+                "$it${PATH_PROJECT(client.withProject(client.withOrganization()))}$PATH_FLAGS"
+            ) {
+                setBodyForm("name" to "test", "rule" to "true")
+            }
+        }
+        assert(createResponses[0].status == createResponses[1].status)
+
+        val ids = createResponses.map {
+            it.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+        }
+        val updateResponses = versions.zip(ids).map { (version, id) ->
+            client.client.put("$version${PATH_FLAG(id)}") {
+                setBodyForm("name" to "test updated", "rule" to "false")
+            }
+        }
+        assert(updateResponses[0].status == updateResponses[1].status)
+
+        val archiveResponses = versions.zip(ids).map { (version, id) ->
+            client.client.put("$version${PATH_FLAG(id)}/$PATH_ARCHIVE")
+        }
+        assert(archiveResponses[0].status == archiveResponses[1].status)
     }
 }

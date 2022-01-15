@@ -23,8 +23,8 @@ const val PATH_TOKENS = "/tokens"
 @Suppress("FunctionName")
 fun PATH_TOKEN(id: Any) = "$PATH_TOKENS/$id"
 
-fun Application.installTokenRoutes() {
-    routing {
+fun Application.installTokenRoutes() = routing {
+    optionalRoute(PATH_LATEST) {
         route(PATH_TOKENS) {
             authenticate("session") {
                 updateToken()

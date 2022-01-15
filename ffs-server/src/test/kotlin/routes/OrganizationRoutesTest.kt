@@ -16,6 +16,7 @@ import io.ktor.client.request.put
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
+import routes.PATH_LATEST
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -184,5 +185,33 @@ class OrganizationRoutesTest {
         assertFailsWith<RedirectResponseException> {
             client.delete(PATH_ORGANIZATION(id))
         }
+    }
+
+    @Test
+    fun apiLatestOptional() = testApplication {
+        val client = createUserClient()
+        val versions = listOf(PATH_LATEST, "")
+
+        val createResponses = versions.map {
+            client.client.post("$it$PATH_ORGANIZATIONS") {
+                setBodyForm("name" to "Test", "rule" to "true")
+            }
+        }
+        assert(createResponses[0].status == createResponses[1].status)
+
+        val ids = createResponses.map {
+            it.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+        }
+        val updateResponses = versions.zip(ids).map { (version, id) ->
+            client.client.put("$version${PATH_ORGANIZATION(id)}") {
+                setBodyForm("name" to "Test updated")
+            }
+        }
+        assert(updateResponses[0].status == updateResponses[1].status)
+
+        val deleteResponse = versions.zip(ids).map { (version, id) ->
+            client.client.delete("$version${PATH_ORGANIZATION(id)}")
+        }
+        assert(deleteResponse[0].status == deleteResponse[1].status)
     }
 }

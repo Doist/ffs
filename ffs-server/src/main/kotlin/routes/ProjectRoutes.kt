@@ -28,6 +28,7 @@ import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
+import routes.PATH_LATEST
 import routes.PATH_TOKENS
 
 const val PATH_PROJECTS = "/projects"
@@ -36,25 +37,27 @@ const val PATH_PROJECTS = "/projects"
 fun PATH_PROJECT(id: Any) = "$PATH_PROJECTS/$id"
 
 fun Application.installProjectRoutes() = routing {
-    route("$PATH_ORGANIZATIONS/{id}/$PATH_PROJECTS") {
-        authenticate("session") {
-            createProject()
-            getProjects()
+    optionalRoute(PATH_LATEST) {
+        route("$PATH_ORGANIZATIONS/{id}/$PATH_PROJECTS") {
+            authenticate("session") {
+                createProject()
+                getProjects()
+            }
         }
-    }
 
-    route(PATH_PROJECTS) {
-        authenticate("session") {
-            getProject()
-            updateProject()
-            deleteProject()
-        }
-    }
+        route(PATH_PROJECTS) {
+            authenticate("session") {
+                getProject()
+                updateProject()
+                deleteProject()
+            }
 
-    route("$PATH_PROJECTS/{id}/$PATH_TOKENS") {
-        authenticate("session") {
-            createToken()
-            getTokens()
+            route("/{id}/$PATH_TOKENS") {
+                authenticate("session") {
+                    createToken()
+                    getTokens()
+                }
+            }
         }
     }
 }

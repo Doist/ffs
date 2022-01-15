@@ -28,6 +28,7 @@ import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
+import routes.PATH_LATEST
 
 const val PATH_ORGANIZATIONS = "/organizations"
 
@@ -35,21 +36,23 @@ const val PATH_ORGANIZATIONS = "/organizations"
 fun PATH_ORGANIZATION(id: Any) = "$PATH_ORGANIZATIONS/$id"
 
 fun Application.installOrganizationRoutes() = routing {
-    route(PATH_ORGANIZATIONS) {
-        authenticate("session") {
-            createOrganization()
-            getOrganizations()
-            getOrganization()
-            updateOrganization()
-            deleteOrganization()
-        }
-    }
+    optionalRoute(PATH_LATEST) {
+        route(PATH_ORGANIZATIONS) {
+            authenticate("session") {
+                createOrganization()
+                getOrganizations()
+                getOrganization()
+                updateOrganization()
+                deleteOrganization()
+            }
 
-    route("$PATH_ORGANIZATIONS/{id}/$PATH_USERS") {
-        authenticate("session") {
-            addUser()
-            updateUser()
-            removeUser()
+            route("/{id}/$PATH_USERS") {
+                authenticate("session") {
+                    addUser()
+                    updateUser()
+                    removeUser()
+                }
+            }
         }
     }
 }

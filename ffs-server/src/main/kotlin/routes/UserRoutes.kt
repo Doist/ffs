@@ -26,6 +26,7 @@ import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
 import io.ktor.server.util.getOrFail
 import kotlinx.coroutines.delay
+import routes.PATH_LATEST
 import kotlin.random.Random
 
 const val PATH_USERS = "/users"
@@ -35,8 +36,8 @@ const val PATH_LOGIN = "/login"
 @Suppress("FunctionName")
 fun PATH_USER(id: Any) = "$PATH_USERS/$id"
 
-fun Application.installUserRoutes() {
-    routing {
+fun Application.installUserRoutes() = routing {
+    optionalRoute(PATH_LATEST) {
         route(PATH_USERS) {
             registerUser()
             loginUser()

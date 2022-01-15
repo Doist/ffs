@@ -11,6 +11,7 @@ import io.ktor.client.request.put
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
+import routes.PATH_LATEST
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
@@ -197,5 +198,39 @@ class UserRoutesTest {
                 setBodyForm("current_password" to "wrongpassword")
             }
         }
+    }
+
+    @Test
+    fun apiLatestOptional() = testApplication {
+        val client = createUserClient()
+        val versions = listOf("", PATH_LATEST)
+
+        val registerResponse = versions.map { version ->
+            client.client.post("$version$PATH_USERS$PATH_REGISTER") {
+                setBodyForm(
+                    "name" to "Test $version",
+                    "email" to "test${version.trim { !it.isLetterOrDigit() } }@test.test",
+                    "password" to "password123"
+                )
+            }
+        }
+        assert(registerResponse[0].status == registerResponse[1].status)
+
+        val ids = registerResponse.map {
+            it.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+        }
+        val updateResponses = versions.zip(ids).map { (version, id) ->
+            client.client.post("$version$PATH_USERS$PATH_LOGIN") {
+                setBodyForm(
+                    "email" to "test${version.trim { !it.isLetterOrDigit() } }@test.test",
+                    "password" to "password123"
+                )
+            }
+
+            client.client.put("$version${PATH_USER(id)}") {
+                setBodyForm("name" to "Test $version updated")
+            }
+        }
+        assert(updateResponses[0].status == updateResponses[1].status)
     }
 }
