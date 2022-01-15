@@ -9,6 +9,8 @@ import doist.ffs.auth.TokenPrincipal
 import doist.ffs.db.Flag
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags
+import doist.ffs.ext.authorizeForProject
+import doist.ffs.ext.optionalRoute
 import doist.ffs.ext.stream
 import doist.ffs.plugins.database
 import doist.ffs.rule.validateFormula

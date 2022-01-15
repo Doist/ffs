@@ -2,8 +2,9 @@ package routes
 
 import doist.ffs.auth.Permission
 import doist.ffs.db.tokens
+import doist.ffs.ext.authorizeForProject
+import doist.ffs.ext.optionalRoute
 import doist.ffs.plugins.database
-import doist.ffs.routes.authorizeForProject
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call

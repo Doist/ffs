@@ -6,6 +6,9 @@ import doist.ffs.db.RoleEnum
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.organizations
 import doist.ffs.db.roles
+import doist.ffs.ext.authorizeForOrganization
+import doist.ffs.ext.authorizeForUser
+import doist.ffs.ext.optionalRoute
 import doist.ffs.plugins.database
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode

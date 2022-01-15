@@ -5,6 +5,8 @@ import doist.ffs.auth.Session
 import doist.ffs.db.UserQueries
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.users
+import doist.ffs.ext.authorizeForUser
+import doist.ffs.ext.optionalRoute
 import doist.ffs.plugins.database
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode

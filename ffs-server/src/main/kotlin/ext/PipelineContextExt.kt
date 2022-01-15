@@ -1,4 +1,4 @@
-package doist.ffs.routes
+package doist.ffs.ext
 
 import doist.ffs.auth.AccessPrincipal
 import doist.ffs.auth.Permission
