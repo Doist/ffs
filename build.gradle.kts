@@ -30,7 +30,7 @@ plugins {
 }
 
 plugins.withType<NodeJsRootPlugin> {
-    the<NodeJsRootExtension>().nodeVersion = "16.13.1"
+    the<NodeJsRootExtension>().nodeVersion = libs.versions.node.get()
 }
 
 allprojects {
