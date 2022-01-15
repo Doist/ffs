@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":ffs-shared:env"))
     implementation(project(":ffs-shared:rule"))
     implementation(project(":ffs-shared:sse"))
+    implementation(project(":ffs-shared:validators"))
 
     implementation(libs.bundles.server.ktor)
     implementation(libs.bundles.server.database)

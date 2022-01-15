@@ -12,5 +12,6 @@ include(":ffs-shared:client-library")
 include(":ffs-shared:env")
 include(":ffs-shared:rule")
 include(":ffs-shared:sse")
+include(":ffs-shared:validators")
 
 enableFeaturePreview("VERSION_CATALOGS")

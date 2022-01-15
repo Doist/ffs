@@ -8,6 +8,8 @@ import doist.ffs.db.users
 import doist.ffs.ext.authorizeForUser
 import doist.ffs.ext.optionalRoute
 import doist.ffs.plugins.database
+import doist.ffs.validators.validateEmail
+import doist.ffs.validators.validatePassword
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
@@ -204,26 +206,6 @@ private fun Route.deleteUser() = delete("{id}") {
     } else {
         call.respond(HttpStatusCode.Forbidden)
     }
-}
-
-/**
- * Validates the email.
- */
-private val EMAIL_REGEXP = (
-    "^(?=.{1,64}@)[\\p{L}0-9_-]+([\\.+][\\p{L}0-9_-]+)*" +
-        "@[^-][\\p{L}0-9-]+(\\.[\\p{L}0-9-]+)*" +
-        "(\\.[\\p{L}]{2,})\$"
-    ).toRegex()
-private fun validateEmail(email: String): Boolean {
-    return email.matches(EMAIL_REGEXP)
-}
-
-/**
- * Validates the password.
- */
-private val PASSWORD_REGEXP = ".{8,}".toRegex()
-private fun validatePassword(password: String): Boolean {
-    return password.matches(PASSWORD_REGEXP)
 }
 
 /**
