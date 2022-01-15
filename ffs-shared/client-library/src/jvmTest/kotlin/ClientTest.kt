@@ -2,6 +2,7 @@ package doist.ffs
 
 import doist.ffs.env.ENV_DEVICE_LOCALE
 import doist.ffs.env.ENV_DEVICE_NAME
+import doist.ffs.env.ENV_DEVICE_OS
 import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
 import doist.ffs.env.ENV_USER_EMAIL
 import doist.ffs.env.ENV_USER_ID
@@ -60,6 +61,7 @@ class ClientTest {
             setUserId(USER_ID)
             setUserEmail(USER_EMAIL)
             setDeviceName(DEVICE_NAME)
+            setDeviceOs(DEVICE_OS)
             setDeviceLocale(DEVICE_LOCALE)
             putNumber(KEY_RANDOM_NUMBER, RANDOM_NUMBER)
             putBoolean(KEY_RANDOM_BOOLEAN, RANDOM_BOOLEAN)
@@ -71,6 +73,7 @@ class ClientTest {
         assertEquals(env[ENV_USER_ID], JsonPrimitive(USER_ID))
         assertEquals(env[ENV_USER_EMAIL], JsonPrimitive(USER_EMAIL))
         assertEquals(env[ENV_DEVICE_NAME], JsonPrimitive(DEVICE_NAME))
+        assertEquals(env[ENV_DEVICE_OS], JsonPrimitive(DEVICE_OS))
         assertEquals(env[ENV_DEVICE_LOCALE], JsonPrimitive(DEVICE_LOCALE))
         assertEquals(env[KEY_RANDOM_NUMBER], JsonPrimitive(RANDOM_NUMBER))
         assertEquals(env[KEY_RANDOM_BOOLEAN], JsonPrimitive(RANDOM_BOOLEAN))
@@ -107,6 +110,7 @@ class ClientTest {
         const val USER_EMAIL = "goncalo@doist.com"
 
         const val DEVICE_NAME = "Pixel 6 Pro"
+        const val DEVICE_OS = "Android 12"
         const val DEVICE_LOCALE = "en-US"
 
         const val RANDOM_NUMBER = 42

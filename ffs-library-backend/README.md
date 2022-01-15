@@ -46,6 +46,7 @@ ffs.setRolloutId("Doist") // Defaults to a random string. Controls staged rollou
 ffs.setUserId(12345)
 ffs.setUserEmail("example@ffs.com")
 ffs.setDeviceName("Pixel 6 Pro")
+ffs.setDeviceOs("Android 12")
 ffs.setDeviceLocale("en_US")
 ffs.putNumber("app-launches", 42)
 ffs.putBoolean("beta", true)

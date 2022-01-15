@@ -17,6 +17,7 @@ interface Config {
     fun setUserEmail(email: String): Config
 
     fun setDeviceName(name: String): Config
+    fun setDeviceOs(name: String): Config
     fun setDeviceLocale(locale: String): Config
 
     fun putString(key: String, value: String): Config
