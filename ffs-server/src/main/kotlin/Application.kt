@@ -37,6 +37,7 @@ import io.ktor.server.plugins.ContentNegotiation
 import io.ktor.server.plugins.DefaultHeaders
 import io.ktor.server.plugins.StatusPages
 import io.ktor.server.response.respond
+import io.ktor.server.routing.IgnoreTrailingSlash
 import io.ktor.server.sessions.Sessions
 import io.ktor.server.sessions.cookie
 import routes.installTokenRoutes
@@ -101,6 +102,7 @@ fun Application.installAuthentication() = install(Authentication) {
 }
 
 fun Application.installPlugins() {
+    install(IgnoreTrailingSlash)
     install(CallLogging)
     install(DefaultHeaders)
     install(ContentNegotiation) {
