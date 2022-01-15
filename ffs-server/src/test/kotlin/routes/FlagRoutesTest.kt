@@ -4,6 +4,8 @@ import doist.ffs.db.Flag
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.RedirectResponseException
+import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -101,5 +103,27 @@ class FlagRoutesTest {
         client.client.delete("${PATH_FLAG(id)}/$PATH_ARCHIVE")
         flag = client.client.get(PATH_FLAG(id)).bodyAsJson()
         assert(flag.archived_at == null)
+    }
+
+    @Test
+    fun unauthenticatedAccess() = testApplication {
+        val client = createClient {
+            install(HttpCookies)
+            followRedirects = false
+        }
+        val id = createUserClient().run {
+            withFlag(withProject(withOrganization()))
+        }
+        assertFailsWith<RedirectResponseException> {
+            client.get(PATH_FLAG(id))
+        }
+        assertFailsWith<RedirectResponseException> {
+            client.put(PATH_FLAG(id)) {
+                setBodyForm("name" to "test")
+            }
+        }
+        assertFailsWith<RedirectResponseException> {
+            client.put("${PATH_FLAG(id)}/$PATH_ARCHIVE")
+        }
     }
 }
