@@ -16,3 +16,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - run: ./gradlew mkdocsPublish
+        env:
+          GRGIT_USER: ${{ github.actor }}
+          GRGIT_PASS: ${{ secrets.GITHUB_TOKEN }}
