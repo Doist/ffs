@@ -3,10 +3,8 @@
 package doist.ffs.routes
 
 import doist.ffs.auth.Permission
-import doist.ffs.db.TokenGenerator
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.projects
-import doist.ffs.db.tokens
 import doist.ffs.ext.authorizeForOrganization
 import doist.ffs.ext.authorizeForProject
 import doist.ffs.ext.optionalRoute
@@ -29,7 +27,6 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
 import routes.PATH_LATEST
-import routes.PATH_TOKENS
 
 const val PATH_PROJECTS = "/projects"
 
@@ -51,25 +48,12 @@ fun Application.installProjectRoutes() = routing {
                 updateProject()
                 deleteProject()
             }
-
-            route("/{id}/$PATH_TOKENS") {
-                authenticate("session") {
-                    createToken()
-                    getTokens()
-                }
-            }
         }
     }
 }
 
 /**
  * Create a new project.
- *
- * On success, responds `201 Created` with an empty body.
- *
- * | Parameter         | Required | Description             |
- * | ----------------- | -------- | ----------------------- |
- * | `name`            | Yes      | Name of the project.    |
  */
 private fun Route.createProject() = post {
     val organizationId = call.parameters.getOrFail<Long>("id")
@@ -154,41 +138,4 @@ private fun Route.deleteProject() = delete("{id}") {
 
     database.projects.delete(id = id)
     call.respond(HttpStatusCode.NoContent)
-}
-
-/**
- * Generate token for project.
- *
- * On success, responds `201 Created` with a JSON string containing the token.
- *
- * | Parameter      | Required | Description                             |
- * | -------------- | -------- | --------------------------------------- |
- * | `permission`   | Yes      | Scope of the token: "eval" or "read".   |
- * | `description`  | Yes      | Description of the token.               |
- */
-private fun Route.createToken() = post {
-    val projectId = call.parameters.getOrFail<Long>("id")
-    val params = call.receiveParameters()
-    val permission = Permission.valueOf(params.getOrFail("permission").uppercase())
-    val description = params.getOrFail("description")
-
-    authorizeForProject(id = projectId, permission = Permission.WRITE)
-
-    val token = TokenGenerator.generate(permission)
-    database.tokens.insert(project_id = projectId, token = token, description = description)
-    call.respond(HttpStatusCode.Created, token)
-}
-
-/**
- * Get all tokens for project.
- *
- * On success, responds `200 OK` with a JSON array containing all tokens for the project.
- */
-private fun Route.getTokens() = get {
-    val projectId = call.parameters.getOrFail<Long>("id")
-
-    authorizeForOrganization(id = projectId, permission = Permission.READ)
-
-    val tokens = database.tokens.selectByProject(project_id = projectId).executeAsList()
-    call.respond(HttpStatusCode.OK, tokens)
 }
