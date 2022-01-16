@@ -82,7 +82,7 @@ nav:
     - Organizatins and projects: dashboard/organizations-and-projects.md
     - API tokens: dashboard/api-tokens.md
     - Feature flags: dashboard/feature-flags.md
-    - Authorization: dashboard/authorization.md
+    - Permissions: dashboard/permissions.md
   - SDKs:
     - sdks/index.md
     - JavaScript: sdks/javascript.md
