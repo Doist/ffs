@@ -89,11 +89,18 @@ subprojects {
             }
         }
 
-        // Apply and configure dokka in library subprojects.
-        if (project.name.startsWith("ffs-library-")) {
-            apply(plugin = libs.plugins.dokka.get().pluginId)
-            tasks.withType<DokkaTaskPartial>().configureEach {
-                moduleName.set(project.name.removePrefix("ffs-").replace('-', ' ').capitalize())
+        // Apply and configure dokka in all subprojects.
+        apply(plugin = libs.plugins.dokka.get().pluginId)
+        tasks.withType<DokkaTaskPartial>().configureEach {
+            moduleName.set(project.name.removePrefix("ffs-").replace('-', ' ').capitalize())
+            dokkaSourceSets {
+                configureEach {
+                    sourceLink {
+                        localDirectory.set(rootDir)
+                        remoteUrl.set(java.net.URL("https://github.com/Doist/ffs/blob/main"))
+                        remoteLineSuffix.set("#L")
+                    }
+                }
             }
         }
     }
