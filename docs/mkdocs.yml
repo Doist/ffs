@@ -15,8 +15,8 @@ copyright: 'Copyright &copy; 2022 Doist'
 
 # Material theme.
 theme:
-  favicon: _assets/favicon.ico
-  logo: _assets/icon-192.png
+  favicon: assets/favicon.ico
+  logo: assets/icon-192.png
   name: 'material'
   custom_dir: theme
   palette:

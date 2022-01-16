@@ -6,7 +6,7 @@ Feature flags solution that is fast ⚡, lean 🤏, and open-source 🌍.
 
 ## Project
 
-<img src="docs/src/_assets/icon-192.png" alt="FFS logo" align="right" width="192" height="192">
+<img src="docs/src/assets/icon-192.png" alt="FFS logo" align="right" width="192" height="192">
 
 FFS is built primarily on Kotlin Multiplatform and made up of 4 major components:
 - A [dashboard](ffs-dashboard), to create and manage feature flags.
