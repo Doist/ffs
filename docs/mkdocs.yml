@@ -8,21 +8,22 @@ site_url: https://github.com/Doist/ffs
 # Repository (add link to repository on each page).
 repo_name: Doist/ffs
 repo_url: https://github.com/Doist/ffs
-edit_uri: edit/main/docs/src/doc/docs/
+edit_uri: edit/main/docs/src
 
 # Copyright (shown at the footer).
 copyright: 'Copyright &copy; 2022 Doist'
 
 # Material theme.
 theme:
-  logo: _assets/icon-192.png
   favicon: _assets/favicon.ico
+  logo: _assets/icon-192.png
   name: 'material'
+  custom_dir: theme
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: red
-      accent: red
+      primary: white
+      accent: white
       toggle:
         icon: material/lightbulb
         name: Dark mode
@@ -36,10 +37,17 @@ theme:
   social:
     - type: 'github'
       link: 'https://github.com/Doist/ffs'
+  features:
+    - navigation.indexes
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
 
 # Plugins and extensions.
 plugins:
   - awesome-pages
+  - search
 markdown_extensions:
   - admonition
   - codehilite:
@@ -47,6 +55,7 @@ markdown_extensions:
   - footnotes
   - meta
   - def_list
+  - tables
   - toc:
       permalink: true
   - pymdownx.betterem:
@@ -56,24 +65,43 @@ markdown_extensions:
   - pymdownx.magiclink
   - pymdownx.smartsymbols
   - pymdownx.superfences
+  - pymdownx.snippets
 
 # Navigation.
 docs_dir: src
 nav:
   - Home: index.md
-  - Setting up the SDK:
-      - Frontend SDK: sdk/frontend.md
-      - Backend SDK: sdk/backend.md
-      - Testing: sdk/testing.md
   - Feature flags:
-      - About feature flags: feature-flags/about.md
-      - The anatomy of rules: feature-flags/rules.md
-      - Time to live: feature-flags/ttl.md
-      - Archiving feature flags: feature-flags/archiving.md
+    - feature-flags/index.md
+    - Anatomy of rules: feature-flags/anatomy-of-rules.md
+    - Time to live: feature-flags/time-to-live.md
+    - Archiving: feature-flags/archiving.md
   - Dashboard:
-      - Managing feature flags: dashboard/managing-feature-flags.md
-      - Managing users: dashboard/managing-users.md
-      - Security: dashboard/security.md
+    - dashboard/index.md
+    - Users: dashboard/users.md
+    - Organizatins and projects: dashboard/organizations-and-projects.md
+    - API tokens: dashboard/api-tokens.md
+    - Feature flags: dashboard/feature-flags.md
+    - Authorization: dashboard/authorization.md
+  - SDKs:
+    - sdks/index.md
+    - JavaScript: sdks/javascript.md
+    - Kotlin: sdks/kotlin.md
+    - Swift: sdks/swift.md
+    - Python: sdks/python.md
+    - Ruby: sdks/ruby.md
+    - Rust: sdks/rust.md
+    - Go: sdks/go.md
   - Server:
-      - Running in Docker: server/docker.md
-  - Reference: dokka-html/index.html
+    - server/index.md
+    - Running: server/running.md
+    - Configuration: server/configuration.md
+  - API:
+    - api/index.md # mention authorization via users (org-wide) or tokens (project-specific).
+    - Users: api/users.md
+    - Organizations: api/organizations.md
+    - Projects: api/projects.md
+    - Flags: api/flags.md
+    - Tokens: api/tokens.md
+  - Changelog: changelog.md
+  - Reference: dokka/index.html
