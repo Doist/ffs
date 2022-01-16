@@ -166,7 +166,7 @@ private fun Route.addUser() = post {
     val params = call.receiveParameters()
     val role = RoleEnum.valueOf(params.getOrFail("role").uppercase())
 
-    authorizeForOrganization(id, Permission.WRITE)
+    authorizeForOrganization(id, Permission.DELETE)
 
     database.roles.insert(user_id = userId, organization_id = id, role = role)
     call.respond(HttpStatusCode.Created)
@@ -188,7 +188,7 @@ private fun Route.updateUser() = put {
     val params = call.receiveParameters()
     val role = RoleEnum.valueOf(params.getOrFail("role").uppercase())
 
-    authorizeForOrganization(id, Permission.WRITE)
+    authorizeForOrganization(id, Permission.DELETE)
 
     database.roles.update(user_id = userId, organization_id = id, role = role)
     call.respond(HttpStatusCode.NoContent)
@@ -207,7 +207,7 @@ private fun Route.removeUser() = delete {
     val id = call.parameters.getOrFail<Long>("id")
     val userId = call.parameters.getOrFail<Long>("user_id")
 
-    authorizeForOrganization(id, Permission.WRITE)
+    authorizeForOrganization(id, Permission.DELETE)
 
     database.roles.delete(user_id = userId, organization_id = id)
     call.respond(HttpStatusCode.NoContent)

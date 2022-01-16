@@ -4,6 +4,7 @@ import doist.ffs.db.SelectById
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.RedirectResponseException
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.request.delete
 import io.ktor.client.request.post
@@ -183,10 +184,11 @@ class UserRoutesTest {
             )
         }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
 
-        val deleteResponse = client.delete(PATH_USER(id)) {
-            setBodyForm("current_password" to "password123")
+        assertFailsWith<RedirectResponseException> {
+            client.delete(PATH_USER(id)) {
+                setBodyForm("current_password" to "password123")
+            }
         }
-        assert(deleteResponse.status == HttpStatusCode.NoContent)
 
         // Ensure one can't login as a deleted user.
         assertFailsWith<ClientRequestException> {
