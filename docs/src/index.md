@@ -34,7 +34,7 @@ The remaining docs go over components, workflows, and advanced options.
 Because no other solutions nail this specific intersection of goals.
 
 ⚡ Updates using [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events). Changes are propagated instantly to clients.  
-⚡ Evaluates over 40,000 [rules](ffs-server/src/benchmark/kotlin/rule/RuleEvalBenchmark.kt) per second. On a Raspberry Pi 4 Model B. Per core.  
+⚡ Evaluates over 40,000 [rules](https://github.com/Doist/ffs/blob/main/ffs-server/src/benchmark/kotlin/rule/RuleEvalBenchmark.kt) per second. On a Raspberry Pi 4 Model B. Per core.  
 ⚡ 🔜 Dedicated frontend library for JavaScript. No compromises where bundle size matters.
 
 🤏 Limited in feature set and code surface. It does few things, and it does them right.  
