@@ -1,0 +1,30 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+
+module:Dashboard
+doist.ffs
+module:Library backend
+doist.ffs
+doist.ffs.model
+module:Library frontend
+doist.ffs
+module:Server
+doist.ffs
+doist.ffs.auth
+doist.ffs.db
+doist.ffs.ext
+doist.ffs.plugins
+doist.ffs.routes
+doist.ffs.serialization
+routes
+module:Client
+doist.ffs
+doist.ffs.uuid
+module:Env
+doist.ffs.env
+module:Rule
+doist.ffs.rule
+module:Sse
+doist.ffs.sse
+module:Validators
+doist.ffs.validators
