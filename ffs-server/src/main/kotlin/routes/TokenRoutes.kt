@@ -2,7 +2,6 @@ package routes
 
 import doist.ffs.auth.Permission
 import doist.ffs.db.TokenGenerator
-import doist.ffs.db.organizations
 import doist.ffs.db.tokens
 import doist.ffs.ext.authorizeForOrganization
 import doist.ffs.ext.authorizeForProject
@@ -90,12 +89,15 @@ private fun Route.getTokens() = get {
 private fun Route.updateToken() = put("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
     val params = call.receiveParameters()
-    val description = params.getOrFail("description")
+    val description = params["description"]
 
     val projectId = database.tokens.selectProjectIdById(id = id).executeAsOne()
     authorizeForProject(id = projectId, permission = Permission.WRITE)
 
-    database.tokens.update(id = id, description = description)
+    database.tokens.run {
+        val token = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+        update(id = id, description = description ?: token.description)
+    }
     call.respond(HttpStatusCode.NoContent)
 }
 

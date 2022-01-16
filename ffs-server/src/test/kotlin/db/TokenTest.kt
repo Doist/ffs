@@ -64,6 +64,16 @@ internal class TokenTest {
     }
 
     @Test
+    fun select(): Unit = testDatabase.run {
+        val id = capturingLastInsertId {
+            tokens.insert(token = TOKEN_EVAL, project_id = projectId, description = DESCRIPTION)
+        }
+        val token = tokens.select(id = id).executeAsOne()
+        assert(token.project_id == projectId)
+        assert(token.description == DESCRIPTION)
+    }
+
+    @Test
     fun selectByProject(): Unit = testDatabase.tokens.run {
         insert(token = TOKEN_EVAL, project_id = projectId, description = DESCRIPTION)
         insert(token = TOKEN_READ, project_id = projectId, description = OTHER_DESCRIPTION)

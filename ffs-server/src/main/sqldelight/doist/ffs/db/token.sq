@@ -16,6 +16,11 @@ insert:
 INSERT INTO token(token, project_id, description)
 VALUES ( ?, ?, ?);
 
+select:
+SELECT id, project_id, description, created_at
+FROM token
+WHERE id = ?;
+
 selectByProject:
 SELECT id, project_id, description, created_at
 FROM token
