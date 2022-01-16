@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import ru.vyarus.gradle.plugin.mkdocs.task.MkdocsTask
 
 group = "doist"
-version = "1.0-SNAPSHOT"
+version = "0.1-SNAPSHOT"
 
 plugins {
     alias(libs.plugins.dokka)
