@@ -1,9 +1,9 @@
 site_name: FFS
 
 # Meta tags (placed in header).
-site_description: FFS is a fast and lean open-source platform for managing and deploying feature flags.
+site_description: Feature flags solution that is fast, lean, and open-source.
 site_author: Doist
-site_url: https://github.com/Doist/ffs
+site_url: https://doist.github.io/ffs/
 
 # Repository (add link to repository on each page).
 repo_name: Doist/ffs
