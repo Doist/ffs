@@ -76,8 +76,4 @@ nav:
       - Security: dashboard/security.md
   - Server:
       - Running in Docker: server/docker.md
-  - API Reference:
-      - ffs-library-frontend:
-        - ... | flat | dokka/ffs-library-frontend/**/*
-      - ffs-library-backend:
-        - ... | flat | dokka/ffs-backend-backend/**/*
+  - Reference: dokka-html/index.html

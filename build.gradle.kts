@@ -106,8 +106,8 @@ mkdocs {
     strict = false
 }
 tasks.withType<MkdocsTask>().configureEach {
-    val dokkaGfmMultiModule by tasks.getting
-    dependsOn(dokkaGfmMultiModule)
+    val dokkaHtmlMultiModule by tasks.getting
+    dependsOn(dokkaHtmlMultiModule)
 }
 
 
