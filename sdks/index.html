@@ -1072,9 +1072,11 @@ FFS is in active development. Some things are incomplete, others will break. <a 
 
 
 <h1 id="sdks">SDKs<a class="headerlink" href="#sdks" title="Permanent link">&para;</a></h1>
-<p>FFS provides two kind of SDKs:
-- <strong>Frontend SDKs</strong> rely on the server to evaluate feature flags and synchronize the results. They are meant for unsafe environments, like frontends.
-- <strong>Backend SDKs</strong> rely on the server to provide feature flag data, and evaluate them locally. They are meant for safe environments, like backends.</p>
+<p>FFS provides two kind of SDKs:</p>
+<ul>
+<li><strong>Frontend SDKs</strong> rely on the server to evaluate feature flags and synchronize the results. They are meant for unsafe environments, like frontends.</li>
+<li><strong>Backend SDKs</strong> rely on the server to provide feature flag data, and evaluate them locally. They are meant for safe environments, like backends.</li>
+</ul>
 <p>The API is essentially the same for both. The only difference is how they work under the hood.</p>
 <h2 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">&para;</a></h2>
 <p>The workflow can be as simple as:</p>
