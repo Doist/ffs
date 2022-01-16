@@ -2,8 +2,8 @@ rootProject.name = "ffs"
 
 include(":ffs-server")
 
-include(":ffs-library-frontend")
-include(":ffs-library-backend")
+include(":ffs-sdk-frontend")
+include(":ffs-sdk-backend")
 
 include(":ffs-dashboard")
 

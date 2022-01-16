@@ -1,6 +1,6 @@
-# FFS backend library
+# FFS frontend SDK
 
-Library that runs in safe environments, such as a backend. It synchronizes rules with the server and evaluates them locally.
+SDK that fetches rules evaluation results from the server, meant to run unsafe environments, such as frontends.
 
 The workflow can be as simple as:
 
@@ -21,7 +21,7 @@ You can also:
 Initialize as early as possible.
 
 ```kotlin
-val ffs = Ffs("TOKEN_BACKEND")
+val ffs = Ffs("TOKEN_FRONTEND")
 ffs.initialize()
 ```
 
@@ -36,7 +36,7 @@ That's it. That's the common workflow. The next code snippet shows more advanced
 ```kotlin
 // Instantiate FFS.
 val ffs = Ffs(
-    apiToken = "TOKEN_BACKEND", // Required.
+    apiToken = "TOKEN_FRONTEND", // Required.
     url = "https://your.own.ffs/v1", // Defaults to "https://ffs.delivery/v1".
     liveUpdates = false, // Defaults to true. If false, data will sync once.
 )
@@ -58,7 +58,7 @@ ffs.initialize {
     all.forEach { (name, flag) ->
         println("$name is enabled: ${ffs.isEnabled(name)}, archived at: ${flag.archived_at}")
     }
-    
+
     // Close the connection.
     shutdown()
 }
@@ -72,7 +72,7 @@ The code above is Kotlin, but all features are available in all clients.
 ### JavaScript
 
 ```javascript
-const ffs = new Ffs("TOKEN_BACKEND")
+const ffs = new Ffs("TOKEN_FRONTEND")
 ffs.initialize()
 
 // ...
@@ -88,7 +88,7 @@ ffs.isEnabled("unknown", false) // false
 ### Swift
 
 ```swift
-let ffs = Ffs("TOKEN_BACKEND")
+let ffs = Ffs("TOKEN_FRONTEND")
 ffs.initialize()
 
 // ...
@@ -96,26 +96,6 @@ ffs.initialize()
 ffs.isEnabled("test") // true
 ffs.isEnabled("unknown", false) // false
 ```
-
-### Python
-
-TBD.
-
-### Ruby
-
-TBD.
-
-### Rust
-
-TBD.
-
-### Go
-
-TBD.
-
-### Java
-
-TBD.
 
 ## Installation
 
