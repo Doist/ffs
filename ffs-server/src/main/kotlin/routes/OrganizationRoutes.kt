@@ -46,7 +46,7 @@ fun Application.installOrganizationRoutes() = routing {
                 deleteOrganization()
             }
 
-            route("/{id}/$PATH_USERS") {
+            route("/{id}/$PATH_USERS/{user_id}") {
                 authenticate("session") {
                     addUser()
                     updateUser()
@@ -162,8 +162,8 @@ private fun Route.deleteOrganization() = delete("{id}") {
  */
 private fun Route.addUser() = post {
     val id = call.parameters.getOrFail<Long>("id")
+    val userId = call.parameters.getOrFail<Long>("user_id")
     val params = call.receiveParameters()
-    val userId = params.getOrFail<Long>("user_id")
     val role = RoleEnum.valueOf(params.getOrFail("role").uppercase())
 
     authorizeForOrganization(id, Permission.WRITE)
@@ -184,8 +184,8 @@ private fun Route.addUser() = post {
  */
 private fun Route.updateUser() = put {
     val id = call.parameters.getOrFail<Long>("id")
+    val userId = call.parameters.getOrFail<Long>("user_id")
     val params = call.receiveParameters()
-    val userId = params.getOrFail<Long>("user_id")
     val role = RoleEnum.valueOf(params.getOrFail("role").uppercase())
 
     authorizeForOrganization(id, Permission.WRITE)
@@ -205,8 +205,7 @@ private fun Route.updateUser() = put {
  */
 private fun Route.removeUser() = delete {
     val id = call.parameters.getOrFail<Long>("id")
-    val params = call.receiveParameters()
-    val userId = params.getOrFail<Long>("user_id")
+    val userId = call.parameters.getOrFail<Long>("user_id")
 
     authorizeForOrganization(id, Permission.WRITE)
 

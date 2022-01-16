@@ -51,8 +51,10 @@ suspend fun UserHttpClient.withOrganization(role: RoleEnum = RoleEnum.ADMIN): Lo
     assert(createOrganizationResponse.status == HttpStatusCode.Created)
 
     val id = createOrganizationResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/')
-    val updateUserInOrganizationResponse = client.put("${PATH_ORGANIZATION(id)}$PATH_USERS") {
-        setBodyForm("user_id" to userId, "role" to role)
+    val updateUserInOrganizationResponse = client.put(
+        "${PATH_ORGANIZATION(id)}/${PATH_USER(userId)}"
+    ) {
+        setBodyForm("role" to role)
     }
     assert(updateUserInOrganizationResponse.status == HttpStatusCode.NoContent)
 

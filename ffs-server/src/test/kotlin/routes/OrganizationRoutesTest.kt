@@ -86,11 +86,13 @@ class OrganizationRoutesTest {
         val ids = List(roles.size) { client.withOrganization(RoleEnum.ADMIN) }
 
         for (i in 1 until roles.size) {
-            client.client.put("${PATH_ORGANIZATION(ids[i - 1])}$PATH_USERS") {
+            client.client.put("${PATH_ORGANIZATION(ids[i - 1])}${PATH_USER(client.userId)}") {
                 setBodyForm("user_id" to client.userId, "role" to roles[i])
             }
         }
-        client.client.delete("${PATH_ORGANIZATION(ids[roles.size - 1])}$PATH_USERS") {
+        client.client.delete(
+            "${PATH_ORGANIZATION(ids[roles.size - 1])}${PATH_USER(client.userId)}"
+        ) {
             setBodyForm("user_id" to client.userId)
         }
 
@@ -119,7 +121,7 @@ class OrganizationRoutesTest {
         val client = createUserClient()
         val id = client.withOrganization()
         assertFailsWith<ClientRequestException> {
-            client.client.put("${PATH_ORGANIZATION(id)}$PATH_USERS")
+            client.client.put("${PATH_ORGANIZATION(id)}/${PATH_USER(client.userId)}")
         }
     }
 
@@ -150,9 +152,7 @@ class OrganizationRoutesTest {
         val client = createUserClient()
         val id = client.withOrganization()
 
-        client.client.delete(PATH_ORGANIZATION(id)) {
-            setBodyForm("user_id" to client.userId)
-        }
+        client.client.delete("${PATH_ORGANIZATION(id)}/${PATH_USER(client.userId)}")
 
         assertFailsWith<ClientRequestException> {
             client.client.get(PATH_ORGANIZATION(id)).bodyAsJson<Organization?>()
