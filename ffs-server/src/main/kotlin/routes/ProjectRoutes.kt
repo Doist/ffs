@@ -71,12 +71,6 @@ private fun Route.createProject() = post {
 
 /**
  * Lists existing projects for the organization.
- *
- * On success, responds `200 OK` with a JSON array containing all projects for the organization.
- *
- * | Parameter         | Required | Description             |
- * | ----------------- | -------- | ----------------------- |
- * | `organization_id` | Yes      | ID of the organization. |
  */
 private fun Route.getProjects() = get {
     val organizationId = call.parameters.getOrFail<Long>("id")
@@ -91,8 +85,6 @@ private fun Route.getProjects() = get {
 
 /**
  * Get an existing project.
- *
- * On success, responds `200 OK` with a JSON object for the project.
  */
 private fun Route.getProject() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
@@ -106,12 +98,6 @@ private fun Route.getProject() = get("{id}") {
 
 /**
  * Update a project.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description          |
- * | --------- | -------- | -------------------- |
- * | `name`    | No       | Name of the project. |
  */
 private fun Route.updateProject() = put("{id}") {
     val id = call.parameters.getOrFail<Long>("id")

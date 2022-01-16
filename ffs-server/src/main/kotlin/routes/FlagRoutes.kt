@@ -88,14 +88,7 @@ fun Application.installFlagRoutes() = routing {
 }
 
 /**
- * Create a new flag.
- *
- * On success, responds `201 Created` with an empty body.
- *
- * | Parameter         | Required | Description        |
- * | ----------------- | -------- | ------------------ |
- * | `name`            | Yes      | Name of the flag.  |
- * | `rule`            | Yes      | Rule of the flag.  |
+ * Creates a new flag.
  */
 private fun Route.createFlag() = post {
     val projectId = call.parameters.getOrFail<Long>("id")
@@ -118,15 +111,13 @@ private fun Route.createFlag() = post {
 
 /**
  * Lists existing flags for the project.
- *
- * On success, responds `200 OK` with a JSON array containing all flags for the project.
  */
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlags() = get {
     // Exceptional case, where endpoint is used with token authentication without parameter.
     val projectId = call.parameters["id"]?.toLong()
         ?: call.principal<TokenPrincipal>()?.projectId
-        ?: throw MissingRequestParameterException("project_id")
+        ?: throw MissingRequestParameterException("id")
 
     authorizeForProject(id = projectId, permission = Permission.READ)
 
@@ -155,12 +146,6 @@ private fun Route.getFlags() = get {
 
 /**
  * Get an existing flag.
- *
- * On success, responds `200 OK` with a JSON object for the flag.
- *
- * | Parameter | Required | Description     |
- * | --------- | -------- | --------------- |
- * | `id`      | Yes      | ID of the flag. |
  */
 private fun Route.getFlag() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
@@ -173,14 +158,6 @@ private fun Route.getFlag() = get("{id}") {
 
 /**
  * Update a flag.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description       |
- * | --------- | -------- | ----------------- |
- * | `id`      | Yes      | ID of the flag.   |
- * | `name`    | No       | Name of the flag. |
- * | `rule`    | No       | Rule of the flag.  |
  */
 private fun Route.updateFlag() = put("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
@@ -201,21 +178,11 @@ private fun Route.updateFlag() = put("{id}") {
 
 /**
  * Evaluates all existing flags for the project.
- *
- * On success, responds `200 OK` with a JSON object mapping flag names to their evaluation.
- *
- * | Parameter         | Required | Description                 |
- * | ----------------- | -------- | --------------------------- |
- * | `project_id`      | Yes      | ID of the project.          |
- * | `env`             | Yes      | Environment for evaluation. |
  */
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getFlagsEval() = get(PATH_EVAL) {
     val queryParameters = call.request.queryParameters
-    // Exceptional case, where endpoint is used from client SDK without parameter.
-    val projectId = queryParameters["id"]?.toLong()
-        ?: call.principal<TokenPrincipal>()?.projectId
-        ?: throw MissingRequestParameterException("project_id")
+    val projectId = call.principal<TokenPrincipal>()!!.projectId
     val env = json.decodeFromString<JsonObject>(queryParameters.getOrFail<String>("env"))
 
     authorizeForProject(id = projectId, permission = Permission.EVAL)
@@ -274,12 +241,6 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
 
 /**
  * Archive a flag.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description     |
- * | --------- | -------- | --------------- |
- * | `id`      | Yes      | ID of the flag. |
  */
 private fun Route.archiveFlag() = put {
     val id = call.parameters.getOrFail<Long>("id")
@@ -293,12 +254,6 @@ private fun Route.archiveFlag() = put {
 
 /**
  * Unarchive a flag.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description     |
- * | --------- | -------- | --------------- |
- * | `id`      | Yes      | ID of the flag. |
  */
 private fun Route.unarchiveFlag() = delete {
     val id = call.parameters.getOrFail<Long>("id")

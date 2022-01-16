@@ -202,7 +202,8 @@ private fun Route.deleteUser() = delete("{id}") {
 
     if (database.users.testPassword(id, currentPassword)) {
         database.users.delete(id = id)
-        call.respond(HttpStatusCode.NoContent)
+        call.sessions.clear<Session>()
+        call.respondRedirect("/")
     } else {
         call.respond(HttpStatusCode.Forbidden)
     }

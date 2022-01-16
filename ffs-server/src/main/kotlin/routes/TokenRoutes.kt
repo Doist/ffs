@@ -79,12 +79,6 @@ private fun Route.getTokens() = get {
 
 /**
  * Update description of token for project.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter      | Required | Description                |
- * | -------------- | -------- | -------------------------- |
- * | `description`  | Yes      | Description of the token.  |
  */
 private fun Route.updateToken() = put("{id}") {
     val id = call.parameters.getOrFail<Long>("id")

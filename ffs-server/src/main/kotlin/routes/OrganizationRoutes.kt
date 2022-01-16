@@ -58,13 +58,7 @@ fun Application.installOrganizationRoutes() = routing {
 }
 
 /**
- * Create a new organization.
- *
- * On success, responds `201 Created` with an empty body.
- *
- * | Parameter | Required | Description               |
- * | --------- | -------- | ------------------------- |
- * | `name`    | Yes      | Name of the organization. |
+ * Create a new organization. The requesting user becomes an admin.
  */
 private fun Route.createOrganization() = post {
     val userId = call.principal<UserPrincipal>()!!.id
@@ -86,8 +80,6 @@ private fun Route.createOrganization() = post {
 
 /**
  * Lists organizations for the current user.
- *
- * On success, responds `200 OK` with a JSON array containing all organizations.
  */
 private fun Route.getOrganizations() = get {
     val userId = call.principal<UserPrincipal>()!!.id
@@ -100,8 +92,6 @@ private fun Route.getOrganizations() = get {
 
 /**
  * Get an existing organization.
- *
- * On success, responds `200 OK` with a JSON object for the organization.
  */
 private fun Route.getOrganization() = get("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
@@ -115,12 +105,6 @@ private fun Route.getOrganization() = get("{id}") {
 
 /**
  * Update an organization.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description               |
- * | --------- | -------- | ------------------------- |
- * | `name`    | No       | Name of the organization. |
  */
 private fun Route.updateOrganization() = put("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
@@ -138,8 +122,6 @@ private fun Route.updateOrganization() = put("{id}") {
 
 /**
  * Delete an organization.
- *
- * On success, responds `204 No Content` with an empty body.
  */
 private fun Route.deleteOrganization() = delete("{id}") {
     val id = call.parameters.getOrFail<Long>("id")
@@ -152,13 +134,6 @@ private fun Route.deleteOrganization() = delete("{id}") {
 
 /**
  * Add user to an organization.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description                 |
- * | --------- | -------- | --------------------------- |
- * | `user_id` | Yes      | ID of user to add.          |
- * | `role`    | Yes      | Role to assign to the user. |
  */
 private fun Route.addUser() = post {
     val id = call.parameters.getOrFail<Long>("id")
@@ -174,13 +149,6 @@ private fun Route.addUser() = post {
 
 /**
  * Update user role within organization.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description                 |
- * | --------- | -------- | --------------------------- |
- * | `user_id` | Yes      | ID of user to add.          |
- * | `role`    | Yes      | Role to assign to the user. |
  */
 private fun Route.updateUser() = put {
     val id = call.parameters.getOrFail<Long>("id")
@@ -196,12 +164,6 @@ private fun Route.updateUser() = put {
 
 /**
  * Remove user from organization.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter | Required | Description                 |
- * | --------- | -------- | --------------------------- |
- * | `user_id` | Yes      | ID of user to add.          |
  */
 private fun Route.removeUser() = delete {
     val id = call.parameters.getOrFail<Long>("id")
