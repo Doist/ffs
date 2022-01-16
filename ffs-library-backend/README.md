@@ -37,7 +37,7 @@ That's it. That's the common workflow. The next code snippet shows more advanced
 // Instantiate FFS.
 val ffs = Ffs(
     apiToken = "TOKEN_BACKEND", // Required.
-    url = "https://your.own.ffs/v1/", // Defaults to "https://ffs.doist.com".
+    url = "https://your.own.ffs/v1", // Defaults to "https://ffs.delivery/v1".
     liveUpdates = false, // Defaults to true. If false, data will sync once.
 )
 
