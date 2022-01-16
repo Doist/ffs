@@ -111,6 +111,7 @@ python.pip("mkdocs-awesome-pages-plugin:${libs.versions.mkdocs.plugin.awesome.pa
 mkdocs {
     sourcesDir = "docs"
     strict = false
+    publish.docPath = ""
 }
 tasks.withType<MkdocsTask>().configureEach {
     val dokkaHtmlMultiModule by tasks.getting
