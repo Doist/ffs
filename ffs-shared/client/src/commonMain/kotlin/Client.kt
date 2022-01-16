@@ -100,9 +100,9 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
     abstract fun isEnabled(name: String, default: Boolean): Boolean
 
     /**
-     * Returns all flag data.
+     * Returns all flag evaluations.
      */
-    fun all() = data
+    abstract fun all(): Map<String, Boolean>
 
     /**
      * Shuts down the client, freeing associated resources.

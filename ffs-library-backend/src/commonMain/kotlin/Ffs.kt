@@ -39,6 +39,12 @@ public class Ffs(
      */
     public override fun isEnabled(name: String, default: Boolean): Boolean =
         data[name]?.isEnabled(env) ?: default
+
+    /**
+     * @inheritDoc
+     */
+    public override fun all(): Map<String, Boolean> =
+        data.mapValues { (name, _) -> isEnabled(name) }
 }
 
 private fun Flag.isEnabled(env: JsonObject): Boolean? {

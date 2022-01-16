@@ -1,7 +1,6 @@
 
 import doist.ffs.Ffs
 import doist.ffs.initializeInternal
-import doist.ffs.model.Flag
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
@@ -29,9 +28,9 @@ class FfsTest {
     @Test
     fun all() = runTest {
         val ffs = Ffs("apitoken", liveUpdates = false)
-        assert(ffs.all() == emptyMap<String, Flag>())
+        assert(ffs.all() == emptyMap<String, Boolean>())
         ffs.initializeForTesting()
-        assert(ffs.all() == mapOf("test" to Flag(1, "test", "1", null)))
+        assert(ffs.all() == mapOf("test" to true))
         assertTrue(ffs.isEnabled("test"))
     }
 

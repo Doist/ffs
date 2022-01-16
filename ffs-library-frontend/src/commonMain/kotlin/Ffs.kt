@@ -32,4 +32,9 @@ public class Ffs(
      * Flag evaluation is done on the server, which provides the results for all evaluations.
      */
     public override fun isEnabled(name: String, default: Boolean): Boolean = data[name] ?: default
+
+    /**
+     * @inheritDoc
+     */
+    override fun all(): Map<String, Boolean> = data.toMap()
 }
