@@ -3,10 +3,10 @@ $dokka.linkExtension:html
 
 module:Dashboard
 doist.ffs
-module:Library backend
+module:Sdk backend
 doist.ffs
 doist.ffs.model
-module:Library frontend
+module:Sdk frontend
 doist.ffs
 module:Server
 doist.ffs

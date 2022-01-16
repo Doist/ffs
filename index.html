@@ -79,7 +79,7 @@
         <aside class="md-banner">
           <div class="md-banner__inner md-grid md-typeset">
             
-FFS is in active development. Some things are incomplete, others will break. <a href="https://github.com/Doist/ffs/issues">Contribute!</a>
+FFS is in active development. Some things are missing, others are incomplete, and some are broken. <a href="https://github.com/Doist/ffs/issues">Contribute!</a>
 
           </div>
         </aside>
@@ -1145,7 +1145,7 @@ FFS is in active development. Some things are incomplete, others will break. <a 
 <h1 id="ffs">FFS<a class="headerlink" href="#ffs" title="Permanent link">&para;</a></h1>
 <p>Feature flags that are fast ⚡, lean 🤏, and open-source 🌍.</p>
 <h2 id="project">Project<a class="headerlink" href="#project" title="Permanent link">&para;</a></h2>
-<p>FFS is built primarily on Kotlin Multiplatform and made up of 4 major components:</p>
+<p>FFS is built on Kotlin Multiplatform and made up of 4 major components:</p>
 <ul>
 <li>A <a href="dashboard">dashboard</a> to create and manage feature flags.</li>
 <li><a href="sdks">SDKs</a> to consume feature flags:<ul>
@@ -1169,12 +1169,12 @@ FFS is in active development. Some things are incomplete, others will break. <a 
 <p>Because no other solutions nail this specific intersection of goals.</p>
 <p>⚡ Updates using <a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events">server-sent events</a>. Changes are propagated instantly to clients.<br />
 ⚡ Evaluates over 40,000 <a href="https://github.com/Doist/ffs/blob/main/ffs-server/src/benchmark/kotlin/rule/RuleEvalBenchmark.kt">rules</a> per second. On a Raspberry Pi 4 Model B. Per core.<br />
-⚡ 🔜 Dedicated frontend library for JavaScript. No compromises where bundle size matters.</p>
+⚡ Dedicated frontend library for JavaScript. No compromises where bundle size matters.</p>
 <p>🤏 Limited in feature set and code surface. It does few things, and it does them right.<br />
 🤏 No bloat. Complimentary functions should be handled by complimentary tools.<br />
 🤏 Easy to grasp, maintain, and improve across all libraries and server.</p>
 <p>🌍 Open-source first and foremost. No special versions or closed add-ons for enterprise.<br />
-🌎  🔜 Easy to set up and deploy. We can run it for you, but out of convenience, not complexity.<br />
+🌎 Easy to set up and deploy. We can run it for you, but out of convenience, not complexity.<br />
 🌏 All contributions are welcome, and we're happy to help along the way.</p>
 <h2 id="technology">Technology<a class="headerlink" href="#technology" title="Permanent link">&para;</a></h2>
 <p><a href="https://kotlinlang.org/">Kotlin</a> is the backbone of FFS. It uses <a href="https://kotlinlang.org/docs/js-overview.html">Kotlin/JS</a> in the dashboard, to <a href="https://kotlinlang.org/docs/multiplatform.html">Kotlin/Multiplatform</a> in the SDKs, to <a href="https://kotlinlang.org/docs/server-overview.html">Kotlin/JVM</a> in the server.</p>
