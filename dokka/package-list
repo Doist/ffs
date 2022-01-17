@@ -20,6 +20,8 @@ routes
 module:Client
 doist.ffs
 doist.ffs.uuid
+module:Endpoints
+doist.ffs.endpoints
 module:Env
 doist.ffs.env
 module:Rule

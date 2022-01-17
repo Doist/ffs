@@ -2,147 +2,147 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://doist.github.io/ffs/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/changelog/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/api/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/api/flags/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/api/organizations/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/api/projects/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/api/tokens/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/api/users/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/dashboard/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/dashboard/api-tokens/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/dashboard/feature-flags/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/dashboard/organizations-and-projects/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/dashboard/permissions/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/dashboard/users/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/feature-flags/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/feature-flags/anatomy-of-rules/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/feature-flags/archiving/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/feature-flags/time-to-live/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/sdks/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/sdks/go/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/sdks/javascript/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/sdks/kotlin/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/sdks/python/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/sdks/ruby/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/sdks/rust/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/sdks/swift/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/server/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/server/configuration/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://doist.github.io/ffs/server/running/</loc>
-         <lastmod>2022-01-16</lastmod>
+         <lastmod>2022-01-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>

@@ -990,22 +990,22 @@ FFS is in active development. Some things are missing, others are incomplete, an
 </li>
       
         <li class="md-nav__item">
-  <a href="#add-user-to-organization" class="md-nav__link">
-    Add user to organization
+  <a href="#add-member-to-organization" class="md-nav__link">
+    Add member to organization
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#update-user-role-in-organization" class="md-nav__link">
-    Update user role in organization
+  <a href="#update-member-role-in-organization" class="md-nav__link">
+    Update member role in organization
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#remove-user-from-organization" class="md-nav__link">
-    Remove user from organization
+  <a href="#remove-member-from-organization" class="md-nav__link">
+    Remove member from organization
   </a>
   
 </li>
@@ -1159,22 +1159,22 @@ FFS is in active development. Some things are missing, others are incomplete, an
 </li>
       
         <li class="md-nav__item">
-  <a href="#add-user-to-organization" class="md-nav__link">
-    Add user to organization
+  <a href="#add-member-to-organization" class="md-nav__link">
+    Add member to organization
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#update-user-role-in-organization" class="md-nav__link">
-    Update user role in organization
+  <a href="#update-member-role-in-organization" class="md-nav__link">
+    Update member role in organization
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#remove-user-from-organization" class="md-nav__link">
-    Remove user from organization
+  <a href="#remove-member-from-organization" class="md-nav__link">
+    Remove member from organization
   </a>
   
 </li>
@@ -1258,8 +1258,8 @@ FFS is in active development. Some things are missing, others are incomplete, an
 </code></pre></div>
 <p>Requires an authenticated user that is an admin in this organization.</p>
 <p>On success, responds <code>204 No Content</code> with an empty body.</p>
-<h2 id="add-user-to-organization">Add user to organization<a class="headerlink" href="#add-user-to-organization" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>POST /organizations/{id}/users/{user_id}
+<h2 id="add-member-to-organization">Add member to organization<a class="headerlink" href="#add-member-to-organization" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>POST /organizations/{id}/members/{user_id}
 </code></pre></div>
 <p>Requires an authenticated user that is an admin in this organization.</p>
 <table>
@@ -1276,13 +1276,13 @@ FFS is in active development. Some things are missing, others are incomplete, an
 <td><code>role</code></td>
 <td>"admin", "user", or "reader"</td>
 <td>Yes</td>
-<td>Role to assign to the user.</td>
+<td>Role to assign to the member.</td>
 </tr>
 </tbody>
 </table>
 <p>On success, responds <code>201 Created</code> with an empty body.</p>
-<h2 id="update-user-role-in-organization">Update user role in organization<a class="headerlink" href="#update-user-role-in-organization" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>PUT /organizations/{id}/users/{user_id}
+<h2 id="update-member-role-in-organization">Update member role in organization<a class="headerlink" href="#update-member-role-in-organization" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>PUT /organizations/{id}/members/{user_id}
 </code></pre></div>
 <p>Requires an authenticated user that is an admin in this organization.</p>
 <table>
@@ -1299,13 +1299,13 @@ FFS is in active development. Some things are missing, others are incomplete, an
 <td><code>role</code></td>
 <td>"admin", "user", or "reader"</td>
 <td>Yes</td>
-<td>Role to assign to the user.</td>
+<td>Role to assign to the member.</td>
 </tr>
 </tbody>
 </table>
 <p>On success, responds <code>204 No Content</code> with an empty body.</p>
-<h2 id="remove-user-from-organization">Remove user from organization<a class="headerlink" href="#remove-user-from-organization" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>DELETE /organizations/{id}/users/{user_id}
+<h2 id="remove-member-from-organization">Remove member from organization<a class="headerlink" href="#remove-member-from-organization" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>DELETE /organizations/{id}/members/{user_id}
 </code></pre></div>
 <p>Requires an authenticated user that is an admin in this organization.</p>
 <p>On success, responds <code>204 No Content</code> with an empty body.</p>
