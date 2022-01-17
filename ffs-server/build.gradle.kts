@@ -3,10 +3,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id(libs.plugins.kotlin.jvm.get().pluginId)
     id(libs.plugins.kotlin.serialization.get().pluginId)
-    id(libs.plugins.sqldelight.get().pluginId)
+    alias(libs.plugins.sqldelight)
     application
     alias(libs.plugins.shadow)
-    id(libs.plugins.kotlinx.benchmark.get().pluginId)
+    alias(libs.plugins.kotlinx.benchmark)
 }
 
 sourceSets.create("benchmark")
