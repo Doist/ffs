@@ -48,6 +48,11 @@ class Organizations {
             @Serializable
             @Resource("{userId}")
             data class ById(val parent: Members, val userId: Long)
+
+            companion object {
+                const val ROLE = "role"
+                const val USER_ID = "user_id"
+            }
         }
 
         @Serializable
@@ -57,8 +62,6 @@ class Organizations {
 
     companion object {
         const val NAME = "name"
-        const val ROLE = "role"
-        const val USER_ID = "user_id"
 
         fun ById.Members.Companion.ById(id: Long, userId: Long) = ById.Members.ById(
             ById.Members(ById(id = id)),
