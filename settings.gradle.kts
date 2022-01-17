@@ -9,6 +9,7 @@ include(":ffs-dashboard")
 
 include(":ffs-shared")
 include(":ffs-shared:client")
+include(":ffs-shared:endpoints")
 include(":ffs-shared:env")
 include(":ffs-shared:rule")
 include(":ffs-shared:sse")

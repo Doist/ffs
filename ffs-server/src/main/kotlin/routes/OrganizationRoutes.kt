@@ -46,7 +46,7 @@ fun Application.installOrganizationRoutes() = routing {
                 deleteOrganization()
             }
 
-            route("/{id}/$PATH_USERS/{user_id}") {
+            route("/{id}/users/{user_id}") {
                 authenticate("session") {
                     addUser()
                     updateUser()

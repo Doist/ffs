@@ -88,7 +88,7 @@ class ProjectRoutesTest {
         val project = client.client.get(PATH_PROJECT(projectId)).bodyAsJson<Project>()
         assertFailsWith<ClientRequestException> {
             val id = client.withProject(organizationId)
-            client.client.put("${PATH_ORGANIZATION(id)}$PATH_USERS") {
+            client.client.put("${PATH_ORGANIZATION(id)}/users") {
                 setBodyForm("name" to project.name)
             }
         }

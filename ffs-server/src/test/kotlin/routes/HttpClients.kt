@@ -4,12 +4,15 @@ package doist.ffs.routes
 
 import doist.ffs.auth.Permission
 import doist.ffs.db.RoleEnum
+import doist.ffs.endpoints.Users
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngineConfig
 import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.client.plugins.resources.Resources
+import io.ktor.client.plugins.resources.post
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.http.HttpHeaders
@@ -26,11 +29,12 @@ suspend fun ApplicationTestBuilder.createUserClient(
     block: (HttpClientConfig<out HttpClientEngineConfig>.() -> Unit)? = null
 ): UserHttpClient {
     val client = createClient {
+        install(Resources)
         install(HttpCookies)
         block?.invoke(this)
     }
 
-    val registerUserResponse = client.post("$PATH_USERS$PATH_REGISTER") {
+    val registerUserResponse = client.post(Users.Register()) {
         val random = Random.nextInt()
         setBodyForm(
             "name" to "Test $random",
@@ -52,7 +56,7 @@ suspend fun UserHttpClient.withOrganization(role: RoleEnum = RoleEnum.ADMIN): Lo
 
     val id = createOrganizationResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/')
     val updateUserInOrganizationResponse = client.put(
-        "${PATH_ORGANIZATION(id)}/${PATH_USER(userId)}"
+        "${PATH_ORGANIZATION(id)}/users/$userId"
     ) {
         setBodyForm("role" to role)
     }
@@ -115,6 +119,7 @@ suspend fun UserHttpClient.withToken(projectId: Long, permission: Permission): S
 //
 //     return TokenHttpClient(
 //         client = createClient {
+//             install(Resources)
 //             install(DefaultRequest) {
 //                 header(HttpHeaders.Authorization, "Bearer $token")
 //             }

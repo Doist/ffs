@@ -5,7 +5,9 @@ import doist.ffs.auth.Session
 import doist.ffs.db.UserQueries
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.users
+import doist.ffs.endpoints.Users
 import doist.ffs.ext.authorizeForUser
+import doist.ffs.ext.href
 import doist.ffs.ext.optionalRoute
 import doist.ffs.plugins.database
 import doist.ffs.validators.validateEmail
@@ -16,14 +18,13 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receiveParameters
+import io.ktor.server.resources.delete
+import io.ktor.server.resources.post
+import io.ktor.server.resources.put
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.post
-import io.ktor.server.routing.put
-import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
@@ -33,52 +34,34 @@ import kotlinx.coroutines.delay
 import routes.PATH_LATEST
 import kotlin.random.Random
 
-const val PATH_USERS = "/users"
-const val PATH_REGISTER = "/register"
-const val PATH_LOGIN = "/login"
-const val PATH_LOGOUT = "/logout"
-
-@Suppress("FunctionName")
-fun PATH_USER(id: Any) = "$PATH_USERS/$id"
-
 fun Application.installUserRoutes() = routing {
     optionalRoute(PATH_LATEST) {
-        route(PATH_USERS) {
-            registerUser()
-            loginUser()
-            logoutUser()
+        registerUser()
+        loginUser()
+        logoutUser()
 
-            authenticate("session") {
-                updateUser()
-                deleteUser()
-            }
+        authenticate("session") {
+            updateUser()
+            deleteUser()
         }
     }
 }
 
 /**
  * Register a user.
- *
- * On success, responds `201 Created` with an empty body.
- *
- * | Parameter  | Required | Description           |
- * | ---------- | -------- | --------------------- |
- * | `name`     | Yes      | Name of the user.     |
- * | `email`    | Yes      | Email of the user.    |
- * | `password` | Yes      | Password of the user. |
  */
-private fun Route.registerUser() = post(PATH_REGISTER) {
+private fun Route.registerUser() = post<Users.Register> {
     val params = call.receiveParameters()
-    val name = params.getOrFail("name")
-    val email = params.getOrFail("email")
-    val password = params.getOrFail("password")
+    val name = params.getOrFail(Users.NAME)
+    val email = params.getOrFail(Users.EMAIL)
+    val password = params.getOrFail(Users.PASSWORD)
 
     if (validateEmail(email) && validatePassword(password)) {
         val id = database.capturingLastInsertId {
             users.insert(name = name, email = email, password = Argon2Password.encode(password))
         }
         call.sessions.set(Session(id))
-        call.response.header(HttpHeaders.Location, PATH_USER(id))
+        call.response.header(HttpHeaders.Location, href(Users.ById(id = id)))
         call.respond(HttpStatusCode.Created)
     } else {
         call.respond(HttpStatusCode.BadRequest)
@@ -87,18 +70,11 @@ private fun Route.registerUser() = post(PATH_REGISTER) {
 
 /**
  * Log in a user.
- *
- * On success, responds `200 OK` with the user data.
- *
- * | Parameter  | Required | Description           |
- * | ---------- | -------- | --------------------- |
- * | `email`    | Yes      | Email of the user.    |
- * | `password` | Yes      | Password of the user. |
  */
-private fun Route.loginUser() = post(PATH_LOGIN) {
+private fun Route.loginUser() = post<Users.Login> {
     val params = call.receiveParameters()
-    val email = params.getOrFail("email")
-    val password = params.getOrFail("password")
+    val email = params.getOrFail(Users.EMAIL)
+    val password = params.getOrFail(Users.PASSWORD)
 
     val id = database.users.selectIdByEmail(email = email).executeAsOneOrNull()
     if (id != null && database.users.testPassword(id, password)) {
@@ -115,30 +91,20 @@ private fun Route.loginUser() = post(PATH_LOGIN) {
  *
  * Always responds with `200 OK`.
  */
-private fun Route.logoutUser() = post(PATH_LOGOUT) {
+private fun Route.logoutUser() = post<Users.Logout> {
     call.sessions.clear<Session>()
     call.respondRedirect("/")
 }
 
 /**
  * Update a user.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter          | Required                              | Description               |
- * | ------------------ | ------------------------------------- | ------------------------- |
- * | `name`             | No                                    | Name of the user.         |
- * | `email`            | No                                    | Email of the user.        |
- * | `password`         | No                                    | Password of the user.     |
- * | `current_password` | If `email` or `password are provided  | Current user password.    |
  */
-private fun Route.updateUser() = put("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
+private fun Route.updateUser() = put<Users.ById> { (_, id) ->
     val params = call.receiveParameters()
-    val currentPassword = params["current_password"]
-    val name = params["name"]
-    val email = params["email"]
-    val password = params["password"]
+    val currentPassword = params[Users.CURRENT_PASSWORD]
+    val name = params[Users.NAME]
+    val email = params[Users.EMAIL]
+    val password = params[Users.PASSWORD]
 
     authorizeForUser(id = id)
 
@@ -186,17 +152,10 @@ private fun Route.updateUser() = put("{id}") {
 
 /**
  * Delete a user.
- *
- * On success, responds `204 No Content` with an empty body.
- *
- * | Parameter          | Required  | Description             |
- * | ------------------ | --------- | ----------------------- |
- * | `current_password` | Yes       | Current user password.  |
  */
-private fun Route.deleteUser() = delete("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
+private fun Route.deleteUser() = delete<Users.ById> { (_, id) ->
     val params = call.receiveParameters()
-    val currentPassword = params.getOrFail("current_password")
+    val currentPassword = params.getOrFail(Users.CURRENT_PASSWORD)
 
     authorizeForUser(id = id)
 

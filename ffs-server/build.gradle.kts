@@ -13,6 +13,7 @@ sourceSets.create("benchmark")
 
 dependencies {
     implementation(project(":ffs-shared:env"))
+    implementation(project(":ffs-shared:endpoints"))
     implementation(project(":ffs-shared:rule"))
     implementation(project(":ffs-shared:sse"))
     implementation(project(":ffs-shared:validators"))
@@ -22,6 +23,7 @@ dependencies {
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.ktor.client.resources)
     testImplementation(libs.kotlinx.benchmark.runtime)
 
     val benchmarkImplementation by configurations.getting

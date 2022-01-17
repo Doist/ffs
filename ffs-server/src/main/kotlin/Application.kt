@@ -13,10 +13,9 @@ import doist.ffs.auth.permissions
 import doist.ffs.db.fromToken
 import doist.ffs.db.roles
 import doist.ffs.db.tokens
+import doist.ffs.endpoints.Users
 import doist.ffs.plugins.Database
 import doist.ffs.plugins.database
-import doist.ffs.routes.PATH_LOGIN
-import doist.ffs.routes.PATH_USERS
 import doist.ffs.routes.installFlagRoutes
 import doist.ffs.routes.installOrganizationRoutes
 import doist.ffs.routes.installProjectRoutes
@@ -36,6 +35,8 @@ import io.ktor.server.plugins.Compression
 import io.ktor.server.plugins.ContentNegotiation
 import io.ktor.server.plugins.DefaultHeaders
 import io.ktor.server.plugins.StatusPages
+import io.ktor.server.resources.Resources
+import io.ktor.server.resources.href
 import io.ktor.server.response.respond
 import io.ktor.server.routing.IgnoreTrailingSlash
 import io.ktor.server.sessions.Sessions
@@ -47,9 +48,9 @@ fun main(args: Array<String>): Unit = EngineMain.main(args)
 
 @Suppress("Unused")
 fun Application.module() {
+    installPlugins()
     installDatabase()
     installAuthentication()
-    installPlugins()
     installRoutes()
 }
 
@@ -84,7 +85,7 @@ fun Application.installAuthentication() = install(Authentication) {
                 }
             )
         }
-        challenge("$PATH_USERS$PATH_LOGIN")
+        challenge(href(Users.Login()))
     }
     bearer("token") {
         validate { credential ->
@@ -102,6 +103,7 @@ fun Application.installAuthentication() = install(Authentication) {
 }
 
 fun Application.installPlugins() {
+    install(Resources)
     install(IgnoreTrailingSlash)
     install(CallLogging)
     install(DefaultHeaders)

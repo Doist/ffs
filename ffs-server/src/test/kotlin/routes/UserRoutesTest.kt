@@ -1,16 +1,22 @@
 package doist.ffs.routes
 
 import doist.ffs.db.SelectById
+import doist.ffs.endpoints.Users
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.RedirectResponseException
 import io.ktor.client.plugins.cookies.HttpCookies
-import io.ktor.client.request.delete
+import io.ktor.client.plugins.resources.Resources
+import io.ktor.client.plugins.resources.delete
+import io.ktor.client.plugins.resources.href
+import io.ktor.client.plugins.resources.post
+import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import routes.PATH_LATEST
 import kotlin.test.Test
@@ -19,21 +25,24 @@ import kotlin.test.assertFailsWith
 class UserRoutesTest {
     @Test
     fun registerLogin() = testApplication {
-        val client = createClient { }
+        val client = createLocalClient()
 
         // Register a user and verify it was created.
-        val registerResponse = client.post("$PATH_USERS$PATH_REGISTER") {
+        val registerResponse = client.post(Users.Register()) {
             setBodyForm(
-                "name" to "Test",
-                "email" to "test@test.test",
-                "password" to "password123"
+                Users.NAME to "Test",
+                Users.EMAIL to "test@test.test",
+                Users.PASSWORD to "password123"
             )
         }
         assert(registerResponse.status == HttpStatusCode.Created)
 
         // Login as the user and verify the details match.
-        val loginResponse = client.post("$PATH_USERS$PATH_LOGIN") {
-            setBodyForm("email" to "test@test.test", "password" to "password123")
+        val loginResponse = client.post(Users.Login()) {
+            setBodyForm(
+                Users.EMAIL to "test@test.test",
+                Users.PASSWORD to "password123"
+            )
         }
         assert(loginResponse.status == HttpStatusCode.OK)
         val user = loginResponse.bodyAsJson<SelectById>()
@@ -43,21 +52,29 @@ class UserRoutesTest {
 
     @Test
     fun registerInvalidEmail() = testApplication {
+        val client = createLocalClient()
+
         assertFailsWith<ClientRequestException> {
-            client.post("$PATH_USERS$PATH_REGISTER") {
-                setBodyForm("name" to "Test", "email" to "no-email", "password" to "password123")
+            client.post(Users.Register()) {
+                setBodyForm(
+                    Users.NAME to "Test",
+                    Users.EMAIL to "no-email",
+                    Users.PASSWORD to "password123"
+                )
             }
         }
     }
 
     @Test
     fun registerInvalidPassword() = testApplication {
+        val client = createLocalClient()
+
         assertFailsWith<ClientRequestException> {
-            client.post("$PATH_USERS$PATH_REGISTER") {
+            client.post(Users.Register()) {
                 setBodyForm(
-                    "name" to "Test",
-                    "email" to "test@test.test",
-                    "password" to "1234567"
+                    Users.NAME to "Test",
+                    Users.EMAIL to "test@test.test",
+                    Users.PASSWORD to "1234567"
                 )
             }
         }
@@ -65,49 +82,46 @@ class UserRoutesTest {
 
     @Test
     fun logout() = testApplication {
-        val client = createClient {
-            install(HttpCookies)
-            expectSuccess = false
-        }
-        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+        val client = createLocalClient()
+        client.post(Users.Register()) {
             setBodyForm(
-                "name" to "Test",
-                "email" to "test@test.test",
-                "password" to "password123"
+                Users.NAME to "Test",
+                Users.EMAIL to "test@test.test",
+                Users.PASSWORD to "password123"
             )
-        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+        }
 
         // Verify logout redirects.
-        assert(client.post("$PATH_USERS$PATH_LOGOUT").status == HttpStatusCode.Found)
+        assertFailsWith<RedirectResponseException> {
+            client.post(Users.Logout())
+        }
     }
 
     @Test
     fun update() = testApplication {
-        val client = createClient {
-            install(HttpCookies)
-        }
-        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+        val client = createLocalClient()
+        val id = client.post(Users.Register()) {
             setBodyForm(
-                "name" to "Test User",
-                "email" to "test@test.test",
-                "password" to "password123"
+                Users.NAME to "Test User",
+                Users.EMAIL to "test@test.test",
+                Users.PASSWORD to "password123"
             )
-        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+        }.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
 
         // Update various user details.
-        client.put(PATH_USER(id)) {
-            setBodyForm("name" to "Test")
+        client.put(Users.ById(id = id)) {
+            setBodyForm(Users.NAME to "Test")
         }
-        client.put(PATH_USER(id)) {
-            setBodyForm("email" to "test@test.com", "current_password" to "password123")
+        client.put(Users.ById(id = id)) {
+            setBodyForm(Users.EMAIL to "test@test.com", Users.CURRENT_PASSWORD to "password123")
         }
-        client.put(PATH_USER(id)) {
-            setBodyForm("name" to "User Test", "current_password" to "password123")
+        client.put(Users.ById(id = id)) {
+            setBodyForm(Users.NAME to "User Test", Users.CURRENT_PASSWORD to "password123")
         }
 
         // Login to obtain user info again, and verify it.
-        val loginResponse = client.post("$PATH_USERS$PATH_LOGIN") {
-            setBodyForm("email" to "test@test.com", "password" to "password123")
+        val loginResponse = client.post(Users.Login()) {
+            setBodyForm(Users.EMAIL to "test@test.com", Users.PASSWORD to "password123")
         }
         val user = loginResponse.bodyAsJson<SelectById>()
         assert(user.name == "User Test")
@@ -116,21 +130,19 @@ class UserRoutesTest {
 
     @Test
     fun updateEmailInvalid() = testApplication {
-        val client = createClient {
-            install(HttpCookies)
-        }
-        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+        val client = createLocalClient()
+        val id = client.post(Users.Register()) {
             setBodyForm(
-                "name" to "Test",
-                "email" to "test@test.test",
-                "password" to "password123"
+                Users.NAME to "Test",
+                Users.EMAIL to "test@test.test",
+                Users.PASSWORD to "password123"
             )
-        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+        }.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
 
         listOf("test@test.t", "test@127.0.0.1", "@test.test").forEach { email ->
             assertFailsWith<ClientRequestException> {
-                client.put(PATH_USER(id)) {
-                    setBodyForm("email" to email, "current_password" to "password123")
+                client.put(Users.ById(id = id)) {
+                    setBodyForm("email" to email, Users.CURRENT_PASSWORD to "password123")
                 }
             }
         }
@@ -138,82 +150,82 @@ class UserRoutesTest {
 
     @Test
     fun updateCurrentPasswordInvalid() = testApplication {
-        val client = createClient {
-            install(HttpCookies)
-        }
-        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+        val client = createLocalClient()
+        val id = client.post(Users.Register()) {
             setBodyForm(
-                "name" to "Test",
-                "email" to "test@test.test",
-                "password" to "password123"
+                Users.NAME to "Test",
+                Users.EMAIL to "test@test.test",
+                Users.PASSWORD to "password123"
             )
-        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+        }.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
 
         assertFailsWith<ClientRequestException> {
-            client.put(PATH_USER(id)) {
-                setBodyForm("email" to "test@test.com")
+            client.put(Users.ById(id = id)) {
+                setBodyForm(Users.EMAIL to "test@test.com")
             }
         }
         assertFailsWith<ClientRequestException> {
-            client.put(PATH_USER(id)) {
-                setBodyForm("email" to "test@test.com", "current_password" to "wrongpassword")
+            client.put(Users.ById(id = id)) {
+                setBodyForm(
+                    Users.EMAIL to "test@test.com",
+                    Users.CURRENT_PASSWORD to "wrongpassword"
+                )
             }
         }
         assertFailsWith<ClientRequestException> {
-            client.put(PATH_USER(id)) {
-                setBodyForm("password" to "newpassword")
+            client.put(Users.ById(id = id)) {
+                setBodyForm(Users.PASSWORD to "newpassword")
             }
         }
         assertFailsWith<ClientRequestException> {
-            client.put(PATH_USER(id)) {
-                setBodyForm("password" to "newpassword", "current_password" to "wrongpassword")
+            client.put(Users.ById(id = id)) {
+                setBodyForm(
+                    Users.PASSWORD to "newpassword",
+                    Users.CURRENT_PASSWORD to "wrongpassword"
+                )
             }
         }
     }
 
     @Test
     fun delete() = testApplication {
-        val client = createClient {
-            install(HttpCookies)
-        }
-        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+        val client = createLocalClient()
+        val id = client.post(Users.Register()) {
             setBodyForm(
-                "name" to "Test",
-                "email" to "test@test.test",
-                "password" to "password123"
+                Users.NAME to "Test",
+                Users.EMAIL to "test@test.test",
+                Users.PASSWORD to "password123"
             )
-        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+        }.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
 
         assertFailsWith<RedirectResponseException> {
-            client.delete(PATH_USER(id)) {
-                setBodyForm("current_password" to "password123")
+            client.delete(Users.ById(id = id)) {
+                setBodyForm(Users.CURRENT_PASSWORD to "password123")
             }
         }
 
         // Ensure one can't login as a deleted user.
         assertFailsWith<ClientRequestException> {
-            client.post("$PATH_USERS$PATH_LOGIN") {
-                setBodyForm("email" to "test@test.test", "password" to "password123")
+            client.post(Users.Login()) {
+                setBodyForm(Users.EMAIL to "test@test.test", Users.PASSWORD to "password123")
             }
         }
     }
 
     @Test
     fun deleteCurrentPasswordInvalid() = testApplication {
-        val client = createClient {
-            install(HttpCookies)
-        }
-        val id = client.post("$PATH_USERS$PATH_REGISTER") {
+        val client = createLocalClient()
+        val id = client.post(Users.Register()) {
             setBodyForm(
-                "name" to "Test",
-                "email" to "test@test.test",
-                "password" to "password123"
+                Users.NAME to "Test",
+                Users.EMAIL to "test@test.test",
+                Users.PASSWORD to "password123"
             )
-        }.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+        }.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
 
         assertFailsWith<ClientRequestException> {
-            client.delete(PATH_USER(id)) {
-                setBodyForm("current_password" to "wrongpassword")
+            client.delete(Users.ById(id = id)) {
+                setBodyForm(Users.CURRENT_PASSWORD to "wrongpassword")
             }
         }
     }
@@ -224,31 +236,38 @@ class UserRoutesTest {
         val versions = listOf("", PATH_LATEST)
 
         val registerResponse = versions.map { version ->
-            client.client.post("$version$PATH_USERS$PATH_REGISTER") {
+            client.client.post("$version${client.client.href(Users.Register())}") {
                 setBodyForm(
-                    "name" to "Test $version",
-                    "email" to "test${version.trim { !it.isLetterOrDigit() } }@test.test",
-                    "password" to "password123"
+                    Users.NAME to "Test $version",
+                    Users.EMAIL to "test${version.trim { !it.isLetterOrDigit() } }@test.test",
+                    Users.PASSWORD to "password123"
                 )
             }
         }
         assert(registerResponse[0].status == registerResponse[1].status)
 
         val ids = registerResponse.map {
-            it.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+            it.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
         }
         val updateResponses = versions.zip(ids).map { (version, id) ->
-            client.client.post("$version$PATH_USERS$PATH_LOGIN") {
+            client.client.post("$version${client.client.href(Users.Login())}") {
                 setBodyForm(
-                    "email" to "test${version.trim { !it.isLetterOrDigit() } }@test.test",
-                    "password" to "password123"
+                    Users.EMAIL to "test${version.trim { !it.isLetterOrDigit() } }@test.test",
+                    Users.PASSWORD to "password123"
                 )
             }
 
-            client.client.put("$version${PATH_USER(id)}") {
-                setBodyForm("name" to "Test $version updated")
+            client.client.put("$version${client.client.href(Users.ById(id = id))}") {
+                setBodyForm(Users.NAME to "Test $version updated")
             }
         }
         assert(updateResponses[0].status == updateResponses[1].status)
+    }
+
+    private fun ApplicationTestBuilder.createLocalClient(cookiess: Boolean = true) = createClient {
+        install(Resources)
+        if (cookiess) {
+            install(HttpCookies)
+        }
     }
 }
