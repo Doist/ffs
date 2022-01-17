@@ -296,9 +296,9 @@ private fun withTestApplication(test: TestApplicationEngine.() -> Unit) = withTe
     application.apply {
         // Hikari configuration from application.conf won't be available in tests,
         // so we need to replicate Application.module() without relying on it. Huh.
+        installPlugins()
         install(Database)
         installAuthentication()
-        installPlugins()
         installRoutes()
     }
     test()
