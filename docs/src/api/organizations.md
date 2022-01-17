@@ -58,38 +58,38 @@ Requires an authenticated user that is an admin in this organization.
 
 On success, responds `204 No Content` with an empty body.
 
-## Add user to organization
+## Add member to organization
 
 ```
-POST /organizations/{id}/users/{user_id}
+POST /organizations/{id}/members/{user_id}
 ```
 
 Requires an authenticated user that is an admin in this organization.
 
-| Query parameter | Type                         | Required | Description                 |
-|-----------------|------------------------------| -------- | --------------------------- |
-| `role`          | "admin", "user", or "reader" | Yes      | Role to assign to the user. |
+| Query parameter | Type                         | Required | Description                   |
+|-----------------|------------------------------| -------- |-------------------------------|
+| `role`          | "admin", "user", or "reader" | Yes      | Role to assign to the member. |
 
 On success, responds `201 Created` with an empty body.
 
-## Update user role in organization
+## Update member role in organization
 
 ```
-PUT /organizations/{id}/users/{user_id}
+PUT /organizations/{id}/members/{user_id}
 ```
 
 Requires an authenticated user that is an admin in this organization.
 
-| Query parameter | Type                         | Required | Description                 |
-|-----------------|------------------------------| -------- | --------------------------- |
-| `role`          | "admin", "user", or "reader" | Yes      | Role to assign to the user. |
+| Query parameter | Type                         | Required | Description                   |
+|-----------------|------------------------------| -------- |-------------------------------|
+| `role`          | "admin", "user", or "reader" | Yes      | Role to assign to the member. |
 
 On success, responds `204 No Content` with an empty body.
 
-## Remove user from organization
+## Remove member from organization
 
 ```
-DELETE /organizations/{id}/users/{user_id}
+DELETE /organizations/{id}/members/{user_id}
 ```
 
 Requires an authenticated user that is an admin in this organization.

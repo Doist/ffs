@@ -4,8 +4,8 @@ import doist.ffs.auth.Permission
 import doist.ffs.auth.UserPrincipal
 import doist.ffs.db.RoleEnum
 import doist.ffs.db.capturingLastInsertId
+import doist.ffs.db.members
 import doist.ffs.db.organizations
-import doist.ffs.db.roles
 import doist.ffs.endpoints.Organizations
 import doist.ffs.ext.authorizeForOrganization
 import doist.ffs.ext.authorizeForUser
@@ -59,7 +59,7 @@ private fun Route.createOrganization() = post<Organizations> {
             capturingLastInsertId {
                 organizations.insert(name)
             }.also {
-                roles.insert(user_id = userId, organization_id = it, role = RoleEnum.ADMIN)
+                members.insert(user_id = userId, organization_id = it, role = RoleEnum.ADMIN)
             }
         }
     }
@@ -76,7 +76,9 @@ private fun Route.getOrganizations() = get<Organizations> {
 
     authorizeForUser(id = userId)
 
-    val organizations = database.roles.selectOrganizationByUser(user_id = userId).executeAsList()
+    val organizations = database.members.selectOrganizationByUserId(
+        user_id = userId
+    ).executeAsList()
     call.respond(HttpStatusCode.OK, organizations)
 }
 
@@ -120,38 +122,38 @@ private fun Route.deleteOrganization() = delete<Organizations.ById> { (_, id) ->
 /**
  * Add user to an organization.
  */
-private fun Route.addUser() = post<Organizations.ById.Users.ById> { (parent, userId) ->
+private fun Route.addUser() = post<Organizations.ById.Members.ById> { (parent, userId) ->
     val id = parent.parent.id
     val params = call.receiveParameters()
     val role = RoleEnum.valueOf(params.getOrFail(Organizations.ROLE).uppercase())
 
     authorizeForOrganization(id, Permission.DELETE)
 
-    database.roles.insert(user_id = userId, organization_id = id, role = role)
+    database.members.insert(user_id = userId, organization_id = id, role = role)
     call.respond(HttpStatusCode.Created)
 }
 
 /**
  * Update user role within organization.
  */
-private fun Route.updateUser() = put<Organizations.ById.Users.ById> { (parent, userId) ->
+private fun Route.updateUser() = put<Organizations.ById.Members.ById> { (parent, userId) ->
     val id = parent.parent.id
     val params = call.receiveParameters()
     val role = RoleEnum.valueOf(params.getOrFail(Organizations.ROLE).uppercase())
 
     authorizeForOrganization(id, Permission.DELETE)
 
-    database.roles.update(user_id = userId, organization_id = id, role = role)
+    database.members.update(user_id = userId, organization_id = id, role = role)
     call.respond(HttpStatusCode.NoContent)
 }
 
 /**
  * Remove user from organization.
  */
-private fun Route.removeUser() = delete<Organizations.ById.Users.ById> { (parent, userId) ->
+private fun Route.removeUser() = delete<Organizations.ById.Members.ById> { (parent, userId) ->
     val id = parent.parent.id
     authorizeForOrganization(id, Permission.DELETE)
 
-    database.roles.delete(user_id = userId, organization_id = id)
+    database.members.delete(user_id = userId, organization_id = id)
     call.respond(HttpStatusCode.NoContent)
 }

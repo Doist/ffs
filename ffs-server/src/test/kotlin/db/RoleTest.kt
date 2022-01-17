@@ -18,21 +18,25 @@ internal class RoleTest {
 
     @Test
     fun insertValid(): Unit = testDatabase.run {
-        roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
+        members.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
     }
 
     @Test
     fun insertDuplicate(): Unit = testDatabase.run {
-        roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
+        members.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
         assertFails {
-            roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.ADMIN)
+            members.insert(
+                user_id = userId,
+                organization_id = organizationId,
+                role = RoleEnum.ADMIN
+            )
         }
     }
 
     @Test
     fun selectOrganizationByUser(): Unit = testDatabase.run {
-        roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
-        val organizations = roles.selectOrganizationByUser(user_id = userId).executeAsList()
+        members.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
+        val organizations = members.selectOrganizationByUserId(user_id = userId).executeAsList()
         assert(organizations.size == 1)
         assert(organizations[0].name == ORG_NAME)
         assert(organizations[0].role == RoleEnum.USER)
@@ -40,11 +44,11 @@ internal class RoleTest {
 
     @Test
     fun selectOrganizationIdProjectIdByUser(): Unit = testDatabase.run {
-        roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.READER)
+        members.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.READER)
         val projectId = capturingLastInsertId {
             projects.insert(organization_id = organizationId, name = "ffs")
         }
-        val organizations = roles.selectOrganizationIdProjectIdByUser(
+        val organizations = members.selectOrganizationIdProjectIdByUserId(
             user_id = userId
         ).executeAsList()
         assert(organizations.size == 1)
@@ -55,17 +59,17 @@ internal class RoleTest {
 
     @Test
     fun update(): Unit = testDatabase.run {
-        roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
-        roles.update(user_id = userId, organization_id = organizationId, role = RoleEnum.ADMIN)
-        val organization = roles.selectOrganizationByUser(user_id = userId).executeAsOne()
+        members.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.USER)
+        members.update(user_id = userId, organization_id = organizationId, role = RoleEnum.ADMIN)
+        val organization = members.selectOrganizationByUserId(user_id = userId).executeAsOne()
         assert(organization.role == RoleEnum.ADMIN)
     }
 
     @Test
     fun delete(): Unit = testDatabase.run {
-        roles.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.READER)
-        roles.delete(user_id = userId, organization_id = organizationId)
-        val organization = roles.selectOrganizationByUser(user_id = userId).executeAsOneOrNull()
+        members.insert(user_id = userId, organization_id = organizationId, role = RoleEnum.READER)
+        members.delete(user_id = userId, organization_id = organizationId)
+        val organization = members.selectOrganizationByUserId(user_id = userId).executeAsOneOrNull()
         assert(organization == null)
     }
 

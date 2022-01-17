@@ -1,6 +1,6 @@
 import doist.ffs.db.RoleEnum;
 
-CREATE TABLE role(
+CREATE TABLE member(
     user_id INTEGER NOT NULL,
     organization_id INTEGER NOT NULL,
     role TEXT AS RoleEnum NOT NULL DEFAULT 'USER',
@@ -10,7 +10,7 @@ CREATE TABLE role(
 );
 
 CREATE TRIGGER trigger_user_organization_updated_at
-AFTER UPDATE ON role
+AFTER UPDATE ON member
 BEGIN
     UPDATE user
     SET updated_at = CURRENT_TIMESTAMP
@@ -18,27 +18,27 @@ BEGIN
 END;
 
 insert:
-INSERT INTO role(user_id, organization_id, role)
+INSERT INTO member(user_id, organization_id, role)
 VALUES (?, ?, ?);
 
-selectOrganizationByUser:
-SELECT organization.id, organization.name, role.role
+selectOrganizationByUserId:
+SELECT organization.id, organization.name, member.role
 FROM organization
-INNER JOIN role ON organization.id = role.organization_id
-WHERE role.user_id = ?;
+INNER JOIN member ON organization.id = member.organization_id
+WHERE member.user_id = ?;
 
-selectOrganizationIdProjectIdByUser:
-SELECT organization.id, project.id AS project_id, role.role
+selectOrganizationIdProjectIdByUserId:
+SELECT organization.id, project.id AS project_id, member.role
 FROM organization
 LEFT JOIN project ON organization.id = project.organization_id
-INNER JOIN role ON organization.id = role.organization_id
-WHERE role.user_id = ?;
+INNER JOIN member ON organization.id = member.organization_id
+WHERE member.user_id = ?;
 
 update:
-UPDATE role
+UPDATE member
 SET role = ?
 WHERE user_id = ? AND organization_id = ?;
 
 delete:
-DELETE FROM role
+DELETE FROM member
 WHERE user_id = ? AND organization_id = ?;

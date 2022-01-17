@@ -57,7 +57,7 @@ suspend fun UserHttpClient.withOrganization(role: RoleEnum = RoleEnum.ADMIN): Lo
     assert(createResponse.status == HttpStatusCode.Created)
 
     val id = createResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
-    val updateResponse = client.put(Organizations.ById.Users.ById(id, userId)) {
+    val updateResponse = client.put(Organizations.ById.Members.ById(id, userId)) {
         setBodyForm(Organizations.ROLE to role)
     }
     assert(updateResponse.status == HttpStatusCode.NoContent)

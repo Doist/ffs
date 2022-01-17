@@ -11,7 +11,7 @@ import doist.ffs.auth.UserPrincipal
 import doist.ffs.auth.bearer
 import doist.ffs.auth.permissions
 import doist.ffs.db.fromToken
-import doist.ffs.db.roles
+import doist.ffs.db.members
 import doist.ffs.db.tokens
 import doist.ffs.endpoints.Users
 import doist.ffs.plugins.Database
@@ -70,7 +70,7 @@ fun Application.installDatabase() = install(Database) {
 fun Application.installAuthentication() = install(Authentication) {
     session<Session>("session") {
         validate { (id) ->
-            val userRoles = database.roles.selectOrganizationIdProjectIdByUser(
+            val userRoles = database.members.selectOrganizationIdProjectIdByUserId(
                 user_id = id
             ).executeAsList()
             return@validate UserPrincipal(

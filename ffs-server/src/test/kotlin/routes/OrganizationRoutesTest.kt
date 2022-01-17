@@ -3,7 +3,7 @@ package doist.ffs.routes
 import doist.ffs.db.Organization
 import doist.ffs.db.Project
 import doist.ffs.db.RoleEnum
-import doist.ffs.db.SelectOrganizationByUser
+import doist.ffs.db.SelectOrganizationByUserId
 import doist.ffs.endpoints.Organizations
 import doist.ffs.endpoints.Organizations.Companion.ById
 import doist.ffs.ext.bodyAsJson
@@ -52,7 +52,7 @@ class OrganizationRoutesTest {
 
         val organizations = client.client
             .get(Organizations())
-            .bodyAsJson<List<SelectOrganizationByUser>>()
+            .bodyAsJson<List<SelectOrganizationByUserId>>()
         assert(ids.size == organizations.size)
         assert(ids.toSet() == organizations.map { it.id }.toSet())
         assert(roles.toSet() == organizations.map { it.role }.toSet())
@@ -95,20 +95,20 @@ class OrganizationRoutesTest {
 
         for (i in 1 until roles.size) {
             client.client.put(
-                Organizations.ById.Users.ById(id = ids[i - 1], user_id = client.userId)
+                Organizations.ById.Members.ById(id = ids[i - 1], user_id = client.userId)
             ) {
                 setBodyForm(Organizations.USER_ID to client.userId, Organizations.ROLE to roles[i])
             }
         }
         client.client.delete(
-            Organizations.ById.Users.ById(id = ids[roles.size - 1], user_id = client.userId)
+            Organizations.ById.Members.ById(id = ids[roles.size - 1], user_id = client.userId)
         ) {
             setBodyForm(Organizations.USER_ID to client.userId)
         }
 
         val organizations = client.client
             .get(Organizations())
-            .bodyAsJson<List<SelectOrganizationByUser>>()
+            .bodyAsJson<List<SelectOrganizationByUserId>>()
 
         assert(organizations.size == ids.size - 1)
         assert(roles.drop(1).toSet() == organizations.map { it.role }.toSet())
@@ -120,7 +120,7 @@ class OrganizationRoutesTest {
         val client = createUserClient()
         val id = client.withOrganization()
         assertFailsWith<ClientRequestException> {
-            client.client.put(Organizations.ById.Users.ById(id = id, user_id = client.userId))
+            client.client.put(Organizations.ById.Members.ById(id = id, user_id = client.userId))
         }
     }
 
@@ -142,7 +142,7 @@ class OrganizationRoutesTest {
         val client = createUserClient()
         val id = client.withOrganization()
 
-        client.client.delete(Organizations.ById.Users.ById(id = id, user_id = client.userId))
+        client.client.delete(Organizations.ById.Members.ById(id = id, user_id = client.userId))
 
         assertFailsWith<ClientRequestException> {
             client.client.get(Organizations.ById(id = id)).bodyAsJson<Organization?>()

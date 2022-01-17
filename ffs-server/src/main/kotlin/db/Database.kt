@@ -11,7 +11,7 @@ val Database.projects get() = projectQueries
 val Database.flags get() = flagQueries
 val Database.tokens get() = tokenQueries
 val Database.users get() = userQueries
-val Database.roles get() = roleQueries
+val Database.members get() = memberQueries
 
 /**
  * Runs [block], typically an insert, and returns the id of the last inserted row.
@@ -52,7 +52,7 @@ internal fun Database(driver: SqlDriver, log: Logger? = null): Database {
         flagAdapter = Flag.Adapter(instantAdapter, instantAdapter, instantAdapter),
         tokenAdapter = Token.Adapter(instantAdapter),
         userAdapter = User.Adapter(instantAdapter, instantAdapter),
-        roleAdapter = Role.Adapter(roleAdapter),
+        memberAdapter = Member.Adapter(memberAdapter),
     )
 }
 
@@ -61,7 +61,7 @@ private val instantAdapter = object : ColumnAdapter<Instant, Long> {
     override fun encode(value: Instant) = value.epochSeconds
 }
 
-private val roleAdapter = object : ColumnAdapter<RoleEnum, String> {
+private val memberAdapter = object : ColumnAdapter<RoleEnum, String> {
     override fun decode(databaseValue: String): RoleEnum = RoleEnum.valueOf(databaseValue)
     override fun encode(value: RoleEnum): String = value.toString()
 }

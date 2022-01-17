@@ -40,12 +40,12 @@ class Organizations {
     data class ById(val parent: Organizations = Organizations(), val id: Long) {
 
         @Serializable
-        @Resource("users")
-        data class Users(val parent: Organizations.ById) {
+        @Resource("members")
+        data class Members(val parent: Organizations.ById) {
 
             @Serializable
             @Resource("{user_id}")
-            data class ById(val parent: Users, val user_id: Long)
+            data class ById(val parent: Members, val user_id: Long)
         }
     }
 
@@ -54,8 +54,8 @@ class Organizations {
         const val ROLE = "role"
         const val USER_ID = "user_id"
 
-        fun ById.Users.Companion.ById(id: Long, user_id: Long) = ById.Users.ById(
-            ById.Users(ById(id = id)),
+        fun ById.Members.Companion.ById(id: Long, user_id: Long) = ById.Members.ById(
+            ById.Members(ById(id = id)),
             user_id = user_id
         )
     }

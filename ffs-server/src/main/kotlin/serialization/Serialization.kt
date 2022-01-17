@@ -5,7 +5,7 @@ import doist.ffs.db.Organization
 import doist.ffs.db.Project
 import doist.ffs.db.SelectById
 import doist.ffs.db.SelectByProject
-import doist.ffs.db.SelectOrganizationByUser
+import doist.ffs.db.SelectOrganizationByUserId
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.json.Json
@@ -15,7 +15,7 @@ import kotlinx.serialization.modules.contextual
 @Serializer(forClass = Organization::class)
 private object OrganizationSerializer
 
-@Serializer(forClass = SelectOrganizationByUser::class)
+@Serializer(forClass = SelectOrganizationByUserId::class)
 private object OrganizationSelectByUserSerializer
 
 @Serializer(forClass = Project::class)
