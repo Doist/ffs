@@ -62,7 +62,7 @@ private fun Route.registerUser() = post<Users.Register> {
         }
         call.sessions.set(Session(id))
         call.response.header(HttpHeaders.Location, href(Users.ById(id = id)))
-        call.respond(HttpStatusCode.Created)
+        call.respond(HttpStatusCode.Created, database.users.selectById(id = id).executeAsOne())
     } else {
         call.respond(HttpStatusCode.BadRequest)
     }

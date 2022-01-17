@@ -98,13 +98,16 @@ class OrganizationRoutesTest {
             client.client.put(
                 Organizations.ById.Members.ById(id = ids[i - 1], userId = client.userId)
             ) {
-                setBodyForm(Organizations.USER_ID to client.userId, Organizations.ROLE to roles[i])
+                setBodyForm(
+                    Organizations.ById.Members.USER_ID to client.userId,
+                    Organizations.ById.Members.ROLE to roles[i]
+                )
             }
         }
         client.client.delete(
             Organizations.ById.Members.ById(id = ids[roles.size - 1], userId = client.userId)
         ) {
-            setBodyForm(Organizations.USER_ID to client.userId)
+            setBodyForm(Organizations.ById.Members.USER_ID to client.userId)
         }
 
         val organizations = client.client
