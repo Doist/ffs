@@ -30,6 +30,7 @@ import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.session
 import io.ktor.server.cio.EngineMain
+import io.ktor.server.plugins.CORS
 import io.ktor.server.plugins.CallLogging
 import io.ktor.server.plugins.Compression
 import io.ktor.server.plugins.ContentNegotiation
@@ -112,6 +113,9 @@ fun Application.installPlugins() {
     install(Resources)
     install(IgnoreTrailingSlash)
     install(CallLogging)
+    install(CORS) {
+        anyHost()
+    }
     install(DefaultHeaders)
     install(ContentNegotiation) {
         serialization(ContentType.Application.Json, json)
