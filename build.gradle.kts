@@ -8,6 +8,8 @@ import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 import ru.vyarus.gradle.plugin.mkdocs.task.MkdocsTask
 
 group = "doist"
@@ -25,6 +27,12 @@ plugins {
     // Plugins for multiple, but not all, subprojects.
     // Multiplatform is loaded indirectly in buildSrc/build.gradle.kts.
     alias(libs.plugins.kotlin.serialization) apply false
+}
+
+plugins.withType<YarnPlugin> {
+    the<YarnRootExtension>().apply {
+        lockFileDirectory = project.rootDir.resolve("js")
+    }
 }
 
 plugins.withType<NodeJsRootPlugin> {

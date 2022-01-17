@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.targets.js.testing.karma.KotlinKarma
-import java.io.File
 
 /**
  * Uses the first available browser to run tests.
@@ -18,8 +17,8 @@ fun KotlinKarma.useAnyBrowser() {
     useSafari()
     useIe()
 
-    // Use a common karma.config.d/ in the root.
-    useConfigDirectory(File(compilation.project.rootProject.projectDir, "karma.config.d"))
+    // Use a js/karma.config.d/ in the root.
+    useConfigDirectory(compilation.project.rootDir.resolve("js").resolve("karma.config.d"))
 
     // Depend on "karma-detect-browsers" for browser selection.
     compilation.dependencies {
