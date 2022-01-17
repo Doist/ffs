@@ -35,7 +35,7 @@ fun PATH_PROJECT(id: Any) = "$PATH_PROJECTS/$id"
 
 fun Application.installProjectRoutes() = routing {
     optionalRoute(PATH_LATEST) {
-        route("$PATH_ORGANIZATIONS/{id}/$PATH_PROJECTS") {
+        route("/organizations/{id}/$PATH_PROJECTS") {
             authenticate("session") {
                 createProject()
                 getProjects()

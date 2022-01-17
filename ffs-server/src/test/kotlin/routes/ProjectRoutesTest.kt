@@ -29,7 +29,7 @@ class ProjectRoutesTest {
         val client = createUserClient()
         val organizationId = client.withOrganization()
         val createResponse = client.client.post(
-            "${PATH_ORGANIZATION(organizationId)}$PATH_PROJECTS"
+            "/organizations/$organizationId$PATH_PROJECTS"
         ) {
             setBodyForm("name" to "Test")
         }
@@ -48,7 +48,7 @@ class ProjectRoutesTest {
         val ids = List(3) { client.withProject(organizationId) }
 
         val projects = client.client
-            .get("${PATH_ORGANIZATION(organizationId)}$PATH_PROJECTS")
+            .get("/organizations/$organizationId$PATH_PROJECTS")
             .bodyAsJson<List<Project>>()
         assert(ids.size == projects.size)
         assert(ids.toSet() == projects.map { it.id }.toSet())
@@ -88,7 +88,7 @@ class ProjectRoutesTest {
         val project = client.client.get(PATH_PROJECT(projectId)).bodyAsJson<Project>()
         assertFailsWith<ClientRequestException> {
             val id = client.withProject(organizationId)
-            client.client.put("${PATH_ORGANIZATION(id)}/users") {
+            client.client.put("${PATH_PROJECT(id)}/users") {
                 setBodyForm("name" to project.name)
             }
         }
@@ -235,7 +235,7 @@ class ProjectRoutesTest {
 
         val createResponses = versions.map {
             client.client.post(
-                "$it${PATH_ORGANIZATION(client.withOrganization())}$PATH_PROJECTS"
+                "$it/organizations/${client.withOrganization()}$PATH_PROJECTS"
             ) {
                 setBodyForm("name" to "Test")
             }

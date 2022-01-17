@@ -4,11 +4,19 @@ import doist.ffs.db.Organization
 import doist.ffs.db.Project
 import doist.ffs.db.RoleEnum
 import doist.ffs.db.SelectOrganizationByUser
+import doist.ffs.endpoints.Organizations
+import doist.ffs.endpoints.Organizations.Companion.ById
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.RedirectResponseException
 import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.client.plugins.resources.Resources
+import io.ktor.client.plugins.resources.delete
+import io.ktor.client.plugins.resources.get
+import io.ktor.client.plugins.resources.href
+import io.ktor.client.plugins.resources.post
+import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -25,8 +33,8 @@ class OrganizationRoutesTest {
     @Test
     fun create() = testApplication {
         val client = createUserClient()
-        val createResponse = client.client.post(PATH_ORGANIZATIONS) {
-            setBodyForm("name" to "Test")
+        val createResponse = client.client.post(Organizations()) {
+            setBodyForm(Organizations.NAME to "Test")
         }
         assert(createResponse.status == HttpStatusCode.Created)
         val resource = createResponse.headers[HttpHeaders.Location]
@@ -43,7 +51,7 @@ class OrganizationRoutesTest {
         val ids = roles.map { client.withOrganization(it) }
 
         val organizations = client.client
-            .get(PATH_ORGANIZATIONS)
+            .get(Organizations())
             .bodyAsJson<List<SelectOrganizationByUser>>()
         assert(ids.size == organizations.size)
         assert(ids.toSet() == organizations.map { it.id }.toSet())
@@ -56,10 +64,10 @@ class OrganizationRoutesTest {
 
         // Nonexistent id.
         assertFailsWith<ClientRequestException> {
-            client.client.get(PATH_ORGANIZATION(42))
+            client.client.get(Organizations.ById(id = 42))
         }
         assertFailsWith<ClientRequestException> {
-            client.client.delete(PATH_ORGANIZATION(42))
+            client.client.delete(Organizations.ById(id = 42))
         }
     }
 
@@ -67,14 +75,14 @@ class OrganizationRoutesTest {
     fun update() = testApplication {
         val client = createUserClient()
         val id = client.withOrganization()
-        var organization = client.client.get(PATH_ORGANIZATION(id)).bodyAsJson<Organization>()
+        var organization = client.client.get(Organizations.ById(id = id)).bodyAsJson<Organization>()
 
         val name = "${organization.name} updated"
-        client.client.put(PATH_ORGANIZATION(id)) {
-            setBodyForm("name" to name)
+        client.client.put(Organizations.ById(id = id)) {
+            setBodyForm(Organizations.NAME to name)
         }
 
-        organization = client.client.get(PATH_ORGANIZATION(id)).bodyAsJson()
+        organization = client.client.get(Organizations.ById(id = id)).bodyAsJson()
         assert(organization.name == name)
     }
 
@@ -86,18 +94,20 @@ class OrganizationRoutesTest {
         val ids = List(roles.size) { client.withOrganization(RoleEnum.ADMIN) }
 
         for (i in 1 until roles.size) {
-            client.client.put("${PATH_ORGANIZATION(ids[i - 1])}/users/${client.userId}") {
-                setBodyForm("user_id" to client.userId, "role" to roles[i])
+            client.client.put(
+                Organizations.ById.Users.ById(id = ids[i - 1], user_id = client.userId)
+            ) {
+                setBodyForm(Organizations.USER_ID to client.userId, Organizations.ROLE to roles[i])
             }
         }
         client.client.delete(
-            "${PATH_ORGANIZATION(ids[roles.size - 1])}/users/${client.userId}"
+            Organizations.ById.Users.ById(id = ids[roles.size - 1], user_id = client.userId)
         ) {
-            setBodyForm("user_id" to client.userId)
+            setBodyForm(Organizations.USER_ID to client.userId)
         }
 
         val organizations = client.client
-            .get(PATH_ORGANIZATIONS)
+            .get(Organizations())
             .bodyAsJson<List<SelectOrganizationByUser>>()
 
         assert(organizations.size == ids.size - 1)
@@ -106,31 +116,11 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun updateUserMissingUserId() = testApplication {
-        val client = createUserClient()
-        val id = client.withOrganization()
-        assertFailsWith<ClientRequestException> {
-            client.client.put("${PATH_ORGANIZATION(id)}/users/") {
-                setBodyForm("role" to RoleEnum.USER)
-            }
-        }
-    }
-
-    @Test
     fun updateUserMissingName() = testApplication {
         val client = createUserClient()
         val id = client.withOrganization()
         assertFailsWith<ClientRequestException> {
-            client.client.put("${PATH_ORGANIZATION(id)}/users/${client.userId}")
-        }
-    }
-
-    @Test
-    fun deleteUserMissingUserId() = testApplication {
-        val client = createUserClient()
-        val id = client.withOrganization()
-        assertFailsWith<ClientRequestException> {
-            client.client.delete("${PATH_ORGANIZATION(id)}/users")
+            client.client.put(Organizations.ById.Users.ById(id = id, user_id = client.userId))
         }
     }
 
@@ -141,7 +131,7 @@ class OrganizationRoutesTest {
         val projectIds = List(2) { client.withProject(organizationId) }
 
         val projects = client.client
-            .get("${PATH_ORGANIZATION(organizationId)}$PATH_PROJECTS")
+            .get("/organizations/$organizationId$PATH_PROJECTS")
             .bodyAsJson<List<Project>>()
 
         assertEquals(projectIds.toSet(), projects.map { it.id }.toSet())
@@ -152,38 +142,39 @@ class OrganizationRoutesTest {
         val client = createUserClient()
         val id = client.withOrganization()
 
-        client.client.delete("${PATH_ORGANIZATION(id)}/users/${client.userId}")
+        client.client.delete(Organizations.ById.Users.ById(id = id, user_id = client.userId))
 
         assertFailsWith<ClientRequestException> {
-            client.client.get(PATH_ORGANIZATION(id)).bodyAsJson<Organization?>()
+            client.client.get(Organizations.ById(id = id)).bodyAsJson<Organization?>()
         }
     }
 
     @Test
     fun unauthenticatedAccess() = testApplication {
         val client = createClient {
+            install(Resources)
             install(HttpCookies)
             followRedirects = false
         }
         assertFailsWith<RedirectResponseException> {
-            client.post(PATH_ORGANIZATIONS) {
-                setBodyForm("name" to "Test")
+            client.post(Organizations()) {
+                setBodyForm(Organizations.NAME to "Test")
             }
         }
         assertFailsWith<RedirectResponseException> {
-            client.get(PATH_ORGANIZATIONS)
+            client.get(Organizations())
         }
         val id = createUserClient().withOrganization()
         assertFailsWith<RedirectResponseException> {
-            client.get(PATH_ORGANIZATION(id))
+            client.get(Organizations.ById(id = id))
         }
         assertFailsWith<RedirectResponseException> {
-            client.put(PATH_ORGANIZATION(id)) {
-                setBodyForm("name" to "Test")
+            client.put(Organizations.ById(id = id)) {
+                setBodyForm(Organizations.NAME to "Test")
             }
         }
         assertFailsWith<RedirectResponseException> {
-            client.delete(PATH_ORGANIZATION(id))
+            client.delete(Organizations.ById(id = id))
         }
     }
 
@@ -193,24 +184,24 @@ class OrganizationRoutesTest {
         val versions = listOf(PATH_LATEST, "")
 
         val createResponses = versions.map {
-            client.client.post("$it$PATH_ORGANIZATIONS") {
-                setBodyForm("name" to "Test", "rule" to "true")
+            client.client.post("$it${client.client.href(Organizations())}") {
+                setBodyForm(Organizations.NAME to "Test")
             }
         }
         assert(createResponses[0].status == createResponses[1].status)
 
         val ids = createResponses.map {
-            it.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+            it.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
         }
         val updateResponses = versions.zip(ids).map { (version, id) ->
-            client.client.put("$version${PATH_ORGANIZATION(id)}") {
-                setBodyForm("name" to "Test updated")
+            client.client.put("$version${client.client.href(Organizations.ById(id = id))}") {
+                setBodyForm(Organizations.NAME to "Test updated")
             }
         }
         assert(updateResponses[0].status == updateResponses[1].status)
 
         val deleteResponse = versions.zip(ids).map { (version, id) ->
-            client.client.delete("$version${PATH_ORGANIZATION(id)}")
+            client.client.delete("$version${client.client.href(Organizations.ById(id = id))}")
         }
         assert(deleteResponse[0].status == deleteResponse[1].status)
     }

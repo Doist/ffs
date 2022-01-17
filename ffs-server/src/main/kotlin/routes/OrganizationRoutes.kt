@@ -6,8 +6,10 @@ import doist.ffs.db.RoleEnum
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.organizations
 import doist.ffs.db.roles
+import doist.ffs.endpoints.Organizations
 import doist.ffs.ext.authorizeForOrganization
 import doist.ffs.ext.authorizeForUser
+import doist.ffs.ext.href
 import doist.ffs.ext.optionalRoute
 import doist.ffs.plugins.database
 import io.ktor.http.HttpHeaders
@@ -18,41 +20,29 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.principal
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.receiveParameters
+import io.ktor.server.resources.delete
+import io.ktor.server.resources.get
+import io.ktor.server.resources.post
+import io.ktor.server.resources.put
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.put
-import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
 import routes.PATH_LATEST
 
-const val PATH_ORGANIZATIONS = "/organizations"
-
-@Suppress("FunctionName")
-fun PATH_ORGANIZATION(id: Any) = "$PATH_ORGANIZATIONS/$id"
-
 fun Application.installOrganizationRoutes() = routing {
     optionalRoute(PATH_LATEST) {
-        route(PATH_ORGANIZATIONS) {
-            authenticate("session") {
-                createOrganization()
-                getOrganizations()
-                getOrganization()
-                updateOrganization()
-                deleteOrganization()
-            }
+        authenticate("session") {
+            createOrganization()
+            getOrganizations()
+            getOrganization()
+            updateOrganization()
+            deleteOrganization()
 
-            route("/{id}/users/{user_id}") {
-                authenticate("session") {
-                    addUser()
-                    updateUser()
-                    removeUser()
-                }
-            }
+            addUser()
+            updateUser()
+            removeUser()
         }
     }
 }
@@ -60,9 +50,9 @@ fun Application.installOrganizationRoutes() = routing {
 /**
  * Create a new organization. The requesting user becomes an admin.
  */
-private fun Route.createOrganization() = post {
+private fun Route.createOrganization() = post<Organizations> {
     val userId = call.principal<UserPrincipal>()!!.id
-    val name = call.receiveParameters().getOrFail("name")
+    val name = call.receiveParameters().getOrFail(Organizations.NAME)
 
     val id = database.run {
         transactionWithResult<Long> {
@@ -74,14 +64,14 @@ private fun Route.createOrganization() = post {
         }
     }
 
-    call.response.header(HttpHeaders.Location, PATH_ORGANIZATION(id))
+    call.response.header(HttpHeaders.Location, href(Organizations.ById(id = id)))
     call.respond(HttpStatusCode.Created)
 }
 
 /**
  * Lists organizations for the current user.
  */
-private fun Route.getOrganizations() = get {
+private fun Route.getOrganizations() = get<Organizations> {
     val userId = call.principal<UserPrincipal>()!!.id
 
     authorizeForUser(id = userId)
@@ -93,9 +83,7 @@ private fun Route.getOrganizations() = get {
 /**
  * Get an existing organization.
  */
-private fun Route.getOrganization() = get("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
-
+private fun Route.getOrganization() = get<Organizations.ById> { (_, id) ->
     authorizeForOrganization(id, Permission.READ)
 
     val organization = database.organizations.select(id = id).executeAsOneOrNull()
@@ -106,10 +94,9 @@ private fun Route.getOrganization() = get("{id}") {
 /**
  * Update an organization.
  */
-private fun Route.updateOrganization() = put("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
+private fun Route.updateOrganization() = put<Organizations.ById> { (_, id) ->
     val params = call.receiveParameters()
-    val name = params["name"]
+    val name = params[Organizations.NAME]
 
     authorizeForOrganization(id, Permission.WRITE)
 
@@ -123,9 +110,7 @@ private fun Route.updateOrganization() = put("{id}") {
 /**
  * Delete an organization.
  */
-private fun Route.deleteOrganization() = delete("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
-
+private fun Route.deleteOrganization() = delete<Organizations.ById> { (_, id) ->
     authorizeForOrganization(id, Permission.DELETE)
 
     database.organizations.delete(id = id)
@@ -135,11 +120,10 @@ private fun Route.deleteOrganization() = delete("{id}") {
 /**
  * Add user to an organization.
  */
-private fun Route.addUser() = post {
-    val id = call.parameters.getOrFail<Long>("id")
-    val userId = call.parameters.getOrFail<Long>("user_id")
+private fun Route.addUser() = post<Organizations.ById.Users.ById> { (parent, userId) ->
+    val id = parent.parent.id
     val params = call.receiveParameters()
-    val role = RoleEnum.valueOf(params.getOrFail("role").uppercase())
+    val role = RoleEnum.valueOf(params.getOrFail(Organizations.ROLE).uppercase())
 
     authorizeForOrganization(id, Permission.DELETE)
 
@@ -150,11 +134,10 @@ private fun Route.addUser() = post {
 /**
  * Update user role within organization.
  */
-private fun Route.updateUser() = put {
-    val id = call.parameters.getOrFail<Long>("id")
-    val userId = call.parameters.getOrFail<Long>("user_id")
+private fun Route.updateUser() = put<Organizations.ById.Users.ById> { (parent, userId) ->
+    val id = parent.parent.id
     val params = call.receiveParameters()
-    val role = RoleEnum.valueOf(params.getOrFail("role").uppercase())
+    val role = RoleEnum.valueOf(params.getOrFail(Organizations.ROLE).uppercase())
 
     authorizeForOrganization(id, Permission.DELETE)
 
@@ -165,10 +148,8 @@ private fun Route.updateUser() = put {
 /**
  * Remove user from organization.
  */
-private fun Route.removeUser() = delete {
-    val id = call.parameters.getOrFail<Long>("id")
-    val userId = call.parameters.getOrFail<Long>("user_id")
-
+private fun Route.removeUser() = delete<Organizations.ById.Users.ById> { (parent, userId) ->
+    val id = parent.parent.id
     authorizeForOrganization(id, Permission.DELETE)
 
     database.roles.delete(user_id = userId, organization_id = id)

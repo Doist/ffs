@@ -4,6 +4,8 @@ package doist.ffs.routes
 
 import doist.ffs.auth.Permission
 import doist.ffs.db.RoleEnum
+import doist.ffs.endpoints.Organizations
+import doist.ffs.endpoints.Organizations.Companion.ById
 import doist.ffs.endpoints.Users
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.HttpClient
@@ -13,8 +15,8 @@ import io.ktor.client.engine.HttpClientEngineConfig
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.post
+import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.post
-import io.ktor.client.request.put
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.ApplicationTestBuilder
@@ -37,9 +39,9 @@ suspend fun ApplicationTestBuilder.createUserClient(
     val registerUserResponse = client.post(Users.Register()) {
         val random = Random.nextInt()
         setBodyForm(
-            "name" to "Test $random",
-            "email" to "test+$random@test.test",
-            "password" to "password123$random"
+            Users.NAME to "Test $random",
+            Users.EMAIL to "test+$random@test.test",
+            Users.PASSWORD to "password123$random"
         )
     }
     assert(registerUserResponse.status == HttpStatusCode.Created)
@@ -49,52 +51,50 @@ suspend fun ApplicationTestBuilder.createUserClient(
 }
 
 suspend fun UserHttpClient.withOrganization(role: RoleEnum = RoleEnum.ADMIN): Long {
-    val createOrganizationResponse = client.post(PATH_ORGANIZATIONS) {
-        setBodyForm("name" to "Test ${Random.nextInt()}")
+    val createResponse = client.post(Organizations()) {
+        setBodyForm(Organizations.NAME to "Test ${Random.nextInt()}")
     }
-    assert(createOrganizationResponse.status == HttpStatusCode.Created)
+    assert(createResponse.status == HttpStatusCode.Created)
 
-    val id = createOrganizationResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/')
-    val updateUserInOrganizationResponse = client.put(
-        "${PATH_ORGANIZATION(id)}/users/$userId"
-    ) {
-        setBodyForm("role" to role)
+    val id = createResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
+    val updateResponse = client.put(Organizations.ById.Users.ById(id, userId)) {
+        setBodyForm(Organizations.ROLE to role)
     }
-    assert(updateUserInOrganizationResponse.status == HttpStatusCode.NoContent)
+    assert(updateResponse.status == HttpStatusCode.NoContent)
 
     return id.toLong()
 }
 
 suspend fun UserHttpClient.withProject(organizationId: Long): Long {
-    val createProjectResponse = client.post("${PATH_ORGANIZATION(organizationId)}$PATH_PROJECTS") {
+    val response = client.post("/organizations/$organizationId$PATH_PROJECTS") {
         setBodyForm("organization_id" to organizationId, "name" to "Test ${Random.nextInt()}")
     }
-    assert(createProjectResponse.status == HttpStatusCode.Created)
+    assert(response.status == HttpStatusCode.Created)
 
-    val id = createProjectResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+    val id = response.headers[HttpHeaders.Location]!!.substringAfterLast('/')
     return id.toLong()
 }
 
 suspend fun UserHttpClient.withFlag(projectId: Long): Long {
-    val createFlagResponse = client.post("${PATH_PROJECT(projectId)}$PATH_FLAGS") {
+    val response = client.post("${PATH_PROJECT(projectId)}$PATH_FLAGS") {
         setBodyForm("name" to "test-${Random.nextInt()}", "rule" to "true")
     }
-    assert(createFlagResponse.status == HttpStatusCode.Created)
+    assert(response.status == HttpStatusCode.Created)
 
-    val id = createFlagResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+    val id = response.headers[HttpHeaders.Location]!!.substringAfterLast('/')
     return id.toLong()
 }
 
 suspend fun UserHttpClient.withToken(projectId: Long, permission: Permission): String {
-    val createTokenResponse = client.post("${PATH_PROJECT(projectId)}$PATH_TOKENS") {
+    val response = client.post("${PATH_PROJECT(projectId)}$PATH_TOKENS") {
         setBodyForm(
             "project_id" to projectId,
             "permission" to permission,
             "description" to permission.toString().lowercase()
         )
     }
-    assert(createTokenResponse.status == HttpStatusCode.Created)
-    return createTokenResponse.body()
+    assert(response.status == HttpStatusCode.Created)
+    return response.body()
 }
 
 // suspend fun ApplicationTestBuilder.createTokenClient(
