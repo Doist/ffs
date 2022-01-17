@@ -68,37 +68,42 @@ fun Application.installDatabase() = install(Database) {
     driver = HikariDataSource(HikariConfig(hikariOptions)).asJdbcDriver()
 }
 
-fun Application.installAuthentication() = install(Authentication) {
-    session<Session>("session") {
-        validate { (id) ->
-            val userRoles = database.members.selectOrganizationIdProjectIdByUserId(
-                user_id = id
-            ).executeAsList()
-            return@validate UserPrincipal(
-                id = id,
-                organizationPermissions = userRoles.associate {
-                    it.id to it.role.permissions
-                },
-                projectPermissions = userRoles.filter {
-                    it.project_id != null
-                }.associate {
-                    it.project_id!! to it.role.permissions
-                }
-            )
-        }
-        challenge(href(Users.Login()))
+fun Application.installAuthentication() {
+    install(Sessions) {
+        cookie<Session>("session")
     }
-    bearer("token") {
-        validate { credential ->
-            val token = credential.token
-            val id = database.tokens.selectProjectIdByToken(token).executeAsOneOrNull()
-            if (id != null) {
-                return@validate TokenPrincipal(
-                    projectId = id,
-                    permission = Permission.fromToken(token)
+    install(Authentication) {
+        session<Session>("session") {
+            validate { (id) ->
+                val userRoles = database.members.selectOrganizationIdProjectIdByUserId(
+                    user_id = id
+                ).executeAsList()
+                return@validate UserPrincipal(
+                    id = id,
+                    organizationPermissions = userRoles.associate {
+                        it.id to it.role.permissions
+                    },
+                    projectPermissions = userRoles.filter {
+                        it.project_id != null
+                    }.associate {
+                        it.project_id!! to it.role.permissions
+                    }
                 )
             }
-            return@validate null
+            challenge(href(Users.Login()))
+        }
+        bearer("token") {
+            validate { credential ->
+                val token = credential.token
+                val id = database.tokens.selectProjectIdByToken(token).executeAsOneOrNull()
+                if (id != null) {
+                    return@validate TokenPrincipal(
+                        projectId = id,
+                        permission = Permission.fromToken(token)
+                    )
+                }
+                return@validate null
+            }
         }
     }
 }
@@ -113,9 +118,6 @@ fun Application.installPlugins() {
         serialization(ContentType.Application.Cbor, cbor)
     }
     install(Compression)
-    install(Sessions) {
-        cookie<Session>("session")
-    }
     install(StatusPages) {
         exception<AuthorizationException> { call, _ ->
             call.respond(HttpStatusCode.Forbidden)
