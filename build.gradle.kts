@@ -22,11 +22,9 @@ plugins {
     alias(libs.plugins.kotlin.power.assert) apply false // Applied below.
     alias(libs.plugins.detekt) apply false // Applied and configured below.
 
-    // Plugins for some subprojects.
+    // Plugins for multiple, but not all, subprojects.
     // Multiplatform is loaded indirectly in buildSrc/build.gradle.kts.
     alias(libs.plugins.kotlin.serialization) apply false
-    alias(libs.plugins.sqldelight) apply false
-    alias(libs.plugins.kotlinx.benchmark) apply false
 }
 
 plugins.withType<NodeJsRootPlugin> {
