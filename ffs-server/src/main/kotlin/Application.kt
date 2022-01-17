@@ -42,6 +42,7 @@ import io.ktor.server.routing.IgnoreTrailingSlash
 import io.ktor.server.sessions.Sessions
 import io.ktor.server.sessions.cookie
 import routes.installTokenRoutes
+import java.sql.SQLException
 import java.util.Properties
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
@@ -120,6 +121,9 @@ fun Application.installPlugins() {
             call.respond(HttpStatusCode.Forbidden)
         }
         exception<IllegalArgumentException> { call, _ ->
+            call.respond(HttpStatusCode.BadRequest)
+        }
+        exception<SQLException> { call, _ ->
             call.respond(HttpStatusCode.BadRequest)
         }
     }

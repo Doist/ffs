@@ -3,46 +3,35 @@ package routes
 import doist.ffs.auth.Permission
 import doist.ffs.db.TokenGenerator
 import doist.ffs.db.tokens
+import doist.ffs.endpoints.Projects
+import doist.ffs.endpoints.Tokens
 import doist.ffs.ext.authorizeForOrganization
 import doist.ffs.ext.authorizeForProject
 import doist.ffs.ext.optionalRoute
 import doist.ffs.plugins.database
-import doist.ffs.routes.PATH_PROJECTS
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.receiveParameters
+import io.ktor.server.resources.delete
+import io.ktor.server.resources.get
+import io.ktor.server.resources.post
+import io.ktor.server.resources.put
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.put
-import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
 
-const val PATH_TOKENS = "/tokens"
-
-@Suppress("FunctionName")
-fun PATH_TOKEN(id: Any) = "$PATH_TOKENS/$id"
-
 fun Application.installTokenRoutes() = routing {
     optionalRoute(PATH_LATEST) {
-        route("$PATH_PROJECTS/{id}/$PATH_TOKENS") {
-            authenticate("session") {
-                createToken()
-                getTokens()
-            }
-        }
+        authenticate("session") {
+            createToken()
+            getTokens()
 
-        route(PATH_TOKENS) {
-            authenticate("session") {
-                updateToken()
-                deleteToken()
-            }
+            updateToken()
+            deleteToken()
         }
     }
 }
@@ -50,13 +39,13 @@ fun Application.installTokenRoutes() = routing {
 /**
  * Generate token for project.
  */
-private fun Route.createToken() = post {
-    val projectId = call.parameters.getOrFail<Long>("id")
-    val params = call.receiveParameters()
-    val permission = Permission.valueOf(params.getOrFail("permission").uppercase())
-    val description = params.getOrFail("description")
-
+private fun Route.createToken() = post<Projects.ById.Tokens> { (endpoint) ->
+    val projectId = endpoint.id
     authorizeForProject(id = projectId, permission = Permission.WRITE)
+
+    val params = call.receiveParameters()
+    val permission = Permission.valueOf(params.getOrFail(Tokens.PERMISSION).uppercase())
+    val description = params.getOrFail(Tokens.DESCRIPTION)
 
     val token = TokenGenerator.generate(permission)
     database.tokens.insert(project_id = projectId, token = token, description = description)
@@ -68,9 +57,8 @@ private fun Route.createToken() = post {
  *
  * On success, responds `200 OK` with a JSON array containing all tokens for the project.
  */
-private fun Route.getTokens() = get {
-    val projectId = call.parameters.getOrFail<Long>("id")
-
+private fun Route.getTokens() = get<Projects.ById.Tokens> { (endpoint) ->
+    val projectId = endpoint.id
     authorizeForOrganization(id = projectId, permission = Permission.READ)
 
     val tokens = database.tokens.selectByProject(project_id = projectId).executeAsList()
@@ -80,13 +68,12 @@ private fun Route.getTokens() = get {
 /**
  * Update description of token for project.
  */
-private fun Route.updateToken() = put("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
-    val params = call.receiveParameters()
-    val description = params["description"]
-
+private fun Route.updateToken() = put<Tokens.ById> { (_, id) ->
     val projectId = database.tokens.selectProjectIdById(id = id).executeAsOne()
     authorizeForProject(id = projectId, permission = Permission.WRITE)
+
+    val params = call.receiveParameters()
+    val description = params[Tokens.DESCRIPTION]
 
     database.tokens.run {
         val token = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
@@ -100,9 +87,7 @@ private fun Route.updateToken() = put("{id}") {
  *
  * On success, responds `204 No Content` with an empty body.
  */
-private fun Route.deleteToken() = delete("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
-
+private fun Route.deleteToken() = delete<Tokens.ById> { (_, id) ->
     val projectId = database.tokens.selectProjectIdById(id = id).executeAsOne()
     authorizeForProject(id = projectId, permission = Permission.WRITE)
 

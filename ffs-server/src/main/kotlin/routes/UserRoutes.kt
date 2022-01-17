@@ -100,13 +100,13 @@ private fun Route.logoutUser() = post<Users.Logout> {
  * Update a user.
  */
 private fun Route.updateUser() = put<Users.ById> { (_, id) ->
+    authorizeForUser(id = id)
+
     val params = call.receiveParameters()
     val currentPassword = params[Users.CURRENT_PASSWORD]
     val name = params[Users.NAME]
     val email = params[Users.EMAIL]
     val password = params[Users.PASSWORD]
-
-    authorizeForUser(id = id)
 
     val validCurrentPassword = database.users.testPassword(id, currentPassword ?: "")
     val response = database.transactionWithResult<HttpStatusCode> {
@@ -154,10 +154,10 @@ private fun Route.updateUser() = put<Users.ById> { (_, id) ->
  * Delete a user.
  */
 private fun Route.deleteUser() = delete<Users.ById> { (_, id) ->
+    authorizeForUser(id = id)
+
     val params = call.receiveParameters()
     val currentPassword = params.getOrFail(Users.CURRENT_PASSWORD)
-
-    authorizeForUser(id = id)
 
     if (database.users.testPassword(id, currentPassword)) {
         database.users.delete(id = id)

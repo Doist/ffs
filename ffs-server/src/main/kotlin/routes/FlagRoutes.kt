@@ -9,7 +9,10 @@ import doist.ffs.auth.TokenPrincipal
 import doist.ffs.db.Flag
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags
+import doist.ffs.endpoints.Flags
+import doist.ffs.endpoints.Projects
 import doist.ffs.ext.authorizeForProject
+import doist.ffs.ext.href
 import doist.ffs.ext.optionalRoute
 import doist.ffs.ext.stream
 import doist.ffs.plugins.database
@@ -20,6 +23,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.application
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
@@ -28,16 +32,16 @@ import io.ktor.server.plugins.MissingRequestParameterException
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.acceptItems
 import io.ktor.server.request.receiveParameters
+import io.ktor.server.resources.delete
+import io.ktor.server.resources.get
+import io.ktor.server.resources.post
+import io.ktor.server.resources.put
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.put
-import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
+import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -50,39 +54,22 @@ import kotlinx.serialization.json.JsonObject
 import routes.PATH_LATEST
 import kotlin.time.Duration.Companion.minutes
 
-const val PATH_FLAGS = "/flags"
-const val PATH_EVAL = "/eval"
-const val PATH_ARCHIVE = "/archive"
-
-@Suppress("FunctionName")
-fun PATH_FLAG(id: Any) = "$PATH_FLAGS/$id"
-
 fun Application.installFlagRoutes() = routing {
     optionalRoute(PATH_LATEST) {
-        route("$PATH_PROJECTS/{id}/$PATH_FLAGS") {
-            authenticate("session") {
-                createFlag()
-                getFlags()
-            }
+        authenticate("session") {
+            createFlag()
+            getFlags()
+
+            getFlag()
+            updateFlag()
+
+            archiveFlag()
+            unarchiveFlag()
         }
 
-        route(PATH_FLAGS) {
-            authenticate("session") {
-                getFlag()
-                updateFlag()
-            }
-
-            authenticate("token") {
-                getFlags()
-                getFlagsEval()
-            }
-
-            route("/{id}/$PATH_ARCHIVE") {
-                authenticate("session") {
-                    archiveFlag()
-                    unarchiveFlag()
-                }
-            }
+        authenticate("token") {
+            getTokenFlags()
+            getTokenFlagsEval()
         }
     }
 }
@@ -90,19 +77,19 @@ fun Application.installFlagRoutes() = routing {
 /**
  * Creates a new flag.
  */
-private fun Route.createFlag() = post {
-    val projectId = call.parameters.getOrFail<Long>("id")
-    val params = call.receiveParameters()
-    val name = params.getOrFail("name")
-    val rule = params.getOrFail("rule")
-
+private fun Route.createFlag() = post<Projects.ById.Flags> { (endpoint) ->
+    val projectId = endpoint.id
     authorizeForProject(id = projectId, permission = Permission.WRITE)
+
+    val params = call.receiveParameters()
+    val name = params.getOrFail(Flags.NAME)
+    val rule = params.getOrFail(Flags.RULE)
 
     if (validateFormula(rule)) {
         val id = database.capturingLastInsertId {
             flags.insert(project_id = projectId, name = name, rule = rule)
         }
-        call.response.header(HttpHeaders.Location, PATH_FLAG(id))
+        call.response.header(HttpHeaders.Location, href(Flags.ById(id = id)))
         call.respond(HttpStatusCode.Created)
     } else {
         call.respond(HttpStatusCode.BadRequest)
@@ -110,47 +97,17 @@ private fun Route.createFlag() = post {
 }
 
 /**
- * Lists existing flags for the project.
+ * Lists existing flags for a project.
  */
-@Suppress("BlockingMethodInNonBlockingContext")
-private fun Route.getFlags() = get {
-    // Exceptional case, where endpoint is used with token authentication without parameter.
-    val projectId = call.parameters["id"]?.toLong()
-        ?: call.principal<TokenPrincipal>()?.projectId
-        ?: throw MissingRequestParameterException("id")
-
-    authorizeForProject(id = projectId, permission = Permission.READ)
-
-    val query = database.flags.selectByProject(projectId)
-    val sse = call.request.acceptItems().any {
-        ContentType.parse(it.value) == ContentType.Text.EventStream
-    }
-    if (sse) {
-        val channel = produce {
-            val flow = query.asFlow().mapToList(application.coroutineContext)
-            collectUpdatedFlags(flow) { lastUpdatedAt, updatedFlags ->
-                send(
-                    SseEvent(
-                        id = lastUpdatedAt.epochSeconds.toString(),
-                        data = json.encodeToString(updatedFlags)
-                    )
-                )
-            }
-        }
-        call.stream(HttpStatusCode.OK, channel)
-    } else {
-        val flags = query.executeAsList()
-        call.respond(HttpStatusCode.OK, flags)
-    }
+private fun Route.getFlags() = get<Projects.ById.Flags> { (endpoint) ->
+    getFlagsInternal(this, endpoint.id)
 }
 
 /**
  * Get an existing flag.
  */
-private fun Route.getFlag() = get("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
+private fun Route.getFlag() = get<Flags.ById> { (_, id) ->
     val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
-
     authorizeForProject(id = flag.project_id, permission = Permission.READ)
 
     call.respond(HttpStatusCode.OK, flag)
@@ -159,14 +116,13 @@ private fun Route.getFlag() = get("{id}") {
 /**
  * Update a flag.
  */
-private fun Route.updateFlag() = put("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
-    val params = call.receiveParameters()
-    val name = params["name"]
-    val rule = params["rule"]
-
+private fun Route.updateFlag() = put<Flags.ById> { (_, id) ->
     val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
     authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
+
+    val params = call.receiveParameters()
+    val name = params[Flags.NAME]
+    val rule = params[Flags.RULE]
 
     if (rule == null || validateFormula(rule)) {
         database.flags.update(id = id, name = name ?: flag.name, rule = rule ?: flag.rule)
@@ -177,15 +133,49 @@ private fun Route.updateFlag() = put("{id}") {
 }
 
 /**
- * Evaluates all existing flags for the project.
+ * Archive a flag.
+ */
+private fun Route.archiveFlag() = put<Flags.ById.Archive> { (endpoint) ->
+    val id = endpoint.id
+    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+    authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
+
+    database.flags.archive(id = id)
+    call.respond(HttpStatusCode.NoContent)
+}
+
+/**
+ * Unarchive a flag.
+ */
+private fun Route.unarchiveFlag() = delete<Flags.ById.Archive> { (endpoint) ->
+    val id = endpoint.id
+    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
+    authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
+
+    database.flags.unarchive(id = id)
+    call.respond(HttpStatusCode.NoContent)
+}
+
+/**
+ * Get flags for token associated with the token's project.
+ */
+private fun Route.getTokenFlags() = get<Flags> {
+    val id = call.principal<TokenPrincipal>()?.projectId
+        ?: throw MissingRequestParameterException("id")
+    getFlagsInternal(this, id)
+}
+
+/**
+ * Evaluates flags for the token's project.
  */
 @Suppress("BlockingMethodInNonBlockingContext")
-private fun Route.getFlagsEval() = get(PATH_EVAL) {
-    val queryParameters = call.request.queryParameters
+private fun Route.getTokenFlagsEval() = get<Flags.Eval> {
     val projectId = call.principal<TokenPrincipal>()!!.projectId
-    val env = json.decodeFromString<JsonObject>(queryParameters.getOrFail<String>("env"))
-
     authorizeForProject(id = projectId, permission = Permission.EVAL)
+
+    val env = json.decodeFromString<JsonObject>(
+        call.request.queryParameters.getOrFail<String>(Flags.ENV)
+    )
 
     val query = database.flags.selectByProject(projectId)
     val sse = call.request.acceptItems().any {
@@ -239,37 +229,6 @@ private fun Route.getFlagsEval() = get(PATH_EVAL) {
     }
 }
 
-/**
- * Archive a flag.
- */
-private fun Route.archiveFlag() = put {
-    val id = call.parameters.getOrFail<Long>("id")
-
-    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
-    authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
-
-    database.flags.archive(id = id)
-    call.respond(HttpStatusCode.NoContent)
-}
-
-/**
- * Unarchive a flag.
- */
-private fun Route.unarchiveFlag() = delete {
-    val id = call.parameters.getOrFail<Long>("id")
-
-    val flag = database.flags.select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
-    authorizeForProject(id = flag.project_id, permission = Permission.WRITE)
-
-    database.flags.unarchive(id = id)
-    call.respond(HttpStatusCode.NoContent)
-}
-
-private fun Flag.isEnabled(env: JsonObject): Boolean? {
-    if (archived_at != null) return null
-    return doist.ffs.rule.isEnabled(rule, env, id)
-}
-
 internal suspend fun collectUpdatedFlags(
     flow: Flow<List<Flag>>,
     collect: suspend (Instant, List<Flag>) -> Unit
@@ -298,4 +257,39 @@ internal suspend fun collectUpdatedFlags(
             }
         }
     }
+}
+
+@Suppress("BlockingMethodInNonBlockingContext")
+private suspend fun getFlagsInternal(
+    ctx: PipelineContext<Unit, ApplicationCall>,
+    projectId: Long
+) {
+    ctx.authorizeForProject(id = projectId, permission = Permission.READ)
+
+    val query = ctx.database.flags.selectByProject(projectId)
+    val sse = ctx.call.request.acceptItems().any {
+        ContentType.parse(it.value) == ContentType.Text.EventStream
+    }
+    if (sse) {
+        val channel = ctx.produce {
+            val flow = query.asFlow().mapToList(ctx.application.coroutineContext)
+            collectUpdatedFlags(flow) { lastUpdatedAt, updatedFlags ->
+                this.send(
+                    SseEvent(
+                        id = lastUpdatedAt.epochSeconds.toString(),
+                        data = json.encodeToString(updatedFlags)
+                    )
+                )
+            }
+        }
+        ctx.call.stream(HttpStatusCode.OK, channel)
+    } else {
+        val flags = query.executeAsList()
+        ctx.call.respond(HttpStatusCode.OK, flags)
+    }
+}
+
+private fun Flag.isEnabled(env: JsonObject): Boolean? {
+    if (archived_at != null) return null
+    return doist.ffs.rule.isEnabled(rule, env, id)
 }

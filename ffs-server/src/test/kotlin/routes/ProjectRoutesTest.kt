@@ -4,11 +4,22 @@ import doist.ffs.auth.Permission
 import doist.ffs.db.Project
 import doist.ffs.db.SelectByProject
 import doist.ffs.db.TokenGenerator
+import doist.ffs.endpoints.Organizations
+import doist.ffs.endpoints.Organizations.Companion.Projects
+import doist.ffs.endpoints.Projects
+import doist.ffs.endpoints.Projects.Companion.Tokens
+import doist.ffs.endpoints.Tokens
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.RedirectResponseException
 import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.client.plugins.resources.Resources
+import io.ktor.client.plugins.resources.delete
+import io.ktor.client.plugins.resources.get
+import io.ktor.client.plugins.resources.href
+import io.ktor.client.plugins.resources.post
+import io.ktor.client.plugins.resources.put
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -18,8 +29,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import routes.PATH_LATEST
-import routes.PATH_TOKEN
-import routes.PATH_TOKENS
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
@@ -29,9 +38,9 @@ class ProjectRoutesTest {
         val client = createUserClient()
         val organizationId = client.withOrganization()
         val createResponse = client.client.post(
-            "/organizations/$organizationId$PATH_PROJECTS"
+            Organizations.ById.Projects(organizationId = organizationId),
         ) {
-            setBodyForm("name" to "Test")
+            setBodyForm(Projects.NAME to "Test")
         }
         assert(createResponse.status == HttpStatusCode.Created)
         val resource = createResponse.headers[HttpHeaders.Location]
@@ -48,7 +57,7 @@ class ProjectRoutesTest {
         val ids = List(3) { client.withProject(organizationId) }
 
         val projects = client.client
-            .get("/organizations/$organizationId$PATH_PROJECTS")
+            .get(Organizations.ById.Projects(organizationId = organizationId))
             .bodyAsJson<List<Project>>()
         assert(ids.size == projects.size)
         assert(ids.toSet() == projects.map { it.id }.toSet())
@@ -58,10 +67,10 @@ class ProjectRoutesTest {
     fun getNonexistentId() = testApplication {
         val client = createUserClient()
         assertFailsWith<ClientRequestException> {
-            client.client.get(PATH_PROJECT(42))
+            client.client.get(Projects.ById(id = 42))
         }
         assertFailsWith<ClientRequestException> {
-            client.client.delete(PATH_PROJECT(42))
+            client.client.delete(Projects.ById(id = 42))
         }
     }
 
@@ -70,13 +79,13 @@ class ProjectRoutesTest {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
-        var project = client.client.get(PATH_PROJECT(id)).bodyAsJson<Project>()
+        var project = client.client.get(Projects.ById(id = id)).bodyAsJson<Project>()
         val name = "${project.name} updated"
-        client.client.put(PATH_PROJECT(id)) {
-            setBodyForm("name" to name)
+        client.client.put(Projects.ById(id = id)) {
+            setBodyForm(Projects.NAME to name)
         }
 
-        project = client.client.get(PATH_PROJECT(id)).bodyAsJson()
+        project = client.client.get(Projects.ById(id = id)).bodyAsJson()
         assert(project.name == name)
     }
 
@@ -85,11 +94,11 @@ class ProjectRoutesTest {
         val client = createUserClient()
         val organizationId = client.withOrganization()
         val projectId = client.withProject(organizationId)
-        val project = client.client.get(PATH_PROJECT(projectId)).bodyAsJson<Project>()
+        val project = client.client.get(Projects.ById(id = projectId)).bodyAsJson<Project>()
         assertFailsWith<ClientRequestException> {
             val id = client.withProject(organizationId)
-            client.client.put("${PATH_PROJECT(id)}/users") {
-                setBodyForm("name" to project.name)
+            client.client.put(Projects.ById(id = id)) {
+                setBodyForm(Projects.NAME to project.name)
             }
         }
     }
@@ -99,10 +108,10 @@ class ProjectRoutesTest {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
-        client.client.delete(PATH_PROJECT(id))
+        client.client.delete(Projects.ById(id = id))
 
         assertFailsWith<ClientRequestException> {
-            client.client.get(PATH_PROJECT(id)).bodyAsJson<Project?>()
+            client.client.get(Projects.ById(id = id)).bodyAsJson<Project?>()
         }
     }
 
@@ -111,18 +120,24 @@ class ProjectRoutesTest {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
-        val evalTokenValue = client.client.post("${PATH_PROJECT(id)}$PATH_TOKENS") {
-            setBodyForm("permission" to Permission.EVAL, "description" to "Eval")
+        val evalTokenValue = client.client.post(Projects.ById.Tokens(projectId = id)) {
+            setBodyForm(
+                Tokens.PERMISSION to Permission.EVAL,
+                Tokens.DESCRIPTION to "Eval"
+            )
         }.bodyAsText()
         assert(TokenGenerator.isFormatValid(evalTokenValue))
 
-        val readTokenValue = client.client.post("${PATH_PROJECT(id)}$PATH_TOKENS") {
-            setBodyForm("permission" to Permission.READ, "description" to "Read")
+        val readTokenValue = client.client.post(Projects.ById.Tokens(projectId = id)) {
+            setBodyForm(
+                Tokens.PERMISSION to Permission.READ,
+                Tokens.DESCRIPTION to "Read"
+            )
         }.bodyAsText()
         assert(TokenGenerator.isFormatValid(readTokenValue))
 
         val tokens = client.client
-            .get("${PATH_PROJECT(id)}$PATH_TOKENS")
+            .get(Projects.ById.Tokens(projectId = id))
             .bodyAsJson<List<SelectByProject>>()
         assert(tokens.size == 2)
         assert(tokens.all { it.project_id == id })
@@ -136,8 +151,11 @@ class ProjectRoutesTest {
 
         Permission.values().filter { it != Permission.EVAL && it != Permission.READ }.forEach {
             assertFailsWith<ClientRequestException> {
-                client.client.post("${PATH_PROJECT(id)}$PATH_TOKENS") {
-                    setBodyForm("permission" to it, "description" to it.name)
+                client.client.post(Projects.ById.Tokens(projectId = id)) {
+                    setBodyForm(
+                        Tokens.PERMISSION to it,
+                        Tokens.DESCRIPTION to it.name
+                    )
                 }
             }
         }
@@ -148,18 +166,21 @@ class ProjectRoutesTest {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
-        client.client.post("${PATH_PROJECT(id)}$PATH_TOKENS") {
-            setBodyForm("permission" to Permission.EVAL, "description" to "Eval")
+        client.client.post(Projects.ById.Tokens(projectId = id)) {
+            setBodyForm(
+                Tokens.PERMISSION to Permission.EVAL,
+                Tokens.DESCRIPTION to "Eval"
+            )
         }.bodyAsText()
 
         var tokens = client.client
-            .get("${PATH_PROJECT(id)}$PATH_TOKENS")
+            .get(Projects.ById.Tokens(projectId = id))
             .bodyAsJson<List<SelectByProject>>()
-        client.client.put(PATH_TOKEN(tokens[0].id)) {
-            setBodyForm("description" to "test")
+        client.client.put(Tokens.ById(id = tokens[0].id)) {
+            setBodyForm(Tokens.DESCRIPTION to "test")
         }
 
-        tokens = client.client.get("${PATH_PROJECT(id)}$PATH_TOKENS").bodyAsJson()
+        tokens = client.client.get(Projects.ById.Tokens(projectId = id)).bodyAsJson()
         assert(tokens[0].description == "test")
     }
 
@@ -168,18 +189,21 @@ class ProjectRoutesTest {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
-        client.client.post("${PATH_PROJECT(id)}$PATH_TOKENS") {
-            setBodyForm("permission" to Permission.EVAL, "description" to "Eval")
+        client.client.post(Projects.ById.Tokens(projectId = id)) {
+            setBodyForm(
+                Tokens.PERMISSION to Permission.EVAL,
+                Tokens.DESCRIPTION to "Eval"
+            )
         }.bodyAsText()
 
         var tokens = client.client
-            .get("${PATH_PROJECT(id)}$PATH_TOKENS")
+            .get(Projects.ById.Tokens(projectId = id))
             .bodyAsJson<List<SelectByProject>>()
-        client.client.put(PATH_TOKEN(tokens[0].id)) {
-            setBodyForm("description" to "test")
+        client.client.put(Tokens.ById(id = tokens[0].id)) {
+            setBodyForm(Tokens.DESCRIPTION to "test")
         }
 
-        tokens = client.client.get("${PATH_PROJECT(id)}$PATH_TOKENS").bodyAsJson()
+        tokens = client.client.get(Projects.ById.Tokens(projectId = id)).bodyAsJson()
         assert(tokens[0].description == "test")
     }
 
@@ -188,22 +212,26 @@ class ProjectRoutesTest {
         val client = createUserClient()
         val id = client.withProject(client.withOrganization())
 
-        client.client.post("${PATH_PROJECT(id)}$PATH_TOKENS") {
-            setBodyForm("permission" to Permission.READ, "description" to "Read")
+        client.client.post(Projects.ById.Tokens(projectId = id)) {
+            setBodyForm(
+                Tokens.PERMISSION to Permission.READ,
+                Tokens.DESCRIPTION to "Read"
+            )
         }.bodyAsText()
 
         var tokens = client.client
-            .get("${PATH_PROJECT(id)}$PATH_TOKENS")
+            .get(Projects.ById.Tokens(projectId = id))
             .bodyAsJson<List<SelectByProject>>()
-        client.client.delete(PATH_TOKEN(tokens[0].id))
+        client.client.delete(Tokens.ById(id = tokens[0].id))
 
-        tokens = client.client.get("${PATH_PROJECT(id)}$PATH_TOKENS").bodyAsJson()
+        tokens = client.client.get(Projects.ById.Tokens(projectId = id)).bodyAsJson()
         assert(tokens.isEmpty())
     }
 
     @Test
     fun unauthenticatedAccess() = testApplication {
         val client = createClient {
+            install(Resources)
             install(HttpCookies)
             followRedirects = false
         }
@@ -211,19 +239,19 @@ class ProjectRoutesTest {
             withProject(withOrganization())
         }
         assertFailsWith<RedirectResponseException> {
-            client.get(PATH_PROJECT(id))
+            client.get(Projects.ById(id = id))
         }
         assertFailsWith<RedirectResponseException> {
-            client.put(PATH_PROJECT(id)) {
-                setBodyForm("name" to "Test")
+            client.put(Projects.ById(id = id)) {
+                setBodyForm(Projects.NAME to "Test")
             }
         }
         assertFailsWith<RedirectResponseException> {
-            client.delete(PATH_PROJECT(id))
+            client.delete(Projects.ById(id = id))
         }
         assertFailsWith<RedirectResponseException> {
-            client.post("${PATH_PROJECT(id)}$PATH_TOKENS") {
-                setBodyForm("permission" to Permission.EVAL, "description" to "Eval")
+            client.post(Projects.ById.Tokens(projectId = id)) {
+                setBodyForm(Tokens.PERMISSION to Permission.EVAL, Tokens.DESCRIPTION to "Eval")
             }
         }
     }
@@ -234,26 +262,27 @@ class ProjectRoutesTest {
         val versions = listOf(PATH_LATEST, "")
 
         val createResponses = versions.map {
+            val id = client.withOrganization()
             client.client.post(
-                "$it/organizations/${client.withOrganization()}$PATH_PROJECTS"
+                "$it${client.client.href(Organizations.ById.Projects(organizationId = id))}"
             ) {
-                setBodyForm("name" to "Test")
+                setBodyForm(Projects.NAME to "Test")
             }
         }
         assert(createResponses[0].status == createResponses[1].status)
 
         val ids = createResponses.map {
-            it.headers[HttpHeaders.Location]!!.substringAfterLast('/')
+            it.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
         }
         val updateResponses = versions.zip(ids).map { (version, id) ->
-            client.client.put("$version${PATH_PROJECT(id)}") {
-                setBodyForm("name" to "Test updated")
+            client.client.put("$version${client.client.href(Projects.ById(id = id))}") {
+                setBodyForm(Projects.NAME to "Test updated")
             }
         }
         assert(updateResponses[0].status == updateResponses[1].status)
 
         val deleteResponse = versions.zip(ids).map { (version, id) ->
-            client.client.delete("$version${PATH_PROJECT(id)}")
+            client.client.delete("$version${client.client.href(Projects.ById(id = id))}")
         }
         assert(deleteResponse[0].status == deleteResponse[1].status)
     }

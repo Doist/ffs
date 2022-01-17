@@ -73,7 +73,6 @@ private fun Route.createOrganization() = post<Organizations> {
  */
 private fun Route.getOrganizations() = get<Organizations> {
     val userId = call.principal<UserPrincipal>()!!.id
-
     authorizeForUser(id = userId)
 
     val organizations = database.members.selectOrganizationByUserId(
@@ -97,10 +96,10 @@ private fun Route.getOrganization() = get<Organizations.ById> { (_, id) ->
  * Update an organization.
  */
 private fun Route.updateOrganization() = put<Organizations.ById> { (_, id) ->
+    authorizeForOrganization(id, Permission.WRITE)
+
     val params = call.receiveParameters()
     val name = params[Organizations.NAME]
-
-    authorizeForOrganization(id, Permission.WRITE)
 
     database.organizations.run {
         val organization = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
@@ -122,12 +121,12 @@ private fun Route.deleteOrganization() = delete<Organizations.ById> { (_, id) ->
 /**
  * Add user to an organization.
  */
-private fun Route.addUser() = post<Organizations.ById.Members.ById> { (parent, userId) ->
-    val id = parent.parent.id
+private fun Route.addUser() = post<Organizations.ById.Members.ById> { (endpoint, userId) ->
+    val id = endpoint.parent.id
+    authorizeForOrganization(id, Permission.DELETE)
+
     val params = call.receiveParameters()
     val role = RoleEnum.valueOf(params.getOrFail(Organizations.ROLE).uppercase())
-
-    authorizeForOrganization(id, Permission.DELETE)
 
     database.members.insert(user_id = userId, organization_id = id, role = role)
     call.respond(HttpStatusCode.Created)
@@ -136,12 +135,12 @@ private fun Route.addUser() = post<Organizations.ById.Members.ById> { (parent, u
 /**
  * Update user role within organization.
  */
-private fun Route.updateUser() = put<Organizations.ById.Members.ById> { (parent, userId) ->
-    val id = parent.parent.id
+private fun Route.updateUser() = put<Organizations.ById.Members.ById> { (endpoint, userId) ->
+    val id = endpoint.parent.id
+    authorizeForOrganization(id, Permission.DELETE)
+
     val params = call.receiveParameters()
     val role = RoleEnum.valueOf(params.getOrFail(Organizations.ROLE).uppercase())
-
-    authorizeForOrganization(id, Permission.DELETE)
 
     database.members.update(user_id = userId, organization_id = id, role = role)
     call.respond(HttpStatusCode.NoContent)
@@ -150,8 +149,8 @@ private fun Route.updateUser() = put<Organizations.ById.Members.ById> { (parent,
 /**
  * Remove user from organization.
  */
-private fun Route.removeUser() = delete<Organizations.ById.Members.ById> { (parent, userId) ->
-    val id = parent.parent.id
+private fun Route.removeUser() = delete<Organizations.ById.Members.ById> { (endpoint, userId) ->
+    val id = endpoint.parent.id
     authorizeForOrganization(id, Permission.DELETE)
 
     database.members.delete(user_id = userId, organization_id = id)

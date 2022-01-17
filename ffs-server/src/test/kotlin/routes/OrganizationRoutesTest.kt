@@ -6,6 +6,7 @@ import doist.ffs.db.RoleEnum
 import doist.ffs.db.SelectOrganizationByUserId
 import doist.ffs.endpoints.Organizations
 import doist.ffs.endpoints.Organizations.Companion.ById
+import doist.ffs.endpoints.Organizations.Companion.Projects
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.plugins.ClientRequestException
@@ -95,13 +96,13 @@ class OrganizationRoutesTest {
 
         for (i in 1 until roles.size) {
             client.client.put(
-                Organizations.ById.Members.ById(id = ids[i - 1], user_id = client.userId)
+                Organizations.ById.Members.ById(id = ids[i - 1], userId = client.userId)
             ) {
                 setBodyForm(Organizations.USER_ID to client.userId, Organizations.ROLE to roles[i])
             }
         }
         client.client.delete(
-            Organizations.ById.Members.ById(id = ids[roles.size - 1], user_id = client.userId)
+            Organizations.ById.Members.ById(id = ids[roles.size - 1], userId = client.userId)
         ) {
             setBodyForm(Organizations.USER_ID to client.userId)
         }
@@ -120,7 +121,7 @@ class OrganizationRoutesTest {
         val client = createUserClient()
         val id = client.withOrganization()
         assertFailsWith<ClientRequestException> {
-            client.client.put(Organizations.ById.Members.ById(id = id, user_id = client.userId))
+            client.client.put(Organizations.ById.Members.ById(id = id, userId = client.userId))
         }
     }
 
@@ -131,7 +132,7 @@ class OrganizationRoutesTest {
         val projectIds = List(2) { client.withProject(organizationId) }
 
         val projects = client.client
-            .get("/organizations/$organizationId$PATH_PROJECTS")
+            .get(Organizations.ById.Projects(organizationId = organizationId))
             .bodyAsJson<List<Project>>()
 
         assertEquals(projectIds.toSet(), projects.map { it.id }.toSet())
@@ -142,7 +143,7 @@ class OrganizationRoutesTest {
         val client = createUserClient()
         val id = client.withOrganization()
 
-        client.client.delete(Organizations.ById.Members.ById(id = id, user_id = client.userId))
+        client.client.delete(Organizations.ById.Members.ById(id = id, userId = client.userId))
 
         assertFailsWith<ClientRequestException> {
             client.client.get(Organizations.ById(id = id)).bodyAsJson<Organization?>()

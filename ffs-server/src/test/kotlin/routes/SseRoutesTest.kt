@@ -8,22 +8,23 @@ import doist.ffs.db.flags
 import doist.ffs.db.organizations
 import doist.ffs.db.projects
 import doist.ffs.db.tokens
+import doist.ffs.endpoints.Flags
 import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
 import doist.ffs.installAuthentication
 import doist.ffs.installPlugins
 import doist.ffs.installRoutes
 import doist.ffs.plugins.Database
 import doist.ffs.plugins.database
-import doist.ffs.routes.PATH_EVAL
-import doist.ffs.routes.PATH_FLAGS
 import doist.ffs.serialization.json
 import doist.ffs.sse.SSE_FIELD_PREFIX_DATA
 import doist.ffs.sse.SSE_FIELD_PREFIX_ID
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.http.encodeURLPath
+import io.ktor.http.URLBuilder
+import io.ktor.http.fullPath
 import io.ktor.http.isSuccess
 import io.ktor.server.application.install
+import io.ktor.server.resources.href
 import io.ktor.server.testing.TestApplicationCall
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.TestApplicationRequest
@@ -96,7 +97,7 @@ class SseRoutesTest {
             description = "test-read-token"
         )
         handleSse(
-            uri = PATH_FLAGS,
+            uri = application.href(Flags()),
             setup = {
                 addHeader(HttpHeaders.Authorization, "Bearer $token")
             }
@@ -188,7 +189,11 @@ class SseRoutesTest {
             put("number", 3)
         }
         handleSse(
-            uri = "$PATH_FLAGS$PATH_EVAL?env=${json.encodeToString(env).encodeURLPath()}",
+            uri = URLBuilder().run {
+                application.href(Flags.Eval(), this)
+                parameters[Flags.ENV] = json.encodeToString(env)
+                build().fullPath
+            },
             setup = {
                 addHeader(HttpHeaders.Authorization, "Bearer $token")
             }

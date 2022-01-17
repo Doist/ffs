@@ -5,8 +5,11 @@ package doist.ffs.routes
 import doist.ffs.auth.Permission
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.projects
+import doist.ffs.endpoints.Organizations
+import doist.ffs.endpoints.Projects
 import doist.ffs.ext.authorizeForOrganization
 import doist.ffs.ext.authorizeForProject
+import doist.ffs.ext.href
 import doist.ffs.ext.optionalRoute
 import doist.ffs.plugins.database
 import io.ktor.http.HttpHeaders
@@ -16,38 +19,26 @@ import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.receiveParameters
+import io.ktor.server.resources.delete
+import io.ktor.server.resources.get
+import io.ktor.server.resources.post
+import io.ktor.server.resources.put
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.put
-import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
 import routes.PATH_LATEST
 
-const val PATH_PROJECTS = "/projects"
-
-@Suppress("FunctionName")
-fun PATH_PROJECT(id: Any) = "$PATH_PROJECTS/$id"
-
 fun Application.installProjectRoutes() = routing {
     optionalRoute(PATH_LATEST) {
-        route("/organizations/{id}/$PATH_PROJECTS") {
-            authenticate("session") {
-                createProject()
-                getProjects()
-            }
-        }
+        authenticate("session") {
+            createProject()
+            getProjects()
 
-        route(PATH_PROJECTS) {
-            authenticate("session") {
-                getProject()
-                updateProject()
-                deleteProject()
-            }
+            getProject()
+            updateProject()
+            deleteProject()
         }
     }
 }
@@ -55,26 +46,25 @@ fun Application.installProjectRoutes() = routing {
 /**
  * Create a new project.
  */
-private fun Route.createProject() = post {
-    val organizationId = call.parameters.getOrFail<Long>("id")
-    val params = call.receiveParameters()
-    val name = params.getOrFail("name")
-
+private fun Route.createProject() = post<Organizations.ById.Projects> { (endpoint) ->
+    val organizationId = endpoint.id
     authorizeForOrganization(id = organizationId, permission = Permission.WRITE)
+
+    val params = call.receiveParameters()
+    val name = params.getOrFail(Projects.NAME)
 
     val id = database.capturingLastInsertId {
         projects.insert(organization_id = organizationId, name = name)
     }
-    call.response.header(HttpHeaders.Location, PATH_PROJECT(id))
+    call.response.header(HttpHeaders.Location, href(Projects.ById(id = id)))
     call.respond(HttpStatusCode.Created)
 }
 
 /**
  * Lists existing projects for the organization.
  */
-private fun Route.getProjects() = get {
-    val organizationId = call.parameters.getOrFail<Long>("id")
-
+private fun Route.getProjects() = get<Organizations.ById.Projects> { (endpoint) ->
+    val organizationId = endpoint.id
     authorizeForOrganization(id = organizationId, permission = Permission.READ)
 
     val projects = database.projects.selectByOrganization(
@@ -86,9 +76,7 @@ private fun Route.getProjects() = get {
 /**
  * Get an existing project.
  */
-private fun Route.getProject() = get("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
-
+private fun Route.getProject() = get<Projects.ById> { (_, id) ->
     authorizeForProject(id = id, permission = Permission.READ)
 
     val project = database.projects.select(id = id).executeAsOneOrNull()
@@ -99,11 +87,11 @@ private fun Route.getProject() = get("{id}") {
 /**
  * Update a project.
  */
-private fun Route.updateProject() = put("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
-    val name = call.receiveParameters()["name"]
-
+private fun Route.updateProject() = put<Projects.ById> { (_, id) ->
     authorizeForProject(id = id, permission = Permission.WRITE)
+
+    val params = call.receiveParameters()
+    val name = params[Projects.NAME]
 
     database.projects.run {
         val project = select(id = id).executeAsOneOrNull() ?: throw NotFoundException()
@@ -117,9 +105,7 @@ private fun Route.updateProject() = put("{id}") {
  *
  * On success, responds `204 No Content` with an empty body.
  */
-private fun Route.deleteProject() = delete("{id}") {
-    val id = call.parameters.getOrFail<Long>("id")
-
+private fun Route.deleteProject() = delete<Projects.ById> { (_, id) ->
     authorizeForProject(id = id, permission = Permission.DELETE)
 
     database.projects.delete(id = id)

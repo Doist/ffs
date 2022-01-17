@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Resource("users")
 class Users {
+
     @Serializable
     @Resource("register")
     data class Register(val parent: Users = Users())
@@ -35,6 +36,7 @@ class Users {
 @Serializable
 @Resource("organizations")
 class Organizations {
+
     @Serializable
     @Resource("{id}")
     data class ById(val parent: Organizations = Organizations(), val id: Long) {
@@ -44,9 +46,13 @@ class Organizations {
         data class Members(val parent: Organizations.ById) {
 
             @Serializable
-            @Resource("{user_id}")
-            data class ById(val parent: Members, val user_id: Long)
+            @Resource("{userId}")
+            data class ById(val parent: Members, val userId: Long)
         }
+
+        @Serializable
+        @Resource("projects")
+        data class Projects(val parent: ById)
     }
 
     companion object {
@@ -54,9 +60,77 @@ class Organizations {
         const val ROLE = "role"
         const val USER_ID = "user_id"
 
-        fun ById.Members.Companion.ById(id: Long, user_id: Long) = ById.Members.ById(
+        fun ById.Members.Companion.ById(id: Long, userId: Long) = ById.Members.ById(
             ById.Members(ById(id = id)),
-            user_id = user_id
+            userId = userId
         )
+
+        fun ById.Companion.Projects(organizationId: Long) = ById.Projects(ById(id = organizationId))
+    }
+}
+
+@Serializable
+@Resource("projects")
+class Projects {
+
+    @Serializable
+    @Resource("{id}")
+    data class ById(val parent: Projects = Projects(), val id: Long) {
+
+        @Serializable
+        @Resource("tokens")
+        data class Tokens(val parent: ById)
+
+        @Serializable
+        @Resource("flags")
+        data class Flags(val parent: ById)
+    }
+
+    companion object {
+        const val NAME = "name"
+
+        fun ById.Companion.Tokens(projectId: Long) = ById.Tokens(ById(id = projectId))
+
+        fun ById.Companion.Flags(projectId: Long) = ById.Flags(ById(id = projectId))
+    }
+}
+
+@Serializable
+@Resource("tokens")
+class Tokens {
+
+    @Serializable
+    @Resource("{id}")
+    data class ById(val parent: Tokens = Tokens(), val id: Long)
+
+    companion object {
+        const val PERMISSION = "permission"
+        const val DESCRIPTION = "description"
+    }
+}
+
+@Serializable
+@Resource("flags")
+class Flags {
+
+    @Serializable
+    @Resource("{id}")
+    data class ById(val parent: Flags = Flags(), val id: Long) {
+
+        @Serializable
+        @Resource("archive")
+        data class Archive(val parent: ById)
+    }
+
+    @Serializable
+    @Resource("eval")
+    data class Eval(val parent: Flags = Flags())
+
+    companion object {
+        const val NAME = "name"
+        const val RULE = "rule"
+        const val ENV = "env"
+
+        fun ById.Companion.Archive(id: Long) = ById.Archive(ById(id = id))
     }
 }

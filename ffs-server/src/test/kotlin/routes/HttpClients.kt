@@ -4,8 +4,14 @@ package doist.ffs.routes
 
 import doist.ffs.auth.Permission
 import doist.ffs.db.RoleEnum
+import doist.ffs.endpoints.Flags
 import doist.ffs.endpoints.Organizations
 import doist.ffs.endpoints.Organizations.Companion.ById
+import doist.ffs.endpoints.Organizations.Companion.Projects
+import doist.ffs.endpoints.Projects
+import doist.ffs.endpoints.Projects.Companion.Flags
+import doist.ffs.endpoints.Projects.Companion.Tokens
+import doist.ffs.endpoints.Tokens
 import doist.ffs.endpoints.Users
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.HttpClient
@@ -16,11 +22,9 @@ import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.post
 import io.ktor.client.plugins.resources.put
-import io.ktor.client.request.post
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.ApplicationTestBuilder
-import routes.PATH_TOKENS
 import kotlin.random.Random
 
 class UserHttpClient(val client: HttpClient, val userId: Long)
@@ -62,12 +66,12 @@ suspend fun UserHttpClient.withOrganization(role: RoleEnum = RoleEnum.ADMIN): Lo
     }
     assert(updateResponse.status == HttpStatusCode.NoContent)
 
-    return id.toLong()
+    return id
 }
 
 suspend fun UserHttpClient.withProject(organizationId: Long): Long {
-    val response = client.post("/organizations/$organizationId$PATH_PROJECTS") {
-        setBodyForm("organization_id" to organizationId, "name" to "Test ${Random.nextInt()}")
+    val response = client.post(Organizations.ById.Projects(organizationId = organizationId)) {
+        setBodyForm(Projects.NAME to "Test ${Random.nextInt()}")
     }
     assert(response.status == HttpStatusCode.Created)
 
@@ -76,21 +80,23 @@ suspend fun UserHttpClient.withProject(organizationId: Long): Long {
 }
 
 suspend fun UserHttpClient.withFlag(projectId: Long): Long {
-    val response = client.post("${PATH_PROJECT(projectId)}$PATH_FLAGS") {
-        setBodyForm("name" to "test-${Random.nextInt()}", "rule" to "true")
+    val response = client.post(Projects.ById.Flags(projectId = projectId)) {
+        setBodyForm(
+            Flags.NAME to "test-${Random.nextInt()}",
+            Flags.RULE to "true"
+        )
     }
     assert(response.status == HttpStatusCode.Created)
 
-    val id = response.headers[HttpHeaders.Location]!!.substringAfterLast('/')
-    return id.toLong()
+    val id = response.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
+    return id
 }
 
 suspend fun UserHttpClient.withToken(projectId: Long, permission: Permission): String {
-    val response = client.post("${PATH_PROJECT(projectId)}$PATH_TOKENS") {
+    val response = client.post(Projects.ById.Tokens(projectId = projectId)) {
         setBodyForm(
-            "project_id" to projectId,
-            "permission" to permission,
-            "description" to permission.toString().lowercase()
+            Tokens.PERMISSION to permission,
+            Tokens.DESCRIPTION to permission.toString().lowercase()
         )
     }
     assert(response.status == HttpStatusCode.Created)
@@ -107,11 +113,12 @@ suspend fun UserHttpClient.withToken(projectId: Long, permission: Permission): S
 //     val organizationId = userClient.withOrganization()
 //     val projectId = userClient.withProject(organizationId)
 //
-//     val createTokenResponse = userClient.client.post("${PATH_PROJECT(projectId)}$PATH_TOKENS") {
+//     val createTokenResponse = userClient.client.post(
+//         Projects.ById.Tokens(projectId = projectId)
+//     ) {
 //         setBodyForm(
-//             "project_id" to projectId,
-//             "permission" to permission,
-//             "description" to permission.toString().lowercase()
+//             Tokens.PERMISSION to permission,
+//             Tokens.DESCRIPTION to permission.toString().lowercase()
 //         )
 //     }
 //     assert(createTokenResponse.status == HttpStatusCode.Created)
