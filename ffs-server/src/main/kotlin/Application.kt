@@ -52,38 +52,40 @@ import java.sql.SQLException
 import java.util.Properties
 import kotlin.random.Random
 
+private const val HMAC_SECRET_KEY_SIZE = 64
+
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
 @Suppress("Unused")
 fun Application.module() {
-    installPlugins()
+    install(Resources)
+    install(IgnoreTrailingSlash)
+    install(CallLogging)
+    install(DefaultHeaders)
+    install(Compression)
+    installCors()
+    installContentNegotiation()
     installDatabase()
     installAuthentication()
     installExceptionHandling()
     installRoutes()
 }
 
-fun Application.installPlugins() {
-    install(Resources)
-    install(IgnoreTrailingSlash)
-    install(CallLogging)
-    install(CORS) {
-        // Cross-origin requests are allowed.
-        anyHost()
-        // Allow headers that are expected but are not in the request safelist.
-        // Ref: https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_request_header
-        header(HttpHeaders.Authorization)
-        // Expose headers that are sent back but are not in the response safelist.
-        // Ref: https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_response_header
-        exposeHeader(HttpHeaders.Authorization)
-        exposeHeader(HttpHeaders.Location)
-    }
-    install(DefaultHeaders)
-    install(ContentNegotiation) {
-        serialization(ContentType.Application.Json, json)
-        serialization(ContentType.Application.Cbor, cbor)
-    }
-    install(Compression)
+fun Application.installCors() = install(CORS) {
+    // Cross-origin requests are allowed.
+    anyHost()
+    // Allow headers that are expected but are not in the request safelist.
+    // Ref: https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_request_header
+    header(HttpHeaders.Authorization)
+    // Expose headers that are sent back but are not in the response safelist.
+    // Ref: https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_response_header
+    exposeHeader(HttpHeaders.Authorization)
+    exposeHeader(HttpHeaders.Location)
+}
+
+fun Application.installContentNegotiation() = install(ContentNegotiation) {
+    serialization(ContentType.Application.Json, json)
+    serialization(ContentType.Application.Cbor, cbor)
 }
 
 fun Application.installDatabase() = install(Database) {
@@ -183,5 +185,3 @@ fun Application.installRoutes() {
     installFlagRoutes()
     installTokenRoutes()
 }
-
-private const val HMAC_SECRET_KEY_SIZE = 64
