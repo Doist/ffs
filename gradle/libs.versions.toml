@@ -11,6 +11,7 @@ kotlinx-datetime = "0.3.2"
 shadow = "7.1.2"
 kotlin-react = "17.0.2-pre.290-kotlin-1.6.10"
 kotlin-react-router-dom = "6.2.1-pre.290-kotlin-1.6.10"
+krypto-js = "2.4.12"
 better-parse = "0.4.3"
 kotlinx-serialization = "1.3.2"
 kotlinx-murmurhash = "0.3.0"
@@ -58,6 +59,7 @@ kotlin-react = { module = "org.jetbrains.kotlin-wrappers:kotlin-react", version.
 kotlin-react-dom = { module = "org.jetbrains.kotlin-wrappers:kotlin-react-dom", version.ref = "kotlin-react"}
 kotlin-react-css = { module = "org.jetbrains.kotlin-wrappers:kotlin-react-css", version.ref = "kotlin-react"}
 kotlin-react-router-dom = { module = "org.jetbrains.kotlin-wrappers:kotlin-react-router-dom", version.ref = "kotlin-react-router-dom"}
+krypto-js = { module = "com.soywiz.korlibs.krypto:krypto-js", version.ref = "krypto-js" }
 better-parse = { module = "com.github.h0tk3y.betterParse:better-parse", version.ref = "better-parse" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-murmurhash = { module = "com.goncalossilva:murmurhash", version.ref = "kotlinx-murmurhash" }

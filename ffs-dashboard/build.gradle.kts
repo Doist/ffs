@@ -11,6 +11,7 @@ dependencies {
 
     implementation(libs.bundles.client.ktor)
     implementation(libs.bundles.client.react)
+    implementation(libs.krypto.js)
 
     implementation(npm("@doist/reactist", "^11.0.0"))
     // Peer dependency of Reactist.
