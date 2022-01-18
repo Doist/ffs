@@ -123,8 +123,8 @@ fun Application.installPlugins() {
         exception<AuthorizationException> { call, _ ->
             call.respond(HttpStatusCode.Forbidden)
         }
-        exception<IllegalArgumentException> { call, _ ->
-            call.respond(HttpStatusCode.BadRequest)
+        exception<IllegalArgumentException> { call, e ->
+            call.respond(HttpStatusCode.BadRequest, e.message ?: "")
         }
         exception<SQLException> { call, _ ->
             call.respond(HttpStatusCode.BadRequest)
