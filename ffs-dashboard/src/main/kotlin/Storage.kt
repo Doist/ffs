@@ -12,6 +12,8 @@ const val KEY_SESSION = "session"
 const val KEY_USER = "user"
 const val KEY_ORGANIZATIONS = "organizations"
 fun KEY_PROJECTS(organizationId: Long) = "organization/$organizationId/projects"
+fun KEY_FLAGS(projectId: Long) = "project/$projectId/rules"
+fun KEY_TOKENS(projectId: Long) = "project/$projectId/tokens"
 
 fun <T> Storage.use(key: String, serializer: KSerializer<T>): StateInstance<T?> {
     val state = useState {

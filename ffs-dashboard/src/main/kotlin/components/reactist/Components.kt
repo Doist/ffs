@@ -5,10 +5,14 @@ package doist.ffs.components.reactist
 
 import org.w3c.dom.HTMLAnchorElement
 import react.FC
+import react.Props
 import react.PropsWithStyle
+import react.ReactElement
+import react.ReactNode
+import react.dom.aria.AriaAttributes
 import react.dom.html.AnchorHTMLAttributes
 
-external interface StandardProps : PropsWithStyle {
+external interface StandardProps : PropsWithStyle, AriaAttributes {
     var `as`: dynamic
         get() = definedExternally
         set(value) = definedExternally
@@ -327,3 +331,68 @@ external interface TextLinkProps :
 }
 
 external var TextLink: FC<TextLinkProps> = definedExternally
+
+external interface TabsProps : Props {
+    var children: ReactNode
+    var color: String? /* "primary" | "secondary" | "tertiary" */
+        get() = definedExternally
+        set(value) = definedExternally
+    var variant: String? /* "normal" | "plain" */
+        get() = definedExternally
+        set(value) = definedExternally
+    var selectedId: String?
+        get() = definedExternally
+        set(value) = definedExternally
+}
+
+external var Tabs: FC<TabsProps> = definedExternally
+
+external interface TabProps : Props {
+    var children: ReactNode
+    var id: String /* TabPanel id */
+}
+
+external var Tab: FC<TabProps> = definedExternally
+
+external interface TabListProps : StandardProps, AriaAttributes {
+    var children: ReactNode
+    var space: dynamic /* "xsmall" | "small" | "medium" | "large" | "xlarge" | "xxlarge" | Readonly<Any>? */
+        get() = definedExternally
+        set(value) = definedExternally
+}
+
+external var TabList: FC<TabListProps> = definedExternally
+
+external interface TabPanelProps : StandardProps, HtmlDivProps {
+    var render: String? /* "always" | "active" | "lazy" */
+        get() = definedExternally
+        set(value) = definedExternally
+}
+
+external var TabPanel: FC<TabPanelProps> = definedExternally
+
+external interface TabAwareSlotProvided {
+    var selectedId: String?
+        get() = definedExternally
+        set(value) = definedExternally
+}
+
+external interface TabAwareSlotProps : Props {
+    var children: (provided: TabAwareSlotProvided) -> ReactElement?
+}
+
+external var TabAwareSlot: FC<TabAwareSlotProps> = definedExternally
+
+external interface NoticeProps : Props {
+    var id: String?
+        get() = definedExternally
+        set(value) = definedExternally
+    var children: ReactNode
+    var tone: String /* "info" | "positive" | "caution" | "critical" */
+}
+
+external var Notice: FC<NoticeProps> = definedExternally
+
+external interface SelectFieldProps : BaseFieldProps
+
+external var SelectField: FC<SelectFieldProps> = definedExternally

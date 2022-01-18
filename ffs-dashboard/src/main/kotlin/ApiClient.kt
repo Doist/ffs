@@ -1,11 +1,20 @@
+@file:Suppress("TooManyFunctions")
+
 package doist.ffs
 
 import db.Organization
+import doist.ffs.db.Flag
+import doist.ffs.db.Permission
 import doist.ffs.db.Project
+import doist.ffs.db.Token
 import doist.ffs.db.User
+import doist.ffs.endpoints.Flags
 import doist.ffs.endpoints.Organizations
 import doist.ffs.endpoints.Organizations.Companion.Projects
 import doist.ffs.endpoints.Projects
+import doist.ffs.endpoints.Projects.Companion.Flags
+import doist.ffs.endpoints.Projects.Companion.Tokens
+import doist.ffs.endpoints.Tokens
 import doist.ffs.endpoints.Users
 import doist.ffs.plugins.SessionHeader
 import doist.ffs.plugins.SessionStorage
@@ -21,6 +30,7 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.DEFAULT_PORT
 import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
@@ -73,14 +83,15 @@ fun <T> ChildrenBuilder.api(
     method: suspend HttpClient.() -> T
 ) = scope.launch {
     val session = localStorage[KEY_SESSION]
-    runCatching {
+    val result = runCatching {
         client.method()
-    }.onFailure {
-        console.warn(it)
     }
     val newSession = localStorage[KEY_SESSION]
     if (session != newSession) {
         setSession(newSession)
+    }
+    result.onFailure {
+        throw it
     }
 }
 
@@ -120,6 +131,34 @@ suspend fun HttpClient.createProject(name: String, organizationId: Long): Long =
     post(Organizations.ById.Projects(organizationId)) {
         setBodyParameters(Projects.NAME to name)
     }.getIdFromLocation()
+
+suspend fun HttpClient.listFlags(projectId: Long): List<Flag> =
+    get(Projects.ById.Flags(projectId)).body()
+
+suspend fun HttpClient.createFlag(name: String, rule: String, projectId: Long): Long =
+    post(Projects.ById.Flags(projectId)) {
+        setBodyParameters(
+            Flags.NAME to name,
+            Flags.RULE to rule
+        )
+    }.getIdFromLocation()
+
+suspend fun HttpClient.listTokens(projectId: Long): List<Token> =
+    get(Projects.ById.Tokens(projectId)).body()
+
+suspend fun HttpClient.createToken(
+    description: String,
+    permission: Permission,
+    projectId: Long
+): Pair<Long, String> {
+    val response = post(Projects.ById.Tokens(projectId)) {
+        setBodyParameters(
+            Tokens.DESCRIPTION to description,
+            Tokens.PERMISSION to permission
+        )
+    }
+    return Pair(response.getIdFromLocation(), response.bodyAsText())
+}
 
 private fun HttpRequestBuilder.setBodyParameters(vararg args: Pair<String, Any>) {
     setBody(

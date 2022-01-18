@@ -85,8 +85,7 @@ val Organizations = FC<Props> {
             icon = SubmitIcon.create()
             disabled = name.isEmpty()
             loading = isSubmitting
-            onClick = { event ->
-                event.preventDefault()
+            onClick = {
                 isSubmitting = true
                 api(setSession) {
                     val id = createOrganization(name)

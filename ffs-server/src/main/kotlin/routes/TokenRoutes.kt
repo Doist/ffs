@@ -2,13 +2,16 @@ package routes
 
 import doist.ffs.db.Permission
 import doist.ffs.db.TokenGenerator
+import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.tokens
 import doist.ffs.endpoints.Projects
 import doist.ffs.endpoints.Tokens
 import doist.ffs.ext.authorizeForOrganization
 import doist.ffs.ext.authorizeForProject
+import doist.ffs.ext.href
 import doist.ffs.ext.optionalRoute
 import doist.ffs.plugins.database
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -19,6 +22,7 @@ import io.ktor.server.resources.delete
 import io.ktor.server.resources.get
 import io.ktor.server.resources.post
 import io.ktor.server.resources.put
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
@@ -48,7 +52,10 @@ private fun Route.createToken() = post<Projects.ById.Tokens> { (endpoint) ->
     val description = params.getOrFail(Tokens.DESCRIPTION)
 
     val token = TokenGenerator.generate(permission)
-    database.tokens.insert(project_id = projectId, token = token, description = description)
+    val id = database.capturingLastInsertId {
+        database.tokens.insert(project_id = projectId, token = token, description = description)
+    }
+    call.response.header(HttpHeaders.Location, href(Tokens.ById(id = id)))
     call.respond(HttpStatusCode.Created, token)
 }
 

@@ -9,6 +9,7 @@ dependencies {
     implementation(project(":ffs-shared:db"))
     implementation(project(":ffs-shared:endpoints"))
     implementation(project(":ffs-shared:validators"))
+    implementation(project(":ffs-shared:rule"))
     implementation(project(":ffs-shared:session-header"))
 
     implementation(libs.bundles.client.ktor)

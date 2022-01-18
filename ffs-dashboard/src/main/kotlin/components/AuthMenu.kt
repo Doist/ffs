@@ -4,13 +4,13 @@ import com.soywiz.krypto.md5
 import doist.ffs.KEY_USER
 import doist.ffs.api
 import doist.ffs.components.reactist.Avatar
-import doist.ffs.components.reactist.AvatarUser
 import doist.ffs.components.reactist.ButtonLink
 import doist.ffs.components.reactist.Inline
 import doist.ffs.contexts.SessionContext
 import doist.ffs.db.User
 import doist.ffs.logout
 import doist.ffs.use
+import kotlinext.js.jso
 import kotlinx.browser.localStorage
 import react.FC
 import react.Props
@@ -36,7 +36,7 @@ val AuthMenu = FC<Props> {
                     val hash = user.email.lowercase().encodeToByteArray().md5().hex
                     avatarUrl = "https://www.gravatar.com/avatar/$hash?s=20&d=blank"
                     size = "xs"
-                    this.user = AvatarUser().apply {
+                    this.user = jso {
                         name = user.name
                         email = user.email
                     }
