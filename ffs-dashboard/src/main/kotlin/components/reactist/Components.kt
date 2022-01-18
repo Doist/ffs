@@ -1,18 +1,21 @@
-@file:Suppress("MaxLineLength", "VariableNaming")
+@file:Suppress("MaxLineLength", "VariableNaming", "Unused")
 @file:JsModule("@doist/reactist")
 @file:JsNonModule
 package doist.ffs.components.reactist
 
-import org.w3c.dom.HTMLButtonElement
-import org.w3c.dom.HTMLInputElement
+import org.w3c.dom.HTMLAnchorElement
 import react.FC
-import react.PropsWithClassName
 import react.PropsWithStyle
-import react.dom.html.ButtonHTMLAttributes
-import react.dom.html.InputHTMLAttributes
+import react.dom.html.AnchorHTMLAttributes
 
-external interface StandardProps : PropsWithStyle, PropsWithClassName {
+external interface StandardProps : PropsWithStyle {
     var `as`: dynamic
+        get() = definedExternally
+        set(value) = definedExternally
+}
+
+external interface ObfuscatedClassName {
+    var exceptionallySetClassName: String?
         get() = definedExternally
         set(value) = definedExternally
 }
@@ -24,7 +27,7 @@ external interface AvatarUser {
     var email: String
 }
 
-external interface AvatarProps : StandardProps {
+external interface AvatarProps : StandardProps, ObfuscatedClassName {
     var colorList: Array<String>?
         get() = definedExternally
         set(value) = definedExternally
@@ -39,7 +42,7 @@ external interface AvatarProps : StandardProps {
 
 external val Avatar: FC<AvatarProps> = definedExternally
 
-external interface BoxPaddingProps : StandardProps {
+external interface BoxPaddingProps {
     var padding: dynamic /* "xsmall" | "small" | "medium" | "large" | "xlarge" | "xxlarge" | Readonly<Any>? */
         get() = definedExternally
         set(value) = definedExternally
@@ -63,7 +66,7 @@ external interface BoxPaddingProps : StandardProps {
         set(value) = definedExternally
 }
 
-external interface BoxMarginProps : StandardProps {
+external interface BoxMarginProps {
     var margin: dynamic /* "xsmall" | "small" | "medium" | "large" | "xlarge" | "xxlarge" | "-xsmall" | "-small" | "-medium" | "-large" | "-xlarge" | "-xxlarge" | Readonly<Any>? */
         get() = definedExternally
         set(value) = definedExternally
@@ -87,7 +90,7 @@ external interface BoxMarginProps : StandardProps {
         set(value) = definedExternally
 }
 
-external interface BorderProps : StandardProps {
+external interface BorderProps {
     var borderRadius: String? /* "standard" | "none" | "full" */
         get() = definedExternally
         set(value) = definedExternally
@@ -117,7 +120,7 @@ external interface ReusableBoxProps : BorderProps, BoxPaddingProps {
         set(value) = definedExternally
 }
 
-external interface BoxProps : ReusableBoxProps, BoxMarginProps {
+external interface BoxProps : StandardProps, HtmlDivProps, ReusableBoxProps, BoxMarginProps {
     var position: dynamic /* "absolute" | "fixed" | "relative" | "static" | "sticky" | Readonly<Any>? */
         get() = definedExternally
         set(value) = definedExternally
@@ -147,9 +150,9 @@ external interface BoxProps : ReusableBoxProps, BoxMarginProps {
         set(value) = definedExternally
 }
 
-external var Box: Any
+external var Box: FC<BoxProps> = definedExternally
 
-external interface InlineProps : ReusableBoxProps {
+external interface InlineProps : StandardProps, HtmlDivProps, ReusableBoxProps {
     var space: dynamic /* "xsmall" | "small" | "medium" | "large" | "xlarge" | "xxlarge" | Readonly<Any>? */
         get() = definedExternally
         set(value) = definedExternally
@@ -163,7 +166,7 @@ external interface InlineProps : ReusableBoxProps {
 
 external var Inline: FC<InlineProps> = definedExternally
 
-external interface ColumnProps : StandardProps {
+external interface ColumnProps : StandardProps, HtmlDivProps {
     var width: String? /* "auto" | "content" | "1/2" | "1/3" | "2/3" | "1/4" | "3/4" | "1/5" | "2/5" | "3/5" | "4/5" */
         get() = definedExternally
         set(value) = definedExternally
@@ -171,7 +174,7 @@ external interface ColumnProps : StandardProps {
 
 external var Column: FC<ColumnProps> = definedExternally
 
-external interface ColumnsProps : ReusableBoxProps {
+external interface ColumnsProps : StandardProps, HtmlDivProps, ReusableBoxProps {
     var space: dynamic /* "xsmall" | "small" | "medium" | "large" | "xlarge" | "xxlarge" | Readonly<Any>? */
         get() = definedExternally
         set(value) = definedExternally
@@ -188,7 +191,7 @@ external interface ColumnsProps : ReusableBoxProps {
 
 external var Columns: FC<ColumnsProps> = definedExternally
 
-external interface StackProps : ReusableBoxProps {
+external interface StackProps : StandardProps, HtmlDivProps, ReusableBoxProps {
     var space: dynamic /* "xsmall" | "small" | "medium" | "large" | "xlarge" | "xxlarge" | Readonly<Any>? */
         get() = definedExternally
         set(value) = definedExternally
@@ -202,7 +205,7 @@ external interface StackProps : ReusableBoxProps {
 
 external var Stack: FC<StackProps> = definedExternally
 
-external interface BaseFieldProps : StandardProps, InputHTMLAttributes<HTMLInputElement> {
+external interface BaseFieldProps : HtmlInputProps {
     var label: dynamic
         get() = definedExternally
         set(value) = definedExternally
@@ -220,7 +223,7 @@ external interface BaseFieldProps : StandardProps, InputHTMLAttributes<HTMLInput
         set(value) = definedExternally
 }
 
-external interface TextFieldProps : BaseFieldProps {
+external interface TextFieldProps : StandardProps, BaseFieldProps {
     override var type: dynamic /* "email" | "search" | "tel" | "text" | "url" */
         get() = definedExternally
         set(value) = definedExternally
@@ -228,7 +231,7 @@ external interface TextFieldProps : BaseFieldProps {
 
 external var TextField: FC<TextFieldProps> = definedExternally
 
-external interface PasswordFieldProps : BaseFieldProps {
+external interface PasswordFieldProps : StandardProps, BaseFieldProps {
     var togglePasswordLabel: String?
         get() = definedExternally
         set(value) = definedExternally
@@ -236,7 +239,7 @@ external interface PasswordFieldProps : BaseFieldProps {
 
 external var PasswordField: FC<PasswordFieldProps> = definedExternally
 
-external interface CommonButtonProps : StandardProps, ButtonHTMLAttributes<HTMLButtonElement> {
+external interface CommonButtonProps {
     var variant: String /* "primary" | "secondary" | "tertiary" | "quaternary" */
     var tone: String? /* "normal" | "destructive" */
         get() = definedExternally
@@ -252,13 +255,13 @@ external interface CommonButtonProps : StandardProps, ButtonHTMLAttributes<HTMLB
         set(value) = definedExternally
 }
 
-external interface IconButtonProps : StandardProps {
+external interface IconButtonProps {
     var icon: IconElement?
         get() = definedExternally
         set(value) = definedExternally
 }
 
-external interface LabelledButtonProps : StandardProps {
+external interface LabelledButtonProps {
     var startIcon: IconElement?
         get() = definedExternally
         set(value) = definedExternally
@@ -269,7 +272,7 @@ external interface LabelledButtonProps : StandardProps {
 
 external interface BaseButtonProps : CommonButtonProps, IconButtonProps, LabelledButtonProps
 
-external interface ButtonProps : BaseButtonProps
+external interface ButtonProps : StandardProps, HtmlButtonProps, BaseButtonProps
 
 external var Button: FC<ButtonProps> = definedExternally
 
@@ -279,10 +282,7 @@ external interface OpenInNewTab {
         set(value) = definedExternally
 }
 
-external interface ButtonLinkProps : BaseButtonProps, OpenInNewTab {
-    var href: String?
-        get() = definedExternally
-        set(value) = definedExternally
+external interface ButtonLinkProps : StandardProps, HtmlAnchorProps, BaseButtonProps, OpenInNewTab {
     var to: history.To?
         get() = definedExternally
         set(value) = definedExternally
@@ -290,7 +290,7 @@ external interface ButtonLinkProps : BaseButtonProps, OpenInNewTab {
 
 external var ButtonLink: FC<ButtonLinkProps> = definedExternally
 
-external interface LoadingProps : StandardProps {
+external interface LoadingProps : StandardProps, HtmlDivProps, ObfuscatedClassName {
     var size: String? /* "small" | "medium" | "large" */
         get() = definedExternally
         set(value) = definedExternally
@@ -298,7 +298,7 @@ external interface LoadingProps : StandardProps {
 
 external var Loading: FC<LoadingProps> = definedExternally
 
-external interface TextProps : StandardProps {
+external interface TextProps : HtmlDivProps {
     var size: String? /* "caption" | "copy" | "body" | "subtitle" */
         get() = definedExternally
         set(value) = definedExternally
@@ -317,3 +317,13 @@ external interface TextProps : StandardProps {
 }
 
 external var Text: FC<TextProps> = definedExternally
+
+external interface TextLinkProps :
+    StandardProps, AnchorHTMLAttributes<HTMLAnchorElement>, OpenInNewTab {
+
+    var to: history.To?
+        get() = definedExternally
+        set(value) = definedExternally
+}
+
+external var TextLink: FC<TextLinkProps> = definedExternally
