@@ -6,7 +6,6 @@ package doist.ffs.components.reactist
 import org.w3c.dom.HTMLButtonElement
 import org.w3c.dom.HTMLInputElement
 import react.FC
-import react.Props
 import react.PropsWithClassName
 import react.PropsWithStyle
 import react.dom.html.ButtonHTMLAttributes
@@ -290,3 +289,31 @@ external interface ButtonLinkProps : BaseButtonProps, OpenInNewTab {
 }
 
 external var ButtonLink: FC<ButtonLinkProps> = definedExternally
+
+external interface LoadingProps : StandardProps {
+    var size: String? /* "small" | "medium" | "large" */
+        get() = definedExternally
+        set(value) = definedExternally
+}
+
+external var Loading: FC<LoadingProps> = definedExternally
+
+external interface TextProps : StandardProps {
+    var size: String? /* "caption" | "copy" | "body" | "subtitle" */
+        get() = definedExternally
+        set(value) = definedExternally
+    var weight: String? /* "regular" | "semibold" | "bold" */
+        get() = definedExternally
+        set(value) = definedExternally
+    var tone: String? /* "normal" | "secondary" | "danger" */
+        get() = definedExternally
+        set(value) = definedExternally
+    var lineClamp: dynamic /* 1 | 2 | 3 | 4 | 5 | "1" | "2" | "3" | "4" | "5" */
+        get() = definedExternally
+        set(value) = definedExternally
+    var align: dynamic /* "start" | "center" | "end" | "justify" | Readonly<Any>? */
+        get() = definedExternally
+        set(value) = definedExternally
+}
+
+external var Text: FC<TextProps> = definedExternally
