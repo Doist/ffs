@@ -2,34 +2,41 @@
 
 package doist.ffs.components
 
-import doist.ffs.KEY_ORGANIZATIONS
+import csstype.JustifyContent
+import doist.ffs.KEY_PROJECTS
 import doist.ffs.api
 import doist.ffs.components.reactist.Button
+import doist.ffs.components.reactist.ButtonLink
 import doist.ffs.components.reactist.Inline
 import doist.ffs.components.reactist.Loading
 import doist.ffs.components.reactist.Stack
-import doist.ffs.components.reactist.Text
 import doist.ffs.components.reactist.TextField
 import doist.ffs.contexts.SessionContext
-import doist.ffs.createOrganization
+import doist.ffs.createProject
 import doist.ffs.ext.toMutableList
-import doist.ffs.listOrganizations
-import doist.ffs.models.Organization
+import doist.ffs.listProjects
+import doist.ffs.models.Project
 import doist.ffs.use
+import kotlinext.js.jso
 import kotlinx.browser.localStorage
 import kotlinx.serialization.builtins.ListSerializer
 import react.FC
 import react.Props
 import react.create
+import react.router.dom.Link
 import react.useContext
 import react.useEffectOnce
 import react.useState
 
-val Organizations = FC<Props> {
+external interface ProjectsProps : Props {
+    var organizationId: Long
+}
+
+val Projects = FC<ProjectsProps> { props ->
     val (_, setSession) = useContext(SessionContext)
-    var organizations by localStorage.use(
-        KEY_ORGANIZATIONS,
-        ListSerializer(Organization.serializer())
+    var projects by localStorage.use(
+        KEY_PROJECTS(props.organizationId),
+        ListSerializer(Project.serializer())
     )
     var isLoading by useState(false)
     var name by useState("")
@@ -38,26 +45,24 @@ val Organizations = FC<Props> {
     useEffectOnce {
         isLoading = true
         api(setSession) {
-            organizations = listOrganizations()
+            projects = listProjects(props.organizationId)
         }.invokeOnCompletion {
             isLoading = false
         }
     }
 
     Stack {
-        space = "large"
-        dividers = "tertiary"
-        paddingBottom = "xxlarge"
+        space = "small"
 
-        organizations?.forEach { organization ->
-            Text {
-                size = "subtitle"
-                lineClamp = 1
-                +organization.name
-            }
-
-            Projects {
-                organizationId = organization.id
+        projects?.forEach { project ->
+            ButtonLink {
+                variant = "quaternary"
+                style = jso {
+                    justifyContent = JustifyContent.start
+                }
+                `as` = Link
+                to = "/projects/${project.id}"
+                +project.name
             }
         }
     }
@@ -69,12 +74,12 @@ val Organizations = FC<Props> {
     Inline {
         space = "small"
         alignY = "bottom"
-        paddingTop = "xxlarge"
+        paddingBottom = "medium"
 
         TextField {
             type = "text"
             value = name
-            placeholder = "Add organization"
+            placeholder = "Add project"
             onChange = {
                 name = it.target.value
             }
@@ -89,8 +94,8 @@ val Organizations = FC<Props> {
                 event.preventDefault()
                 isSubmitting = true
                 api(setSession) {
-                    val id = createOrganization(name)
-                    organizations = organizations.toMutableList() + Organization(id, name)
+                    val id = createProject(name, props.organizationId)
+                    projects = projects.toMutableList() + Project(id, name, props.organizationId)
                     name = ""
                 }.invokeOnCompletion {
                     isSubmitting = false

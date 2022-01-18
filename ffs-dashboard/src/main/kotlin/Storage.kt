@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming")
+
 package doist.ffs
 
 import kotlinx.serialization.KSerializer
@@ -9,6 +11,7 @@ import react.useState
 const val KEY_SESSION = "session"
 const val KEY_USER = "user"
 const val KEY_ORGANIZATIONS = "organizations"
+fun KEY_PROJECTS(organizationId: Long) = "organization/$organizationId/projects"
 
 fun <T> Storage.use(key: String, serializer: KSerializer<T>): StateInstance<T?> {
     val state = useState {
