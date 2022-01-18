@@ -1,4 +1,4 @@
-package doist.ffs.models
+package doist.ffs.db
 
 import kotlinx.serialization.Serializable
 

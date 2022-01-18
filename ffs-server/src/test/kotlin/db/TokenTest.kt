@@ -1,7 +1,6 @@
 package doist.ffs.db
 
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
-import doist.ffs.auth.Permission
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFails
 

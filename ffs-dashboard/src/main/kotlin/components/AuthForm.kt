@@ -10,8 +10,8 @@ import doist.ffs.components.reactist.PasswordField
 import doist.ffs.components.reactist.Stack
 import doist.ffs.components.reactist.TextField
 import doist.ffs.contexts.SessionContext
+import doist.ffs.db.User
 import doist.ffs.login
-import doist.ffs.models.User
 import doist.ffs.register
 import doist.ffs.use
 import doist.ffs.validators.validateEmail

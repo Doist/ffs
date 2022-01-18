@@ -2,7 +2,7 @@
 
 package doist.ffs.routes
 
-import doist.ffs.auth.Permission
+import doist.ffs.db.Permission
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.projects
 import doist.ffs.endpoints.Organizations

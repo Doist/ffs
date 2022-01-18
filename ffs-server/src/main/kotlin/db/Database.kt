@@ -61,7 +61,7 @@ private val instantAdapter = object : ColumnAdapter<Instant, Long> {
     override fun encode(value: Instant) = value.epochSeconds
 }
 
-private val memberAdapter = object : ColumnAdapter<RoleEnum, String> {
-    override fun decode(databaseValue: String): RoleEnum = RoleEnum.valueOf(databaseValue)
-    override fun encode(value: RoleEnum): String = value.toString()
+private val memberAdapter = object : ColumnAdapter<Role, String> {
+    override fun decode(databaseValue: String): Role = Role.valueOf(databaseValue)
+    override fun encode(value: Role): String = value.toString()
 }

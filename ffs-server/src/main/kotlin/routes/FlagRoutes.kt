@@ -4,9 +4,9 @@ package doist.ffs.routes
 
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
-import doist.ffs.auth.Permission
 import doist.ffs.auth.TokenPrincipal
 import doist.ffs.db.Flag
+import doist.ffs.db.Permission
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags
 import doist.ffs.endpoints.Flags

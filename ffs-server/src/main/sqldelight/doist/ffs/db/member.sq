@@ -1,9 +1,9 @@
-import doist.ffs.db.RoleEnum;
+import doist.ffs.db.Role;
 
 CREATE TABLE member(
     user_id INTEGER NOT NULL,
     organization_id INTEGER NOT NULL,
-    role TEXT AS RoleEnum NOT NULL DEFAULT 'USER',
+    role TEXT AS Role NOT NULL DEFAULT 'USER',
     FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE,
     FOREIGN KEY(organization_id) REFERENCES organization(id) ON DELETE CASCADE,
     PRIMARY KEY(user_id, organization_id)

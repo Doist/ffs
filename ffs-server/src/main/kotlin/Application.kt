@@ -4,14 +4,14 @@ import com.squareup.sqldelight.sqlite.driver.asJdbcDriver
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import doist.ffs.auth.AuthorizationException
-import doist.ffs.auth.Permission
 import doist.ffs.auth.Session
 import doist.ffs.auth.TokenPrincipal
 import doist.ffs.auth.UserPrincipal
-import doist.ffs.auth.permissions
 import doist.ffs.auth.scheme
+import doist.ffs.db.Permission
 import doist.ffs.db.fromToken
 import doist.ffs.db.members
+import doist.ffs.db.permissions
 import doist.ffs.db.tokens
 import doist.ffs.endpoints.AuthScheme
 import doist.ffs.plugins.Database

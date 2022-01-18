@@ -1,5 +1,6 @@
 package doist.ffs.auth
 
+import doist.ffs.db.Permission
 import io.ktor.server.auth.Principal
 
 /**

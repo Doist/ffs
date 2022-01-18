@@ -1,6 +1,6 @@
 package routes
 
-import doist.ffs.auth.Permission
+import doist.ffs.db.Permission
 import doist.ffs.db.TokenGenerator
 import doist.ffs.db.tokens
 import doist.ffs.endpoints.Projects
