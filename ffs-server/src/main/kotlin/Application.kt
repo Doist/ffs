@@ -152,6 +152,9 @@ fun Application.installAuthentication() {
                     }
                 )
             }
+            challenge {
+                call.respond(HttpStatusCode.Unauthorized)
+            }
         }
 
         scheme(scheme = "Token", name = "token") {
