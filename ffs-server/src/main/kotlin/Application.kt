@@ -27,10 +27,12 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.serialization
 import io.ktor.server.application.Application
+import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.session
 import io.ktor.server.cio.EngineMain
+import io.ktor.server.config.tryGetString
 import io.ktor.server.plugins.CORS
 import io.ktor.server.plugins.CallLogging
 import io.ktor.server.plugins.Compression
@@ -40,6 +42,7 @@ import io.ktor.server.plugins.StatusPages
 import io.ktor.server.resources.Resources
 import io.ktor.server.response.respond
 import io.ktor.server.routing.IgnoreTrailingSlash
+import io.ktor.server.sessions.SessionStorageMemory
 import io.ktor.server.sessions.SessionTransportTransformer
 import io.ktor.server.sessions.SessionTransportTransformerMessageAuthentication
 import io.ktor.server.sessions.Sessions
@@ -105,13 +108,15 @@ fun Application.installDatabase() = install(Database) {
 
 fun Application.installAuthentication() {
     install(Sessions) {
-        val signKey = environment.config.propertyOrNull("ktor.security.sessions.signKey")?.let {
-            hex(it.getString())
+        val signKey = environment.config.tryGetString("ktor.security.sessions.signKey")?.let {
+            hex(it)
         } ?: Random.nextBytes(HMAC_SECRET_KEY_SIZE)
+        val storage = environment.config.tryGetString("ktor.security.sessions.directory")?.let {
+            directorySessionStorage(File(it))
+        } ?: SessionStorageMemory()
 
         // Reuse authorization header with a "Session" scheme for session authorization.
-        val directory = environment.config.property("ktor.security.sessions.directory").getString()
-        header<Session>(HttpHeaders.Authorization, directorySessionStorage(File(directory))) {
+        header<Session>(HttpHeaders.Authorization, storage) {
             val base = SessionTransportTransformerMessageAuthentication(signKey)
             transform(object : SessionTransportTransformer {
                 val prefix = "${AuthScheme.Session} "
