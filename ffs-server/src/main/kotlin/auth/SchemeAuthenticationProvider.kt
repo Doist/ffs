@@ -16,57 +16,59 @@ import io.ktor.server.auth.parseAuthorizationHeader
 import io.ktor.server.request.ApplicationRequest
 import io.ktor.server.response.respond
 
-private const val KEY_BEARER_AUTH = "BearerAuth"
+private const val KEY_SCHEME_AUTH = "SchemeAuth"
 
-data class BearerCredential(val token: String) : Credential
+data class SchemeCredential(val scheme: String, val token: String) : Credential
 
 /**
- * Represents a Bearer authentication provider.
+ * Represents a scheme authentication provider.
  * Based on [io.ktor.server.auth.BasicAuthenticationProvider].
  *
+ * @property scheme the auth scheme, from [AuthScheme] or custom.
  * @property name is the name of the provider, or `null` for a default provider.
  */
-class BearerAuthenticationProvider internal constructor(
+class SchemeAuthenticationProvider internal constructor(
     configuration: Configuration
 ) : AuthenticationProvider(configuration) {
     internal val authenticationFunction = configuration.authenticationFunction
 
     /**
-     * Bearer auth configuration.
+     * Scheme auth configuration.
      */
     class Configuration internal constructor(
         name: String?
     ) : AuthenticationProvider.Configuration(name) {
-        internal var authenticationFunction: AuthenticationFunction<BearerCredential> = {
+        internal var authenticationFunction: AuthenticationFunction<SchemeCredential> = {
             throw NotImplementedError(
-                "Bearer auth validate function missing. Use `bearer { validate { ... } }` to fix."
+                "scheme validate function missing. Use `scheme(...) { validate { ... } }` to fix."
             )
         }
 
         /**
-         * Sets a validation function that will check given [BearerCredential] instance and return
+         * Sets a validation function that will check given [SchemeCredential] instance and return
          * [Principal], or null if credential does not correspond to an authenticated principal.
          */
-        fun validate(body: suspend ApplicationCall.(BearerCredential) -> Principal?) {
+        fun validate(body: suspend ApplicationCall.(SchemeCredential) -> Principal?) {
             authenticationFunction = body
         }
     }
 }
 
 /**
- * Installs Bearer Authentication mechanism.
+ * Installs Scheme Authentication mechanism.
  */
-fun Authentication.Configuration.bearer(
+fun Authentication.Configuration.scheme(
+    scheme: String,
     name: String? = null,
-    configure: BearerAuthenticationProvider.Configuration.() -> Unit
+    configure: SchemeAuthenticationProvider.Configuration.() -> Unit
 ) {
-    val provider = BearerAuthenticationProvider(
-        BearerAuthenticationProvider.Configuration(name).apply(configure)
+    val provider = SchemeAuthenticationProvider(
+        SchemeAuthenticationProvider.Configuration(name).apply(configure)
     )
     val authenticate = provider.authenticationFunction
 
     provider.pipeline.intercept(AuthenticationPipeline.RequestAuthentication) { context ->
-        val credentials = call.request.bearerAuthenticationCredentials()
+        val credentials = call.request.schemeAuthenticationCredentials(scheme)
         val principal = credentials?.let { authenticate(call, it) }
 
         val cause = when {
@@ -76,7 +78,7 @@ fun Authentication.Configuration.bearer(
         }
 
         if (cause != null) {
-            context.challenge(KEY_BEARER_AUTH, cause) {
+            context.challenge(KEY_SCHEME_AUTH, cause) {
                 call.respond(UnauthorizedResponse())
                 it.complete()
             }
@@ -90,15 +92,15 @@ fun Authentication.Configuration.bearer(
 }
 
 /**
- * Retrieves Bearer authentication credentials for this [ApplicationRequest].
+ * Retrieves scheme's authentication credentials for this [ApplicationRequest].
  */
-fun ApplicationRequest.bearerAuthenticationCredentials(): BearerCredential? {
+fun ApplicationRequest.schemeAuthenticationCredentials(scheme: String): SchemeCredential? {
     val authHeader = parseAuthorizationHeader()
     if (
         authHeader is HttpAuthHeader.Single &&
-        authHeader.authScheme.equals(AuthScheme.Bearer, ignoreCase = true)
+        authHeader.authScheme.equals(scheme, ignoreCase = true)
     ) {
-        return BearerCredential(authHeader.blob)
+        return SchemeCredential(scheme, authHeader.blob)
     }
     return null
 }

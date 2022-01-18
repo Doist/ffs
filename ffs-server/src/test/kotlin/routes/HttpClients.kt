@@ -14,11 +14,11 @@ import doist.ffs.endpoints.Projects.Companion.Tokens
 import doist.ffs.endpoints.Tokens
 import doist.ffs.endpoints.Users
 import doist.ffs.ext.setBodyForm
+import doist.ffs.plugins.SessionHeader
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngineConfig
-import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.post
 import io.ktor.client.plugins.resources.put
@@ -36,7 +36,9 @@ suspend fun ApplicationTestBuilder.createUserClient(
 ): UserHttpClient {
     val client = createClient {
         install(Resources)
-        install(HttpCookies)
+        install(SessionHeader) {
+            name = HttpHeaders.Authorization
+        }
         block?.invoke(this)
     }
 
@@ -128,7 +130,7 @@ suspend fun UserHttpClient.withToken(projectId: Long, permission: Permission): S
 //         client = createClient {
 //             install(Resources)
 //             install(DefaultRequest) {
-//                 header(HttpHeaders.Authorization, "Bearer $token")
+//                 header(HttpHeaders.Authorization, "${AuthScheme.Token} $token")
 //             }
 //         },
 //         projectId = projectId,

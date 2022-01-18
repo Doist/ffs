@@ -5,6 +5,12 @@ package doist.ffs.endpoints
 import io.ktor.resources.Resource
 import kotlinx.serialization.Serializable
 
+@Suppress
+object AuthScheme {
+    const val Token = "Token"
+    const val Session = "Session"
+}
+
 @Serializable
 @Resource("users")
 class Users {

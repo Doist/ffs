@@ -3,6 +3,7 @@
 package doist.ffs
 
 import doist.ffs.api.ApiClient
+import doist.ffs.endpoints.AuthScheme
 import doist.ffs.env.ENV_DEVICE_LOCALE
 import doist.ffs.env.ENV_DEVICE_NAME
 import doist.ffs.env.ENV_DEVICE_OS
@@ -14,9 +15,10 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.accept
-import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonArray
@@ -63,7 +65,7 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
             val job = it.launch {
                 val configRequest: HttpRequestBuilder.() -> Unit = {
                     accept(ContentType.Application.Json)
-                    bearerAuth(config.apiToken)
+                    header(HttpHeaders.Authorization, "${AuthScheme.Token} ${config.apiToken}")
 
                     parameter("env", config.env)
                 }

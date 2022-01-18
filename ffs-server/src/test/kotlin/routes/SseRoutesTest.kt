@@ -8,6 +8,7 @@ import doist.ffs.db.flags
 import doist.ffs.db.organizations
 import doist.ffs.db.projects
 import doist.ffs.db.tokens
+import doist.ffs.endpoints.AuthScheme
 import doist.ffs.endpoints.Flags
 import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
 import doist.ffs.installAuthentication
@@ -99,7 +100,7 @@ class SseRoutesTest {
         handleSse(
             uri = application.href(Flags()),
             setup = {
-                addHeader(HttpHeaders.Authorization, "Bearer $token")
+                addHeader(HttpHeaders.Authorization, "${AuthScheme.Token} $token")
             }
         ) { channel ->
             val readLine = suspend { channel.readUTF8Line()!! }
@@ -195,7 +196,7 @@ class SseRoutesTest {
                 build().fullPath
             },
             setup = {
-                addHeader(HttpHeaders.Authorization, "Bearer $token")
+                addHeader(HttpHeaders.Authorization, "${AuthScheme.Token} $token")
             }
         ) { channel ->
             val readLine = suspend { channel.readUTF8Line()!! }

@@ -12,6 +12,7 @@ include(":ffs-shared:client")
 include(":ffs-shared:endpoints")
 include(":ffs-shared:env")
 include(":ffs-shared:rule")
+include(":ffs-shared:session-header")
 include(":ffs-shared:sse")
 include(":ffs-shared:validators")
 

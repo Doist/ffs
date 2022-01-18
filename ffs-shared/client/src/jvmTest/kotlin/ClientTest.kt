@@ -1,5 +1,6 @@
 package doist.ffs
 
+import doist.ffs.endpoints.AuthScheme
 import doist.ffs.env.ENV_DEVICE_LOCALE
 import doist.ffs.env.ENV_DEVICE_NAME
 import doist.ffs.env.ENV_DEVICE_OS
@@ -46,7 +47,7 @@ class ClientTest {
     fun apiToken() = runTest {
         MockClient().initialize(engine).join()
         val request = engine.requestHistory.last()
-        assertEquals("Bearer $TOKEN", request.headers[HttpHeaders.Authorization])
+        assertEquals("${AuthScheme.Token} $TOKEN", request.headers[HttpHeaders.Authorization])
     }
 
     @Test
