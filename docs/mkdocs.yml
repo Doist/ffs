@@ -83,6 +83,7 @@ nav:
     - API tokens: dashboard/api-tokens.md
     - Feature flags: dashboard/feature-flags.md
     - Permissions: dashboard/permissions.md
+    - Running: dashboard/running.md
   - SDKs:
     - sdks/index.md
     - JavaScript: sdks/javascript.md
