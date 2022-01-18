@@ -19,6 +19,8 @@ val Dashboard = FC<Props> {
 
         Column {
             width = "content"
+
+            Organizations()
         }
 
         Column {

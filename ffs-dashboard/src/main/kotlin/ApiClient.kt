@@ -99,6 +99,13 @@ suspend fun HttpClient.login(email: String, password: String): User =
 
 suspend fun HttpClient.logout() = post(Users.Logout())
 
+suspend fun HttpClient.createOrganization(name: String) =
+    post(Organizations()) {
+        setBodyParameters(Organizations.NAME to name)
+    }
+
+suspend fun HttpClient.listOrganizations(): List<Organization> =
+    get(Organizations()).body()
 
 private fun HttpRequestBuilder.setBodyParameters(vararg args: Pair<String, Any>) {
     setBody(

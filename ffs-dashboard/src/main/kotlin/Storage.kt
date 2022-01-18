@@ -8,6 +8,8 @@ import react.useState
 
 const val KEY_SESSION = "session"
 const val KEY_USER = "user"
+const val KEY_ORGANIZATIONS = "organizations"
+
 fun <T> Storage.use(key: String, serializer: KSerializer<T>): StateInstance<T?> {
     val state = useState {
         getItem(key)?.let { json.decodeFromString(serializer, it) }
