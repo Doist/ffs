@@ -101,10 +101,8 @@ fun Application.installAuthentication() {
         } ?: Random.nextBytes(HMAC_SECRET_KEY_SIZE)
 
         // Reuse authorization header with a "Session" scheme for session authorization.
-        header<Session>(
-            HttpHeaders.Authorization,
-            directorySessionStorage(File("build/.sessions"))
-        ) {
+        val directory = environment.config.property("ktor.security.sessions.directory").getString()
+        header<Session>(HttpHeaders.Authorization, directorySessionStorage(File(directory))) {
             val base = SessionTransportTransformerMessageAuthentication(signKey)
             transform(object : SessionTransportTransformer {
                 val prefix = "${AuthScheme.Session} "
