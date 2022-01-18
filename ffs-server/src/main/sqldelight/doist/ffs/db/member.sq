@@ -9,14 +9,6 @@ CREATE TABLE member(
     PRIMARY KEY(user_id, organization_id)
 );
 
-CREATE TRIGGER trigger_user_organization_updated_at
-AFTER UPDATE ON member
-BEGIN
-    UPDATE user
-    SET updated_at = CURRENT_TIMESTAMP
-    WHERE id = old.user_id;
-END;
-
 insert:
 INSERT INTO member(user_id, organization_id, role)
 VALUES (?, ?, ?);
