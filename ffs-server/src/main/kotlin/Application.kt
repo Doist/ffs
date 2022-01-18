@@ -89,7 +89,9 @@ fun Application.installDatabase() = install(Database) {
                 set(key.removePrefix("hikari."), environment.config.property(key).getString())
             }
     }
-    driver = HikariDataSource(HikariConfig(hikariOptions)).asJdbcDriver()
+    if (hikariOptions.contains("dataSourceClassName")) {
+        driver = HikariDataSource(HikariConfig(hikariOptions)).asJdbcDriver()
+    }
 }
 
 fun Application.installAuthentication() {
