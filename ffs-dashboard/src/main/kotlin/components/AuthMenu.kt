@@ -1,5 +1,6 @@
 package doist.ffs.components
 
+import com.soywiz.krypto.md5
 import doist.ffs.api
 import doist.ffs.components.reactist.Avatar
 import doist.ffs.components.reactist.AvatarUser
@@ -23,6 +24,16 @@ val AuthMenu = FC<Props> {
         alignY = "center"
 
         if (user != null) {
+            Avatar {
+                val hash = user.email.lowercase().encodeToByteArray().md5().hex
+                avatarUrl = "https://www.gravatar.com/avatar/$hash?s=20&d=blank"
+                size = "xs"
+                this.user = AvatarUser().apply {
+                    name = user.name
+                    email = user.email
+                }
+            }
+
             ButtonLink {
                 variant = "tertiary"
                 loading = isSubmitting
