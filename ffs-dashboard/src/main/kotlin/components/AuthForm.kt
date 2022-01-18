@@ -58,7 +58,7 @@ val AuthForm = FC<AuthFormProps> { props ->
                     }
                 )
                 isSubmitting = false
-                navigate("/")
+                navigate(to = "/app")
             }.invokeOnCompletion { error ->
                 if (error != null) {
                     isSubmitting = false

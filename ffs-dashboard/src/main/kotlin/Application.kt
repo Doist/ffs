@@ -2,7 +2,9 @@ package doist.ffs
 
 import doist.ffs.components.App
 import doist.ffs.components.AuthForm
-import doist.ffs.components.Dashboard
+import doist.ffs.components.Landing
+import doist.ffs.components.Project
+import doist.ffs.components.Root
 import kotlinext.js.jso
 import kotlinx.browser.document
 import react.FC
@@ -25,7 +27,7 @@ val root = FC<Props> {
         Routes {
             Route {
                 path = "/"
-                element = createElement(App)
+                element = createElement(Root)
 
                 Route {
                     path = "login"
@@ -34,6 +36,7 @@ val root = FC<Props> {
 
                 Route {
                     path = "register"
+                    @Suppress("NonExternalClassifierExtendingStateOrProps")
                     element = createElement(
                         AuthForm,
                         props = jso {
@@ -44,7 +47,21 @@ val root = FC<Props> {
 
                 Route {
                     index = true
-                    element = createElement(Dashboard)
+                    element = createElement(Landing)
+                }
+
+                Route {
+                    path = "app"
+                    element = createElement(App)
+
+                    Route {
+                        path = "projects"
+
+                        Route {
+                            path = ":projectId"
+                            element = createElement(Project)
+                        }
+                    }
                 }
             }
         }

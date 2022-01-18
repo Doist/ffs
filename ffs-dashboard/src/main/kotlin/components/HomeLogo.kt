@@ -12,7 +12,7 @@ val HomeLogo = FC<Props> {
         to = "/"
 
         img {
-            src = "icon-192.png"
+            src = "/icon-192.png"
             width = 32.0
             height = 32.0
             alt = "FFS logo"

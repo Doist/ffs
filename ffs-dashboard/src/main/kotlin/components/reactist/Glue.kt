@@ -17,8 +17,4 @@ typealias HtmlInputProps = InputHTMLAttributes<HTMLInputElement>
 typealias HtmlButtonProps = ButtonHTMLAttributes<HTMLButtonElement>
 typealias HtmlAnchorProps = AnchorHTMLAttributes<HTMLAnchorElement>
 
-fun AvatarUser(): AvatarUser = js("{}") as AvatarUser
-
-typealias ColumnsCollapseBelow = Any
-
 typealias IconElement = ReactElement
