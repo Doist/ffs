@@ -1,5 +1,6 @@
 package doist.ffs.routes
 
+import doist.ffs.auth.AuthorizationException
 import doist.ffs.auth.Permission
 import doist.ffs.auth.UserPrincipal
 import doist.ffs.db.RoleEnum
@@ -51,7 +52,7 @@ fun Application.installOrganizationRoutes() = routing {
  * Create a new organization. The requesting user becomes an admin.
  */
 private fun Route.createOrganization() = post<Organizations> {
-    val userId = call.principal<UserPrincipal>()!!.id
+    val userId = call.principal<UserPrincipal>()?.id ?: throw AuthorizationException()
     val name = call.receiveParameters().getOrFail(Organizations.NAME)
 
     val id = database.run {
@@ -72,7 +73,7 @@ private fun Route.createOrganization() = post<Organizations> {
  * Lists organizations for the current user.
  */
 private fun Route.getOrganizations() = get<Organizations> {
-    val userId = call.principal<UserPrincipal>()!!.id
+    val userId = call.principal<UserPrincipal>()?.id ?: throw AuthorizationException()
     authorizeForUser(id = userId)
 
     val organizations = database.members.selectOrganizationByUserId(

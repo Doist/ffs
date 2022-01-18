@@ -12,8 +12,6 @@ import doist.ffs.endpoints.Tokens
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.plugins.RedirectResponseException
-import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
@@ -232,24 +230,23 @@ class ProjectRoutesTest {
     fun unauthenticatedAccess() = testApplication {
         val client = createClient {
             install(Resources)
-            install(HttpCookies)
             followRedirects = false
         }
         val id = createUserClient().run {
             withProject(withOrganization())
         }
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.get(Projects.ById(id = id))
         }
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.put(Projects.ById(id = id)) {
                 setBodyForm(Projects.NAME to "Test")
             }
         }
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.delete(Projects.ById(id = id))
         }
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.post(Projects.ById.Tokens(projectId = id)) {
                 setBodyForm(Tokens.PERMISSION to Permission.EVAL, Tokens.DESCRIPTION to "Eval")
             }

@@ -5,7 +5,6 @@ import doist.ffs.endpoints.Users
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.plugins.RedirectResponseException
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.delete
@@ -91,10 +90,8 @@ class UserRoutesTest {
             )
         }
 
-        // Verify logout redirects.
-        assertFailsWith<RedirectResponseException> {
-            client.post(Users.Logout())
-        }
+        val logoutResponse = client.post(Users.Logout())
+        assert(logoutResponse.status == HttpStatusCode.OK)
     }
 
     @Test
@@ -198,11 +195,10 @@ class UserRoutesTest {
             )
         }.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
 
-        assertFailsWith<RedirectResponseException> {
-            client.delete(Users.ById(id = id)) {
-                setBodyForm(Users.CURRENT_PASSWORD to "password123")
-            }
+        val deleteResponse = client.delete(Users.ById(id = id)) {
+            setBodyForm(Users.CURRENT_PASSWORD to "password123")
         }
+        assert(deleteResponse.status == HttpStatusCode.OK)
 
         // Ensure one can't login as a deleted user.
         assertFailsWith<ClientRequestException> {
