@@ -70,6 +70,13 @@ fun Application.installPlugins() {
     install(CORS) {
         // Cross-origin requests are allowed.
         anyHost()
+        // Allow headers that are expected but are not in the request safelist.
+        // Ref: https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_request_header
+        header(HttpHeaders.Authorization)
+        // Expose headers that are sent back but are not in the response safelist.
+        // Ref: https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_response_header
+        exposeHeader(HttpHeaders.Authorization)
+        exposeHeader(HttpHeaders.Location)
     }
     install(DefaultHeaders)
     install(ContentNegotiation) {
