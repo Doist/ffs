@@ -2,6 +2,7 @@
 
 package doist.ffs.components
 
+import db.Organization
 import doist.ffs.KEY_ORGANIZATIONS
 import doist.ffs.api
 import doist.ffs.components.reactist.Button
@@ -14,7 +15,6 @@ import doist.ffs.contexts.SessionContext
 import doist.ffs.createOrganization
 import doist.ffs.ext.toMutableList
 import doist.ffs.listOrganizations
-import doist.ffs.models.Organization
 import doist.ffs.use
 import kotlinx.browser.localStorage
 import kotlinx.serialization.builtins.ListSerializer

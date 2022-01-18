@@ -1,7 +1,7 @@
 package routes
 
-import doist.ffs.auth.Permission
 import doist.ffs.db.Flag
+import doist.ffs.db.Permission
 import doist.ffs.db.TokenGenerator
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.flags

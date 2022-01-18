@@ -1,9 +1,9 @@
 package doist.ffs.routes
 
 import doist.ffs.auth.AuthorizationException
-import doist.ffs.auth.Permission
 import doist.ffs.auth.UserPrincipal
-import doist.ffs.db.RoleEnum
+import doist.ffs.db.Permission
+import doist.ffs.db.Role
 import doist.ffs.db.capturingLastInsertId
 import doist.ffs.db.members
 import doist.ffs.db.organizations
@@ -60,7 +60,7 @@ private fun Route.createOrganization() = post<Organizations> {
             capturingLastInsertId {
                 organizations.insert(name)
             }.also {
-                members.insert(user_id = userId, organization_id = it, role = RoleEnum.ADMIN)
+                members.insert(user_id = userId, organization_id = it, role = Role.ADMIN)
             }
         }
     }
@@ -127,7 +127,7 @@ private fun Route.addUser() = post<Organizations.ById.Members.ById> { (endpoint,
     authorizeForOrganization(id, Permission.DELETE)
 
     val params = call.receiveParameters()
-    val role = RoleEnum.valueOf(params.getOrFail(Organizations.ById.Members.ROLE).uppercase())
+    val role = Role.valueOf(params.getOrFail(Organizations.ById.Members.ROLE).uppercase())
 
     database.members.insert(user_id = userId, organization_id = id, role = role)
     call.respond(HttpStatusCode.Created)
@@ -141,7 +141,7 @@ private fun Route.updateUser() = put<Organizations.ById.Members.ById> { (endpoin
     authorizeForOrganization(id, Permission.DELETE)
 
     val params = call.receiveParameters()
-    val role = RoleEnum.valueOf(params.getOrFail(Organizations.ById.Members.ROLE).uppercase())
+    val role = Role.valueOf(params.getOrFail(Organizations.ById.Members.ROLE).uppercase())
 
     database.members.update(user_id = userId, organization_id = id, role = role)
     call.respond(HttpStatusCode.NoContent)

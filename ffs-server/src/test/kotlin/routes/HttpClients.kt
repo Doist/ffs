@@ -2,8 +2,8 @@
 
 package doist.ffs.routes
 
-import doist.ffs.auth.Permission
-import doist.ffs.db.RoleEnum
+import doist.ffs.db.Permission
+import doist.ffs.db.Role
 import doist.ffs.endpoints.Flags
 import doist.ffs.endpoints.Organizations
 import doist.ffs.endpoints.Organizations.Companion.ById
@@ -56,7 +56,7 @@ suspend fun ApplicationTestBuilder.createUserClient(
     return UserHttpClient(client = client, userId = id)
 }
 
-suspend fun UserHttpClient.withOrganization(role: RoleEnum = RoleEnum.ADMIN): Long {
+suspend fun UserHttpClient.withOrganization(role: Role = Role.ADMIN): Long {
     val createResponse = client.post(Organizations()) {
         setBodyForm(Organizations.NAME to "Test ${Random.nextInt()}")
     }

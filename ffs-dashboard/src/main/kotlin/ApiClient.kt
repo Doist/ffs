@@ -1,12 +1,12 @@
 package doist.ffs
 
+import db.Organization
+import doist.ffs.db.Project
+import doist.ffs.db.User
 import doist.ffs.endpoints.Organizations
 import doist.ffs.endpoints.Organizations.Companion.Projects
 import doist.ffs.endpoints.Projects
 import doist.ffs.endpoints.Users
-import doist.ffs.models.Organization
-import doist.ffs.models.Project
-import doist.ffs.models.User
 import doist.ffs.plugins.SessionHeader
 import doist.ffs.plugins.SessionStorage
 import io.ktor.client.HttpClient

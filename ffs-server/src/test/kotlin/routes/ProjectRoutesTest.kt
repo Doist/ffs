@@ -1,6 +1,6 @@
 package doist.ffs.routes
 
-import doist.ffs.auth.Permission
+import doist.ffs.db.Permission
 import doist.ffs.db.Project
 import doist.ffs.db.SelectByProject
 import doist.ffs.db.TokenGenerator

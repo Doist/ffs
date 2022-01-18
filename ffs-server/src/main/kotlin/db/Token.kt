@@ -2,7 +2,6 @@
 
 package doist.ffs.db
 
-import doist.ffs.auth.Permission
 import java.util.zip.CRC32
 import kotlin.random.Random
 import kotlin.random.nextULong

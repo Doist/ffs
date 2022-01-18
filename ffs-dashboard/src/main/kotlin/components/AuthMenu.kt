@@ -8,8 +8,8 @@ import doist.ffs.components.reactist.AvatarUser
 import doist.ffs.components.reactist.ButtonLink
 import doist.ffs.components.reactist.Inline
 import doist.ffs.contexts.SessionContext
+import doist.ffs.db.User
 import doist.ffs.logout
-import doist.ffs.models.User
 import doist.ffs.use
 import kotlinx.browser.localStorage
 import react.FC

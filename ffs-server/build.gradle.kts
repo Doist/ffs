@@ -12,6 +12,7 @@ plugins {
 sourceSets.create("benchmark")
 
 dependencies {
+    implementation(project(":ffs-shared:db"))
     implementation(project(":ffs-shared:env"))
     implementation(project(":ffs-shared:endpoints"))
     implementation(project(":ffs-shared:rule"))

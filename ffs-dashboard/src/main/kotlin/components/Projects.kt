@@ -13,9 +13,9 @@ import doist.ffs.components.reactist.Stack
 import doist.ffs.components.reactist.TextField
 import doist.ffs.contexts.SessionContext
 import doist.ffs.createProject
+import doist.ffs.db.Project
 import doist.ffs.ext.toMutableList
 import doist.ffs.listProjects
-import doist.ffs.models.Project
 import doist.ffs.use
 import kotlinext.js.jso
 import kotlinx.browser.localStorage

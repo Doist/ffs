@@ -2,7 +2,7 @@ package doist.ffs.routes
 
 import doist.ffs.db.Organization
 import doist.ffs.db.Project
-import doist.ffs.db.RoleEnum
+import doist.ffs.db.Role
 import doist.ffs.db.SelectOrganizationByUserId
 import doist.ffs.endpoints.Organizations
 import doist.ffs.endpoints.Organizations.Companion.ById
@@ -46,7 +46,7 @@ class OrganizationRoutesTest {
     @Test
     fun get() = testApplication {
         val client = createUserClient()
-        val roles = RoleEnum.values().toList()
+        val roles = Role.values().toList()
         val ids = roles.map { client.withOrganization(it) }
 
         val organizations = client.client
@@ -88,9 +88,9 @@ class OrganizationRoutesTest {
     @Test
     fun userManagement() = testApplication {
         val client = createUserClient()
-        val roles = RoleEnum.values().toList()
-        assert(roles[0] == RoleEnum.ADMIN)
-        val ids = List(roles.size) { client.withOrganization(RoleEnum.ADMIN) }
+        val roles = Role.values().toList()
+        assert(roles[0] == Role.ADMIN)
+        val ids = List(roles.size) { client.withOrganization(Role.ADMIN) }
 
         for (i in 1 until roles.size) {
             client.client.put(

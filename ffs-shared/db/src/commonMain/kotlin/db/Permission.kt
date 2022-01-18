@@ -1,6 +1,4 @@
-package doist.ffs.auth
-
-import doist.ffs.db.RoleEnum
+package doist.ffs.db
 
 enum class Permission {
     /**
@@ -27,15 +25,15 @@ enum class Permission {
     companion object
 }
 
-val RoleEnum.permissions: Collection<Permission>
+val Role.permissions: Collection<Permission>
     get() = when (this) {
-        RoleEnum.ADMIN -> listOf(
+        Role.ADMIN -> listOf(
             Permission.EVAL, Permission.READ, Permission.WRITE, Permission.DELETE
         )
-        RoleEnum.USER -> listOf(
+        Role.USER -> listOf(
             Permission.EVAL, Permission.READ, Permission.WRITE
         )
-        RoleEnum.READER -> listOf(
+        Role.READER -> listOf(
             Permission.READ
         )
     }

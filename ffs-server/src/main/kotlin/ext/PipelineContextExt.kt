@@ -1,10 +1,10 @@
 package doist.ffs.ext
 
 import doist.ffs.auth.AccessPrincipal
-import doist.ffs.auth.Permission
 import doist.ffs.auth.Resource
 import doist.ffs.auth.UserPrincipal
 import doist.ffs.auth.authorize
+import doist.ffs.db.Permission
 import io.ktor.http.URLBuilder
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.application
