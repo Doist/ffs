@@ -4,8 +4,8 @@ import doist.ffs.db.SelectById
 import doist.ffs.endpoints.Users
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
+import doist.ffs.plugins.SessionHeader
 import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.href
@@ -260,10 +260,10 @@ class UserRoutesTest {
         assert(updateResponses[0].status == updateResponses[1].status)
     }
 
-    private fun ApplicationTestBuilder.createLocalClient(cookiess: Boolean = true) = createClient {
+    private fun ApplicationTestBuilder.createLocalClient() = createClient {
         install(Resources)
-        if (cookiess) {
-            install(HttpCookies)
+        install(SessionHeader) {
+            name = HttpHeaders.Authorization
         }
     }
 }
