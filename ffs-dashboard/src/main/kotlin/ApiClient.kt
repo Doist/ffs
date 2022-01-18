@@ -4,9 +4,10 @@ import doist.ffs.endpoints.Organizations
 import doist.ffs.endpoints.Users
 import doist.ffs.models.Organization
 import doist.ffs.models.User
+import doist.ffs.plugins.SessionHeader
+import doist.ffs.plugins.SessionStorage
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ContentNegotiation
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpRequestRetry
@@ -17,13 +18,16 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.setBody
 import io.ktor.http.DEFAULT_PORT
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
+import io.ktor.http.Url
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.Job
+import kotlinx.browser.localStorage
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import org.w3c.dom.get
+import org.w3c.dom.set
 import react.ChildrenBuilder
 import react.StateSetter
 
@@ -36,6 +40,17 @@ private val scope = MainScope()
 
 private val client = HttpClient {
     install(Resources)
+    install(SessionHeader) {
+        name = HttpHeaders.Authorization
+        storage = object : SessionStorage {
+            override fun get(url: Url) = localStorage[KEY_SESSION]
+            override fun set(url: Url, value: String?) = if (value != null) {
+                localStorage[KEY_SESSION] = value
+            } else {
+                localStorage.removeItem(KEY_SESSION)
+            }
+        }
+    }
     install(ContentNegotiation) {
         json(json = json)
     }
@@ -49,43 +64,43 @@ private val client = HttpClient {
     }
 }
 
-fun <T> ChildrenBuilder.api(setUser: StateSetter<User?>, method: suspend HttpClient.() -> T): Job {
-    return scope.launch {
-        runCatching {
-            client.method()
-        }.onFailure { error ->
-            when (error) {
-                is ClientRequestException -> {
-                    if (error.response.status == HttpStatusCode.Unauthorized) {
-                        setUser(null)
-                    }
-                }
-            }
-        }
+fun <T> ChildrenBuilder.api(
+    setSession: StateSetter<String?>,
+    method: suspend HttpClient.() -> T
+) = scope.launch {
+    val session = localStorage[KEY_SESSION]
+    runCatching {
+        client.method()
+    }.onFailure {
+        console.warn(it)
+    }
+    val newSession = localStorage[KEY_SESSION]
+    if (session != newSession) {
+        setSession(newSession)
     }
 }
 
 suspend fun HttpClient.register(name: String, email: String, password: String): User =
     post(Users.Register()) {
-        setBody(
+        setBodyParameters(
             Users.NAME to name,
             Users.EMAIL to email,
             Users.PASSWORD to password
         )
     }.body()
 
-suspend fun HttpClient.login(email: String, password: String): User = post(Users.Login()) {
-    setBody(
-        Users.EMAIL to email,
-        Users.PASSWORD to password
-    )
-}.body()
+suspend fun HttpClient.login(email: String, password: String): User =
+    post(Users.Login()) {
+        setBodyParameters(
+            Users.EMAIL to email,
+            Users.PASSWORD to password
+        )
+    }.body()
 
-suspend fun HttpClient.logout() {
-    post(Users.Logout())
-}
+suspend fun HttpClient.logout() = post(Users.Logout())
 
-private fun HttpRequestBuilder.setBody(vararg args: Pair<String, Any>) {
+
+private fun HttpRequestBuilder.setBodyParameters(vararg args: Pair<String, Any>) {
     setBody(
         FormDataContent(
             Parameters.build {

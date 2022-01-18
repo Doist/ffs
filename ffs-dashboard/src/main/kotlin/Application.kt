@@ -2,6 +2,7 @@ package doist.ffs
 
 import doist.ffs.components.App
 import doist.ffs.components.AuthForm
+import doist.ffs.components.Dashboard
 import kotlinext.js.jso
 import kotlinx.browser.document
 import react.FC
@@ -24,7 +25,7 @@ val root = FC<Props> {
         Routes {
             Route {
                 path = "/"
-                element = createElement(App) // Auth + logo/pitch OR Auth menu
+                element = createElement(App)
 
                 Route {
                     path = "login"
@@ -39,6 +40,11 @@ val root = FC<Props> {
                             register = true
                         }
                     )
+                }
+
+                Route {
+                    index = true
+                    element = createElement(Dashboard)
                 }
             }
         }

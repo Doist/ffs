@@ -8,6 +8,7 @@ plugins {
 dependencies {
     implementation(project(":ffs-shared:endpoints"))
     implementation(project(":ffs-shared:validators"))
+    implementation(project(":ffs-shared:session-header"))
 
     implementation(libs.bundles.client.ktor)
     implementation(libs.bundles.client.react)
