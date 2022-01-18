@@ -13,7 +13,6 @@ import doist.ffs.auth.permissions
 import doist.ffs.db.fromToken
 import doist.ffs.db.members
 import doist.ffs.db.tokens
-import doist.ffs.endpoints.Users
 import doist.ffs.plugins.Database
 import doist.ffs.plugins.database
 import doist.ffs.routes.installFlagRoutes
@@ -37,7 +36,6 @@ import io.ktor.server.plugins.ContentNegotiation
 import io.ktor.server.plugins.DefaultHeaders
 import io.ktor.server.plugins.StatusPages
 import io.ktor.server.resources.Resources
-import io.ktor.server.resources.href
 import io.ktor.server.response.respond
 import io.ktor.server.routing.IgnoreTrailingSlash
 import io.ktor.server.sessions.Sessions
@@ -91,7 +89,6 @@ fun Application.installAuthentication() {
                     }
                 )
             }
-            challenge(href(Users.Login()))
         }
         bearer("token") {
             validate { credential ->

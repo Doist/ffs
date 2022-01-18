@@ -39,7 +39,7 @@ No prior authentication required, although it's a no-op if the user is not authe
 POST /users/logout
 ```
 
-Responds `302 Found` and redirects to `/`.
+Responds `200 OK`.
 
 ## Update user
 
@@ -70,4 +70,4 @@ DELETE /users/{id}
 |--------------------|--------|----------| ------------------------- |
 | `current_password` | String | Yes      | Current user password.    |
 
-On success, responds `302 Found` and redirects to `/`.
+On success, responds `200 OK`.

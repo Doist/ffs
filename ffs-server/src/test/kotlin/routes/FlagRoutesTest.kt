@@ -8,8 +8,6 @@ import doist.ffs.endpoints.Projects.Companion.Flags
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.plugins.RedirectResponseException
-import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
@@ -128,21 +126,20 @@ class FlagRoutesTest {
     fun unauthenticatedAccess() = testApplication {
         val client = createClient {
             install(Resources)
-            install(HttpCookies)
             followRedirects = false
         }
         val id = createUserClient().run {
             withFlag(withProject(withOrganization()))
         }
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.get(Flags.ById(id = id))
         }
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.put(Flags.ById(id = id)) {
                 setBodyForm(Flags.NAME to "test")
             }
         }
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.put(Flags.ById.Archive(id = id))
         }
     }

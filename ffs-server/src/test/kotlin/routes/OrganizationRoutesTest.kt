@@ -10,8 +10,6 @@ import doist.ffs.endpoints.Organizations.Companion.Projects
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
 import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.plugins.RedirectResponseException
-import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
@@ -157,27 +155,26 @@ class OrganizationRoutesTest {
     fun unauthenticatedAccess() = testApplication {
         val client = createClient {
             install(Resources)
-            install(HttpCookies)
             followRedirects = false
         }
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.post(Organizations()) {
                 setBodyForm(Organizations.NAME to "Test")
             }
         }
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.get(Organizations())
         }
         val id = createUserClient().withOrganization()
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.get(Organizations.ById(id = id))
         }
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.put(Organizations.ById(id = id)) {
                 setBodyForm(Organizations.NAME to "Test")
             }
         }
-        assertFailsWith<RedirectResponseException> {
+        assertFailsWith<ClientRequestException> {
             client.delete(Organizations.ById(id = id))
         }
     }

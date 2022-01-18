@@ -23,7 +23,6 @@ import io.ktor.server.resources.post
 import io.ktor.server.resources.put
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
 import io.ktor.server.sessions.clear
@@ -80,7 +79,6 @@ private fun Route.loginUser() = post<Users.Login> {
     if (id != null && database.users.testPassword(id, password)) {
         call.sessions.set(Session(id))
         call.respond(HttpStatusCode.OK, database.users.selectById(id = id).executeAsOne())
-        return@post
     } else {
         call.respond(HttpStatusCode.Unauthorized)
     }
@@ -93,7 +91,7 @@ private fun Route.loginUser() = post<Users.Login> {
  */
 private fun Route.logoutUser() = post<Users.Logout> {
     call.sessions.clear<Session>()
-    call.respondRedirect("/")
+    call.respond(HttpStatusCode.OK)
 }
 
 /**
@@ -162,7 +160,7 @@ private fun Route.deleteUser() = delete<Users.ById> { (_, id) ->
     if (database.users.testPassword(id, currentPassword)) {
         database.users.delete(id = id)
         call.sessions.clear<Session>()
-        call.respondRedirect("/")
+        call.respond(HttpStatusCode.OK)
     } else {
         call.respond(HttpStatusCode.Forbidden)
     }
