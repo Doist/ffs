@@ -11,10 +11,7 @@ import doist.ffs.db.tokens
 import doist.ffs.endpoints.AuthScheme
 import doist.ffs.endpoints.Flags
 import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
-import doist.ffs.installAuthentication
-import doist.ffs.installPlugins
-import doist.ffs.installRoutes
-import doist.ffs.plugins.Database
+import doist.ffs.module
 import doist.ffs.plugins.database
 import doist.ffs.serialization.json
 import doist.ffs.sse.SSE_FIELD_PREFIX_DATA
@@ -24,7 +21,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.URLBuilder
 import io.ktor.http.fullPath
 import io.ktor.http.isSuccess
-import io.ktor.server.application.install
 import io.ktor.server.resources.href
 import io.ktor.server.testing.TestApplicationCall
 import io.ktor.server.testing.TestApplicationEngine
@@ -84,7 +80,8 @@ import org.junit.jupiter.api.Test
 @Suppress("LongMethod")
 class SseRoutesTest {
     @Test
-    fun flagStream(): Unit = routes.withTestApplication {
+    fun flagStream(): Unit = withTestApplication {
+        application.module()
         val organizationId = application.database.capturingLastInsertId {
             organizations.insert(name = "test-organization")
         }
@@ -172,7 +169,8 @@ class SseRoutesTest {
     }
 
     @Test
-    fun flagEvalStream(): Unit = routes.withTestApplication {
+    fun flagEvalStream(): Unit = withTestApplication {
+        application.module()
         val organizationId = application.database.capturingLastInsertId {
             organizations.insert(name = "test-organization")
         }
@@ -296,16 +294,4 @@ private fun TestApplicationEngine.handleSse(
     }
 
     return call
-}
-
-private fun withTestApplication(test: TestApplicationEngine.() -> Unit) = withTestApplication {
-    application.apply {
-        // Hikari configuration from application.conf won't be available in tests,
-        // so we need to replicate Application.module() without relying on it. Huh.
-        installPlugins()
-        install(Database)
-        installAuthentication()
-        installRoutes()
-    }
-    test()
 }
