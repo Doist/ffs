@@ -1,8 +1,11 @@
 package doist.ffs
 
 import doist.ffs.endpoints.Organizations
+import doist.ffs.endpoints.Organizations.Companion.Projects
+import doist.ffs.endpoints.Projects
 import doist.ffs.endpoints.Users
 import doist.ffs.models.Organization
+import doist.ffs.models.Project
 import doist.ffs.models.User
 import doist.ffs.plugins.SessionHeader
 import doist.ffs.plugins.SessionStorage
@@ -17,6 +20,7 @@ import io.ktor.client.plugins.resources.post
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.DEFAULT_PORT
 import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
@@ -97,15 +101,25 @@ suspend fun HttpClient.login(email: String, password: String): User =
         )
     }.body()
 
-suspend fun HttpClient.logout() = post(Users.Logout())
-
-suspend fun HttpClient.createOrganization(name: String) =
-    post(Organizations()) {
-        setBodyParameters(Organizations.NAME to name)
-    }
+suspend fun HttpClient.logout() {
+    post(Users.Logout())
+}
 
 suspend fun HttpClient.listOrganizations(): List<Organization> =
     get(Organizations()).body()
+
+suspend fun HttpClient.createOrganization(name: String): Long =
+    post(Organizations()) {
+        setBodyParameters(Organizations.NAME to name)
+    }.getIdFromLocation()
+
+suspend fun HttpClient.listProjects(organizationId: Long): List<Project> =
+    get(Organizations.ById.Projects(organizationId)).body()
+
+suspend fun HttpClient.createProject(name: String, organizationId: Long): Long =
+    post(Organizations.ById.Projects(organizationId)) {
+        setBodyParameters(Projects.NAME to name)
+    }.getIdFromLocation()
 
 private fun HttpRequestBuilder.setBodyParameters(vararg args: Pair<String, Any>) {
     setBody(
@@ -118,3 +132,6 @@ private fun HttpRequestBuilder.setBodyParameters(vararg args: Pair<String, Any>)
         )
     )
 }
+
+private fun HttpResponse.getIdFromLocation() =
+    headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
