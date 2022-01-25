@@ -191,7 +191,6 @@ private sealed class RuleExpr<out T> {
     /**
      * Supported functions.
      */
-    @Suppress("unused")
     sealed class FunctionExpr<T> : RuleExpr<T>() {
         //region Info.
         data class IsBlank(val value: RuleExpr<Any?>) : FunctionExpr<Boolean>() {

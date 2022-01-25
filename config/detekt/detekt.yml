@@ -1,7 +1,11 @@
+complexity:
+  TooManyFunctions:
+    active: false # was true
+
 formatting:
-  # Set 100-char max line length.
   MaximumLineLength:
     maxLineLength: 100 # was 120
+    active: false # was true, use MaxLineLength
   ParameterListWrapping:
     maxLineLength: 100 # was 120
 
@@ -27,3 +31,13 @@ formatting:
     active: true # was false
   SpacingBetweenDeclarationsWithComments:
     active: true # was false
+
+naming:
+  MatchingDeclarationName:
+    active: false # was true
+
+style:
+  MaxLineLength:
+    maxLineLength: 100 # was 120
+  MagicNumber:
+    active: false # was true

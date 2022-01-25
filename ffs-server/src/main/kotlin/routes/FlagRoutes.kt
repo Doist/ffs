@@ -168,7 +168,6 @@ private fun Route.getTokenFlags() = get<Flags> {
 /**
  * Evaluates flags for the token's project.
  */
-@Suppress("BlockingMethodInNonBlockingContext")
 private fun Route.getTokenFlagsEval() = get<Flags.Eval> {
     val projectId = call.principal<TokenPrincipal>()!!.projectId
     authorizeForProject(id = projectId, permission = Permission.EVAL)
@@ -259,7 +258,6 @@ internal suspend fun collectUpdatedFlags(
     }
 }
 
-@Suppress("BlockingMethodInNonBlockingContext")
 private suspend fun getFlagsInternal(
     ctx: PipelineContext<Unit, ApplicationCall>,
     projectId: Long

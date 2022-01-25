@@ -118,7 +118,6 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
         }
     }
 
-    @Suppress("TooManyFunctions")
     private class BaseConfig(
         override val apiToken: String,
         override val url: String,

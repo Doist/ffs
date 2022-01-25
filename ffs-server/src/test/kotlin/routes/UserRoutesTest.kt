@@ -228,7 +228,7 @@ class UserRoutesTest {
 
     @Test
     fun apiLatestOptional() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val versions = listOf("", PATH_LATEST)
 
         val registerResponse = versions.map { version ->

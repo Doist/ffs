@@ -59,7 +59,7 @@ private const val HMAC_SECRET_KEY_SIZE = 64
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
 
-@Suppress("Unused")
+@Suppress("unused")
 fun Application.module() {
     install(Resources)
     install(IgnoreTrailingSlash)

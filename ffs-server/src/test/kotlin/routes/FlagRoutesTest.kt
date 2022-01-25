@@ -27,7 +27,7 @@ import kotlin.test.assertFailsWith
 class FlagRoutesTest {
     @Test
     fun create() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val projectId = client.withProject(client.withOrganization())
         val createResponse = client.client.post(Projects.ById.Flags(projectId = projectId)) {
             setBodyForm(
@@ -47,7 +47,7 @@ class FlagRoutesTest {
 
     @Test
     fun createInvalidRule() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val projectId = client.withProject(client.withOrganization())
 
         assertFailsWith<ClientRequestException> {
@@ -62,7 +62,7 @@ class FlagRoutesTest {
 
     @Test
     fun get() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val projectId = client.withProject(client.withOrganization())
         val ids = List(5) { client.withFlag(projectId) }
 
@@ -75,7 +75,7 @@ class FlagRoutesTest {
 
     @Test
     fun update() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withFlag(client.withProject(client.withOrganization()))
 
         var flag = client.client.get(Flags.ById(id = id)).bodyAsJson<Flag>()
@@ -95,7 +95,7 @@ class FlagRoutesTest {
 
     @Test
     fun updateInvalidRule() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withFlag(client.withProject(client.withOrganization()))
 
         assertFailsWith<ClientRequestException> {
@@ -107,7 +107,7 @@ class FlagRoutesTest {
 
     @Test
     fun archive() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withFlag(client.withProject(client.withOrganization()))
 
         var flag = client.client.get(Flags.ById(id = id)).bodyAsJson<Flag>()
@@ -128,7 +128,7 @@ class FlagRoutesTest {
             install(Resources)
             followRedirects = false
         }
-        val id = createUserClient().run {
+        val id = createSessionClient().run {
             withFlag(withProject(withOrganization()))
         }
         assertFailsWith<ClientRequestException> {
@@ -146,7 +146,7 @@ class FlagRoutesTest {
 
     @Test
     fun apiLatestOptional() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val versions = listOf(PATH_LATEST, "")
 
         val createResponses = versions.map {

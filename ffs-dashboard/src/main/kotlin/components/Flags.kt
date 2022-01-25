@@ -1,5 +1,3 @@
-@file:Suppress("MatchingDeclarationName")
-
 package doist.ffs.components
 
 import doist.ffs.KEY_FLAGS

@@ -3,7 +3,7 @@ package doist.ffs.uuid
 import kotlin.random.Random
 import kotlin.random.nextUBytes
 
-@Suppress("UnnecessaryAbstractClass", "MagicNumber", "ComplexCondition")
+@Suppress("UnnecessaryAbstractClass")
 abstract class UUID private constructor(private val random: Random = Random.Default) {
     constructor(seed: Int) : this(Random(seed))
 
@@ -35,6 +35,7 @@ abstract class UUID private constructor(private val random: Random = Random.Defa
         return buildString {
             bytes.forEachIndexed { i, byte ->
                 val byteStr = byte.toString(radix = 16)
+                @Suppress("ComplexCondition")
                 if (i == 4 || i == 6 || i == 8 || i == 10) {
                     append('-')
                 }

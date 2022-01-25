@@ -21,7 +21,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
-@Suppress("ComplexMethod", "TooGenericExceptionCaught")
+@Suppress("ComplexMethod")
 internal suspend fun HttpClient.stream(
     url: String,
     builder: HttpRequestBuilder.() -> Unit = {},
@@ -81,7 +81,10 @@ internal suspend fun HttpClient.stream(
             }
 
             delay(retry)
-        } catch (throwable: Throwable) {
+        } catch (
+            @Suppress("TooGenericExceptionCaught")
+            throwable: Throwable
+        ) {
             if (throwable is ResponseException || throwable is CancellationException) {
                 // Stop retrying on network errors or cancellation.
                 throw throwable

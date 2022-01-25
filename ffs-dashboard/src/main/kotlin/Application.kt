@@ -16,7 +16,6 @@ import react.router.Route
 import react.router.Routes
 import react.router.dom.BrowserRouter
 
-@Suppress("TooGenericExceptionCaught", "PrintStackTrace")
 fun main() {
     kotlinext.js.require("@doist/reactist/styles/reactist.css")
     render(root.create(), document.getElementById("root")!!)
@@ -36,7 +35,6 @@ val root = FC<Props> {
 
                 Route {
                     path = "register"
-                    @Suppress("NonExternalClassifierExtendingStateOrProps")
                     element = createElement(
                         AuthForm,
                         props = jso {

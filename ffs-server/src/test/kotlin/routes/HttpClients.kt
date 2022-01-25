@@ -1,5 +1,3 @@
-@file:Suppress("MatchingDeclarationName")
-
 package doist.ffs.routes
 
 import doist.ffs.db.Permission
@@ -27,13 +25,17 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.ApplicationTestBuilder
 import kotlin.random.Random
 
-class UserHttpClient(val client: HttpClient, val userId: Long)
+class SessionHttpClient(val client: HttpClient, val userId: Long)
 
-// class TokenHttpClient(val client: HttpClient, val projectId: Long, val userClient: UserHttpClient)
+// class TokenHttpClient(
+//     val client: HttpClient,
+//     val projectId: Long,
+//     val sessionClient: SessionHttpClient
+// )
 
-suspend fun ApplicationTestBuilder.createUserClient(
+suspend fun ApplicationTestBuilder.createSessionClient(
     block: (HttpClientConfig<out HttpClientEngineConfig>.() -> Unit)? = null
-): UserHttpClient {
+): SessionHttpClient {
     val client = createClient {
         install(Resources)
         install(SessionHeader) {
@@ -53,10 +55,10 @@ suspend fun ApplicationTestBuilder.createUserClient(
     assert(registerUserResponse.status == HttpStatusCode.Created)
 
     val id = registerUserResponse.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
-    return UserHttpClient(client = client, userId = id)
+    return SessionHttpClient(client = client, userId = id)
 }
 
-suspend fun UserHttpClient.withOrganization(role: Role = Role.ADMIN): Long {
+suspend fun SessionHttpClient.withOrganization(role: Role = Role.ADMIN): Long {
     val createResponse = client.post(Organizations()) {
         setBodyForm(Organizations.NAME to "Test ${Random.nextInt()}")
     }
@@ -71,7 +73,7 @@ suspend fun UserHttpClient.withOrganization(role: Role = Role.ADMIN): Long {
     return id
 }
 
-suspend fun UserHttpClient.withProject(organizationId: Long): Long {
+suspend fun SessionHttpClient.withProject(organizationId: Long): Long {
     val response = client.post(Organizations.ById.Projects(organizationId = organizationId)) {
         setBodyForm(Projects.NAME to "Test ${Random.nextInt()}")
     }
@@ -81,7 +83,7 @@ suspend fun UserHttpClient.withProject(organizationId: Long): Long {
     return id.toLong()
 }
 
-suspend fun UserHttpClient.withFlag(projectId: Long): Long {
+suspend fun SessionHttpClient.withFlag(projectId: Long): Long {
     val response = client.post(Projects.ById.Flags(projectId = projectId)) {
         setBodyForm(
             Flags.NAME to "test-${Random.nextInt()}",
@@ -94,7 +96,7 @@ suspend fun UserHttpClient.withFlag(projectId: Long): Long {
     return id
 }
 
-suspend fun UserHttpClient.withToken(projectId: Long, permission: Permission): String {
+suspend fun SessionHttpClient.withToken(projectId: Long, permission: Permission): String {
     val response = client.post(Projects.ById.Tokens(projectId = projectId)) {
         setBodyForm(
             Tokens.PERMISSION to permission,

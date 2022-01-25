@@ -31,7 +31,7 @@ import kotlin.test.assertFailsWith
 class OrganizationRoutesTest {
     @Test
     fun create() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val createResponse = client.client.post(Organizations()) {
             setBodyForm(Organizations.NAME to "Test")
         }
@@ -45,7 +45,7 @@ class OrganizationRoutesTest {
 
     @Test
     fun get() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val roles = Role.values().toList()
         val ids = roles.map { client.withOrganization(it) }
 
@@ -59,7 +59,7 @@ class OrganizationRoutesTest {
 
     @Test
     fun getNonexistentId() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
 
         // Nonexistent id.
         assertFailsWith<ClientRequestException> {
@@ -72,7 +72,7 @@ class OrganizationRoutesTest {
 
     @Test
     fun update() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withOrganization()
         var organization = client.client.get(Organizations.ById(id = id)).bodyAsJson<Organization>()
 
@@ -87,7 +87,7 @@ class OrganizationRoutesTest {
 
     @Test
     fun userManagement() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val roles = Role.values().toList()
         assert(roles[0] == Role.ADMIN)
         val ids = List(roles.size) { client.withOrganization(Role.ADMIN) }
@@ -119,7 +119,7 @@ class OrganizationRoutesTest {
 
     @Test
     fun updateUserMissingName() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withOrganization()
         assertFailsWith<ClientRequestException> {
             client.client.put(Organizations.ById.Members.ById(id = id, userId = client.userId))
@@ -128,7 +128,7 @@ class OrganizationRoutesTest {
 
     @Test
     fun projectManagement() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val organizationId = client.withOrganization()
         val projectIds = List(2) { client.withProject(organizationId) }
 
@@ -141,7 +141,7 @@ class OrganizationRoutesTest {
 
     @Test
     fun delete() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withOrganization()
 
         client.client.delete(Organizations.ById.Members.ById(id = id, userId = client.userId))
@@ -165,7 +165,7 @@ class OrganizationRoutesTest {
         assertFailsWith<ClientRequestException> {
             client.get(Organizations())
         }
-        val id = createUserClient().withOrganization()
+        val id = createSessionClient().withOrganization()
         assertFailsWith<ClientRequestException> {
             client.get(Organizations.ById(id = id))
         }
@@ -181,7 +181,7 @@ class OrganizationRoutesTest {
 
     @Test
     fun apiLatestOptional() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val versions = listOf(PATH_LATEST, "")
 
         val createResponses = versions.map {

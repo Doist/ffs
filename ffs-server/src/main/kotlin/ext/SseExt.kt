@@ -14,7 +14,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
  * Reads [SseEvent] events from the specified [ReceiveChannel] and serializes them
  * in a way compatible with the Server-Sent Events specification.
  */
-@Suppress("BlockingMethodInNonBlockingContext")
 internal suspend fun ApplicationCall.stream(
     status: HttpStatusCode,
     events: ReceiveChannel<SseEvent>

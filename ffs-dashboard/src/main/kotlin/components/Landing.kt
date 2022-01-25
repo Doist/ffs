@@ -1,5 +1,3 @@
-@file:Suppress("MatchingDeclarationName", "MaxLineLength")
-
 package doist.ffs.components
 
 import doist.ffs.KEY_SESSION
@@ -37,6 +35,7 @@ val Landing = FC<Props> {
         Notice {
             tone = "caution"
 
+            @Suppress("MaxLineLength")
             Text {
                 +"FFS is in active development. This instance is not persistent and exists for demonstration purposes only. Don't rely on it."
             }

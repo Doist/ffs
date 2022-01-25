@@ -2,7 +2,6 @@ package doist.ffs
 
 import kotlinx.serialization.json.JsonObject
 
-@Suppress("TooManyFunctions")
 interface Config {
     val apiToken: String
 

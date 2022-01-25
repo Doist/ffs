@@ -1,5 +1,3 @@
-@file:Suppress("MatchingDeclarationName", "MagicNumber", "ReturnCount")
-
 package doist.ffs.db
 
 import java.util.zip.CRC32
@@ -48,6 +46,7 @@ object TokenGenerator {
     /**
      * Verifies if [token] follows the token format.
      */
+    @Suppress("ReturnCount")
     fun isFormatValid(token: String): Boolean {
         if (token.length != 60) return false
         val regex = Regex("(ffs[rx]_[0-9a-z]{48})([0-9a-z]{7})")

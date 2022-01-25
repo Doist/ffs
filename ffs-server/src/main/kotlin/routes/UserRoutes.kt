@@ -178,7 +178,6 @@ private suspend fun UserQueries.testPassword(
         return true
     }
     // Waste time to help mitigate timing attacks.
-    @Suppress("MagicNumber")
     delay(Random.nextLong(200, 400))
     return false
 }

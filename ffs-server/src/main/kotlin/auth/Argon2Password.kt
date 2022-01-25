@@ -94,7 +94,6 @@ object Argon2Password {
      * The ctx struct must contain buffers large enough to hold the salt and pwd
      * when it is fed into decode_string.
      */
-    @Suppress("MagicNumber")
     private fun decode(encodedHash: String): Pair<ByteArray, Argon2Parameters> {
         val builder: Argon2Parameters.Builder
         val parts = encodedHash.split("\$")

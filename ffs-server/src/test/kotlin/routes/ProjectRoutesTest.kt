@@ -33,7 +33,7 @@ import kotlin.test.assertFailsWith
 class ProjectRoutesTest {
     @Test
     fun create() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val organizationId = client.withOrganization()
         val createResponse = client.client.post(
             Organizations.ById.Projects(organizationId = organizationId),
@@ -50,7 +50,7 @@ class ProjectRoutesTest {
 
     @Test
     fun get() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val organizationId = client.withOrganization()
         val ids = List(3) { client.withProject(organizationId) }
 
@@ -63,7 +63,7 @@ class ProjectRoutesTest {
 
     @Test
     fun getNonexistentId() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         assertFailsWith<ClientRequestException> {
             client.client.get(Projects.ById(id = 42))
         }
@@ -74,7 +74,7 @@ class ProjectRoutesTest {
 
     @Test
     fun update() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withProject(client.withOrganization())
 
         var project = client.client.get(Projects.ById(id = id)).bodyAsJson<Project>()
@@ -89,7 +89,7 @@ class ProjectRoutesTest {
 
     @Test
     fun updateDuplicateName() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val organizationId = client.withOrganization()
         val projectId = client.withProject(organizationId)
         val project = client.client.get(Projects.ById(id = projectId)).bodyAsJson<Project>()
@@ -103,7 +103,7 @@ class ProjectRoutesTest {
 
     @Test
     fun delete() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withProject(client.withOrganization())
 
         client.client.delete(Projects.ById(id = id))
@@ -115,7 +115,7 @@ class ProjectRoutesTest {
 
     @Test
     fun tokenCreate() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withProject(client.withOrganization())
 
         val evalTokenValue = client.client.post(Projects.ById.Tokens(projectId = id)) {
@@ -144,7 +144,7 @@ class ProjectRoutesTest {
 
     @Test
     fun tokenCreateInvalidPermission() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withProject(client.withOrganization())
 
         Permission.values().filter { it != Permission.EVAL && it != Permission.READ }.forEach {
@@ -161,7 +161,7 @@ class ProjectRoutesTest {
 
     @Test
     fun tokenUpdate() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withProject(client.withOrganization())
 
         client.client.post(Projects.ById.Tokens(projectId = id)) {
@@ -184,7 +184,7 @@ class ProjectRoutesTest {
 
     @Test
     fun tokenUpdatePermissionDoes() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withProject(client.withOrganization())
 
         client.client.post(Projects.ById.Tokens(projectId = id)) {
@@ -207,7 +207,7 @@ class ProjectRoutesTest {
 
     @Test
     fun tokenDelete() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val id = client.withProject(client.withOrganization())
 
         client.client.post(Projects.ById.Tokens(projectId = id)) {
@@ -232,7 +232,7 @@ class ProjectRoutesTest {
             install(Resources)
             followRedirects = false
         }
-        val id = createUserClient().run {
+        val id = createSessionClient().run {
             withProject(withOrganization())
         }
         assertFailsWith<ClientRequestException> {
@@ -255,7 +255,7 @@ class ProjectRoutesTest {
 
     @Test
     fun apiLatestOptional() = testApplication {
-        val client = createUserClient()
+        val client = createSessionClient()
         val versions = listOf(PATH_LATEST, "")
 
         val createResponses = versions.map {

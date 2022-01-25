@@ -22,7 +22,6 @@ private val JsonObject.rolloutId: String?
  *               key for partial frequencies, ensuring that the formula is evaluated consistently
  *               between calls and across environments.
  */
-@Suppress("MagicNumber")
 fun isEnabled(formula: String, env: JsonObject, flagId: Any): Boolean {
     val key = env.rolloutId.takeUnless { it.isNullOrEmpty() }?.let { "$flagId$it" }
     return when (val probability = eval(formula, env)) {

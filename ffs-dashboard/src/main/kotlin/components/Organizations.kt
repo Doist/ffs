@@ -1,5 +1,3 @@
-@file:Suppress("MatchingDeclarationName")
-
 package doist.ffs.components
 
 import db.Organization
