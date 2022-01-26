@@ -22,6 +22,7 @@ import doist.ffs.routes.installProjectRoutes
 import doist.ffs.routes.installUserRoutes
 import doist.ffs.serialization.cbor
 import doist.ffs.serialization.json
+import doist.ffs.sse.LastEventID
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -80,9 +81,11 @@ fun Application.installCors() = install(CORS) {
     // Allow headers that are expected but are not in the request safelist.
     // Ref: https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_request_header
     header(HttpHeaders.Authorization)
+    header(HttpHeaders.LastEventID)
     // Expose headers that are sent back but are not in the response safelist.
     // Ref: https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_response_header
     exposeHeader(HttpHeaders.Authorization)
+    exposeHeader(HttpHeaders.LastEventID)
     exposeHeader(HttpHeaders.Location)
 }
 
