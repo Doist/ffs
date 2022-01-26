@@ -1,6 +1,6 @@
 package doist.ffs.ext
 
-import doist.ffs.sse.HEADER_LAST_EVENT_ID
+import doist.ffs.sse.LastEventID
 import doist.ffs.sse.SSE_FIELD_PREFIX_RETRY
 import doist.ffs.sse.SseEvent
 import doist.ffs.sse.write
@@ -9,6 +9,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.utils.EmptyContent.status
 import io.ktor.http.CacheControl
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.cio.CIO
@@ -41,7 +42,7 @@ class SseIntegrationTest {
         val server = embeddedServer(CIO, port) {
             routing {
                 get("/") {
-                    lastId = call.request.header(HEADER_LAST_EVENT_ID)?.toInt() ?: 0
+                    lastId = call.request.header(HttpHeaders.LastEventID)?.toInt() ?: 0
                     val flow = flow {
                         repeat(batch) {
                             delay(50)

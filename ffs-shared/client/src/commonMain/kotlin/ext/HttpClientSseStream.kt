@@ -1,6 +1,6 @@
 package ext
 
-import doist.ffs.sse.HEADER_LAST_EVENT_ID
+import doist.ffs.sse.LastEventID
 import doist.ffs.sse.SSE_DEFAULT_RETRY
 import doist.ffs.sse.SSE_FIELD_PREFIX_DATA
 import doist.ffs.sse.SSE_FIELD_PREFIX_EVENT
@@ -35,7 +35,7 @@ internal suspend fun HttpClient.stream(
                 header(HttpHeaders.Accept, ContentType.Text.EventStream)
                 header(HttpHeaders.CacheControl, CacheControl.NoCache(null))
                 if (lastEventId != null) {
-                    header(HEADER_LAST_EVENT_ID, lastEventId)
+                    header(HttpHeaders.LastEventID, lastEventId)
                 }
                 builder()
             }.body<ByteReadChannel, Unit> { channel ->
