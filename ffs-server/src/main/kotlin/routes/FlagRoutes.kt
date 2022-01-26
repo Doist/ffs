@@ -68,8 +68,8 @@ fun Application.installFlagRoutes() = routing {
         }
 
         authenticate("token") {
-            getTokenFlags()
-            getTokenFlagsEval()
+            getFlagsViaToken()
+            getFlagsEvalViaToken()
         }
     }
 }
@@ -100,7 +100,42 @@ private fun Route.createFlag() = post<Projects.ById.Flags> { (endpoint) ->
  * Lists existing flags for a project.
  */
 private fun Route.getFlags() = get<Projects.ById.Flags> { (endpoint) ->
-    getFlagsInternal(this, endpoint.id)
+    getFlags(this, endpoint.id)
+}
+
+/**
+ * Get flags for token associated with the token's project.
+ */
+private fun Route.getFlagsViaToken() = get<Flags> {
+    val id = call.principal<TokenPrincipal>()?.projectId
+        ?: throw MissingRequestParameterException("id")
+    getFlags(this, id)
+}
+
+private suspend fun getFlags(ctx: PipelineContext<Unit, ApplicationCall>, projectId: Long) {
+    ctx.authorizeForProject(id = projectId, permission = Permission.READ)
+
+    val query = ctx.database.flags.selectByProject(projectId)
+    val sse = ctx.call.request.acceptItems().any {
+        ContentType.parse(it.value) == ContentType.Text.EventStream
+    }
+    if (sse) {
+        val channel = ctx.produce {
+            val flow = query.asFlow().mapToList(ctx.application.coroutineContext)
+            collectUpdatedFlags(flow) { lastUpdatedAt, updatedFlags ->
+                this.send(
+                    SseEvent(
+                        id = lastUpdatedAt.epochSeconds.toString(),
+                        data = json.encodeToString(updatedFlags)
+                    )
+                )
+            }
+        }
+        ctx.call.stream(HttpStatusCode.OK, channel)
+    } else {
+        val flags = query.executeAsList()
+        ctx.call.respond(HttpStatusCode.OK, flags)
+    }
 }
 
 /**
@@ -157,18 +192,9 @@ private fun Route.unarchiveFlag() = delete<Flags.ById.Archive> { (endpoint) ->
 }
 
 /**
- * Get flags for token associated with the token's project.
- */
-private fun Route.getTokenFlags() = get<Flags> {
-    val id = call.principal<TokenPrincipal>()?.projectId
-        ?: throw MissingRequestParameterException("id")
-    getFlagsInternal(this, id)
-}
-
-/**
  * Evaluates flags for the token's project.
  */
-private fun Route.getTokenFlagsEval() = get<Flags.Eval> {
+private fun Route.getFlagsEvalViaToken() = get<Flags.Eval> {
     val projectId = call.principal<TokenPrincipal>()!!.projectId
     authorizeForProject(id = projectId, permission = Permission.EVAL)
 
@@ -228,8 +254,9 @@ private fun Route.getTokenFlagsEval() = get<Flags.Eval> {
     }
 }
 
-internal suspend fun collectUpdatedFlags(
+private suspend fun collectUpdatedFlags(
     flow: Flow<List<Flag>>,
+    since: Instant = Instant.DISTANT_PAST,
     collect: suspend (Instant, List<Flag>) -> Unit
 ) {
     var lastUpdatedFlags = emptyList<Flag>()
@@ -237,8 +264,7 @@ internal suspend fun collectUpdatedFlags(
         // Select flags that changed since the last flow emission by picking those
         // updated as or more recently than the most recent in the previous batch,
         // that were not contained in the batch itself.
-        val lastUpdatedAt =
-            lastUpdatedFlags.firstOrNull()?.updated_at ?: Instant.DISTANT_PAST
+        val lastUpdatedAt = lastUpdatedFlags.firstOrNull()?.updated_at ?: since
         val updatedFlags = flags.filter { flag ->
             // Instances are recreated on each call, so we can rely on contains().
             flag.updated_at >= lastUpdatedAt && !lastUpdatedFlags.contains(flag)
@@ -255,35 +281,6 @@ internal suspend fun collectUpdatedFlags(
                 flag.updated_at == updatedAt
             }
         }
-    }
-}
-
-private suspend fun getFlagsInternal(
-    ctx: PipelineContext<Unit, ApplicationCall>,
-    projectId: Long
-) {
-    ctx.authorizeForProject(id = projectId, permission = Permission.READ)
-
-    val query = ctx.database.flags.selectByProject(projectId)
-    val sse = ctx.call.request.acceptItems().any {
-        ContentType.parse(it.value) == ContentType.Text.EventStream
-    }
-    if (sse) {
-        val channel = ctx.produce {
-            val flow = query.asFlow().mapToList(ctx.application.coroutineContext)
-            collectUpdatedFlags(flow) { lastUpdatedAt, updatedFlags ->
-                this.send(
-                    SseEvent(
-                        id = lastUpdatedAt.epochSeconds.toString(),
-                        data = json.encodeToString(updatedFlags)
-                    )
-                )
-            }
-        }
-        ctx.call.stream(HttpStatusCode.OK, channel)
-    } else {
-        val flags = query.executeAsList()
-        ctx.call.respond(HttpStatusCode.OK, flags)
     }
 }
 
