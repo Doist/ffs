@@ -48,6 +48,7 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.conflate
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.decodeFromString
@@ -127,7 +128,7 @@ private suspend fun getFlags(ctx: PipelineContext<Unit, ApplicationCall>, projec
             Instant.fromEpochSeconds(lastId)
         } ?: Instant.DISTANT_PAST
         val channel = ctx.produce {
-            val flow = query.asFlow().mapToList(ctx.application.coroutineContext)
+            val flow = query.asFlow().conflate().mapToList(ctx.application.coroutineContext)
             collectUpdatedFlags(flow, since) { lastUpdatedAt, updatedFlags ->
                 send(
                     SseEvent(
@@ -241,7 +242,7 @@ private fun Route.getFlagsEvalViaToken() = get<Flags.Eval> {
             }
 
             // Monitor flag database changes.
-            val flow = query.asFlow().mapToList(application.coroutineContext)
+            val flow = query.asFlow().conflate().mapToList(application.coroutineContext)
             collectUpdatedFlags(flow, since) { _, updatedFlags ->
                 sendUpdatedFlagsEval(updatedFlags)
             }
