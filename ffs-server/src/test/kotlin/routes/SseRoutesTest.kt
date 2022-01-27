@@ -1,5 +1,6 @@
 package routes
 
+import doist.ffs.Database
 import doist.ffs.db.Flag
 import doist.ffs.db.Permission
 import doist.ffs.db.TokenGenerator
@@ -14,6 +15,7 @@ import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
 import doist.ffs.module
 import doist.ffs.plugins.database
 import doist.ffs.serialization.json
+import doist.ffs.sse.LastEventID
 import doist.ffs.sse.SSE_FIELD_PREFIX_DATA
 import doist.ffs.sse.SSE_FIELD_PREFIX_ID
 import io.ktor.http.ContentType
@@ -33,6 +35,7 @@ import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
+import kotlinx.datetime.Instant
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.buildJsonObject
@@ -82,18 +85,7 @@ class SseRoutesTest {
     @Test
     fun flagStream(): Unit = withTestApplication {
         application.module()
-        val organizationId = application.database.capturingLastInsertId {
-            organizations.insert(name = "test-organization")
-        }
-        val projectId = application.database.capturingLastInsertId {
-            projects.insert(organization_id = organizationId, name = "test-project")
-        }
-        val token = TokenGenerator.generate(Permission.READ)
-        application.database.tokens.insert(
-            token = token,
-            project_id = projectId,
-            description = "test-read-token"
-        )
+        val (_, projectId, token) = initializeData(application.database, Permission.READ)
         handleSse(
             uri = application.href(Flags()),
             setup = {
@@ -169,20 +161,55 @@ class SseRoutesTest {
     }
 
     @Test
+    fun flagStreamLastId(): Unit = withTestApplication {
+        application.module()
+        val (_, projectId, token) = initializeData(application.database, Permission.READ)
+        handleSse(
+            uri = application.href(Flags()),
+            setup = {
+                addHeader(HttpHeaders.Authorization, "${AuthScheme.Token} $token")
+                addHeader(HttpHeaders.LastEventID, "${Instant.DISTANT_FUTURE.epochSeconds}")
+            }
+        ) { channel ->
+            // Channel starts out empty as there is no data.
+            assert(channel.availableForRead == 0)
+
+            // Create a flag and check it isn't sent.
+            application.database.flags.run {
+                insert(project_id = projectId, name = "true", rule = "true")
+            }
+            assert(channel.availableForRead == 0)
+        }
+
+        // Reconnect with Last-Event-ID in the past and check that flag is sent.
+        handleSse(
+            uri = application.href(Flags()),
+            setup = {
+                addHeader(HttpHeaders.Authorization, "${AuthScheme.Token} $token")
+                addHeader(HttpHeaders.LastEventID, "${Instant.DISTANT_PAST.epochSeconds}")
+            }
+        ) { channel ->
+            val readLine = suspend { channel.readUTF8Line()!! }
+
+            readLine().startsWith(SSE_FIELD_PREFIX_ID)
+            readLine().let { line ->
+                line.startsWith(SSE_FIELD_PREFIX_DATA)
+                val flags = json.decodeFromString<List<Flag>>(
+                    line.substring(SSE_FIELD_PREFIX_DATA.length)
+                )
+                assert(flags.size == 1)
+                assert(flags[0].name == "true")
+                assert(flags[0].rule == "true")
+                assert(flags[0].archived_at == null)
+            }
+            readLine().isEmpty()
+        }
+    }
+
+    @Test
     fun flagEvalStream(): Unit = withTestApplication {
         application.module()
-        val organizationId = application.database.capturingLastInsertId {
-            organizations.insert(name = "test-organization")
-        }
-        val projectId = application.database.capturingLastInsertId {
-            projects.insert(organization_id = organizationId, name = "test-project")
-        }
-        val token = TokenGenerator.generate(Permission.EVAL)
-        application.database.tokens.insert(
-            token = token,
-            project_id = projectId,
-            description = "test-eval-token"
-        )
+        val (_, projectId, token) = initializeData(application.database, Permission.EVAL)
         val env = buildJsonObject {
             put(ENV_INTERNAL_ROLLOUT_ID, "123456789abcdef")
             put("number", 3)
@@ -248,6 +275,60 @@ class SseRoutesTest {
             assert(channel.availableForRead == 0)
         }
     }
+
+    @Test
+    fun flagEvalStreamLastId(): Unit = withTestApplication {
+        application.module()
+        val (_, projectId, token) = initializeData(application.database, Permission.EVAL)
+        val env = buildJsonObject {
+            put(ENV_INTERNAL_ROLLOUT_ID, "123456789abcdef")
+        }
+        handleSse(
+            uri = URLBuilder().run {
+                application.href(Flags.Eval(), this)
+                parameters[Flags.ENV] = json.encodeToString(env)
+                build().fullPath
+            },
+            setup = {
+                addHeader(HttpHeaders.Authorization, "${AuthScheme.Token} $token")
+                addHeader(HttpHeaders.LastEventID, "${Instant.DISTANT_FUTURE.epochSeconds}")
+            }
+        ) { channel ->
+            // Channel starts out empty as there is no data.
+            assert(channel.availableForRead == 0)
+
+            // Create a flag and check it isn't sent.
+            application.database.flags.run {
+                insert(project_id = projectId, name = "false", rule = "false")
+            }
+            assert(channel.availableForRead == 0)
+        }
+
+        // Reconnect with Last-Event-ID in the past and check that flag is sent.
+        handleSse(
+            uri = URLBuilder().run {
+                application.href(Flags.Eval(), this)
+                parameters[Flags.ENV] = json.encodeToString(env)
+                build().fullPath
+            },
+            setup = {
+                addHeader(HttpHeaders.Authorization, "${AuthScheme.Token} $token")
+                addHeader(HttpHeaders.LastEventID, "${Instant.DISTANT_PAST.epochSeconds}")
+            }
+        ) { channel ->
+            val readLine = suspend { channel.readUTF8Line()!! }
+
+            readLine().startsWith(SSE_FIELD_PREFIX_ID)
+            readLine().let { line ->
+                line.startsWith(SSE_FIELD_PREFIX_DATA)
+                val flagEvals = json.decodeFromString<Map<String, Boolean>>(
+                    line.substring(SSE_FIELD_PREFIX_DATA.length)
+                )
+                assert(flagEvals == mapOf("false" to false))
+            }
+            readLine().isEmpty()
+        }
+    }
 }
 
 /**
@@ -294,4 +375,23 @@ private fun TestApplicationEngine.handleSse(
     }
 
     return call
+}
+
+private fun initializeData(
+    database: Database,
+    permission: Permission
+): Triple<Long, Long, String> {
+    val organizationId = database.capturingLastInsertId {
+        organizations.insert(name = "test-organization")
+    }
+    val projectId = database.capturingLastInsertId {
+        projects.insert(organization_id = organizationId, name = "test-project")
+    }
+    val token = TokenGenerator.generate(permission)
+    database.tokens.insert(
+        token = token,
+        project_id = projectId,
+        description = "test-token"
+    )
+    return Triple(organizationId, projectId, token)
 }
