@@ -18,6 +18,7 @@ import doist.ffs.ext.stream
 import doist.ffs.plugins.database
 import doist.ffs.rule.validateFormula
 import doist.ffs.serialization.json
+import doist.ffs.sse.LastEventID
 import doist.ffs.sse.SseEvent
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -31,6 +32,7 @@ import io.ktor.server.auth.principal
 import io.ktor.server.plugins.MissingRequestParameterException
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.request.acceptItems
+import io.ktor.server.request.header
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.resources.delete
 import io.ktor.server.resources.get
@@ -116,14 +118,18 @@ private suspend fun getFlags(ctx: PipelineContext<Unit, ApplicationCall>, projec
     ctx.authorizeForProject(id = projectId, permission = Permission.READ)
 
     val query = ctx.database.flags.selectByProject(projectId)
-    val sse = ctx.call.request.acceptItems().any {
+    val request = ctx.call.request
+    val sse = request.acceptItems().any {
         ContentType.parse(it.value) == ContentType.Text.EventStream
     }
     if (sse) {
+        val since = request.header(HttpHeaders.LastEventID)?.toLongOrNull()?.let { lastId ->
+            Instant.fromEpochSeconds(lastId)
+        } ?: Instant.DISTANT_PAST
         val channel = ctx.produce {
             val flow = query.asFlow().mapToList(ctx.application.coroutineContext)
-            collectUpdatedFlags(flow) { lastUpdatedAt, updatedFlags ->
-                this.send(
+            collectUpdatedFlags(flow, since) { lastUpdatedAt, updatedFlags ->
+                send(
                     SseEvent(
                         id = lastUpdatedAt.epochSeconds.toString(),
                         data = json.encodeToString(updatedFlags)
@@ -203,10 +209,14 @@ private fun Route.getFlagsEvalViaToken() = get<Flags.Eval> {
     )
 
     val query = database.flags.selectByProject(projectId)
+    val request = call.request
     val sse = call.request.acceptItems().any {
         ContentType.parse(it.value) == ContentType.Text.EventStream
     }
     if (sse) {
+        val since = request.header(HttpHeaders.LastEventID)?.toLongOrNull()?.let { lastId ->
+            Instant.fromEpochSeconds(lastId)
+        } ?: Instant.DISTANT_PAST
         val channel = produce {
             val lastFlagsEval = mutableMapOf<String, Boolean?>().withDefault { false }
             val sendUpdatedFlagsEval: suspend (flags: List<Flag>) -> Unit = { flags: List<Flag> ->
@@ -232,7 +242,7 @@ private fun Route.getFlagsEvalViaToken() = get<Flags.Eval> {
 
             // Monitor flag database changes.
             val flow = query.asFlow().mapToList(application.coroutineContext)
-            collectUpdatedFlags(flow) { _, updatedFlags ->
+            collectUpdatedFlags(flow, since) { _, updatedFlags ->
                 sendUpdatedFlagsEval(updatedFlags)
             }
 
@@ -256,7 +266,7 @@ private fun Route.getFlagsEvalViaToken() = get<Flags.Eval> {
 
 private suspend fun collectUpdatedFlags(
     flow: Flow<List<Flag>>,
-    since: Instant = Instant.DISTANT_PAST,
+    since: Instant,
     collect: suspend (Instant, List<Flag>) -> Unit
 ) {
     var lastUpdatedFlags = emptyList<Flag>()
