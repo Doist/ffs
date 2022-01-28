@@ -18,6 +18,7 @@ interface Config {
     fun setDeviceName(name: String): Config
     fun setDeviceOs(os: String): Config
     fun setDeviceLocale(locale: String): Config
+    fun setDeviceIpAddress(ipAddress: String): Config
 
     fun putString(key: String, value: String): Config
     fun putNumber(key: String, value: Number): Config

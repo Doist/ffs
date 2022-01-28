@@ -4,6 +4,7 @@ package doist.ffs
 
 import doist.ffs.api.ApiClient
 import doist.ffs.endpoints.AuthScheme
+import doist.ffs.env.ENV_DEVICE_IP_ADDRESS
 import doist.ffs.env.ENV_DEVICE_LOCALE
 import doist.ffs.env.ENV_DEVICE_NAME
 import doist.ffs.env.ENV_DEVICE_OS
@@ -155,6 +156,10 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
 
         override fun setDeviceLocale(locale: String): Config = apply {
             map[ENV_DEVICE_LOCALE] = JsonPrimitive(locale)
+        }
+
+        override fun setDeviceIpAddress(ipAddress: String): Config = apply {
+            map[ENV_DEVICE_IP_ADDRESS] = JsonPrimitive(ipAddress)
         }
 
         override fun putString(key: String, value: String): Config = apply {

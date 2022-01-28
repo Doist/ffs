@@ -227,6 +227,19 @@ class RuleEvalTest {
     }
 
     @Test
+    fun range() {
+        assertEquals(0f, eval("""contains([0:10], 11)"""))
+        assertEquals(0f, eval("""contains([0:10], 15)"""))
+        assertEquals(1f, eval("""contains([0:10], 10)"""))
+        assertEquals(1f, eval("""contains([100:500], 100)"""))
+        assertEquals(1f, eval("""contains([100:500], 499)"""))
+        assertEquals(1f, eval("""contains([100:500], 500)"""))
+
+        assertFailsWith<IllegalArgumentException> { eval("""contains([0:10])""") }
+        assertFailsWith<IllegalArgumentException> { eval("""contains([0:10], 2, 3)""") }
+    }
+
+    @Test
     fun logic() {
         assertEquals(0f, eval("""not(true)"""))
         assertEquals(1f, eval("""not(false)"""))
@@ -282,6 +295,57 @@ class RuleEvalTest {
     }
 
     @Test
+    fun ip() {
+        assertEquals(167772160f, eval("""ip("10.0.0.0")"""))
+        assertEquals(2560f, eval("""ip("0.0.10.0")"""))
+        assertEquals(2165248f, eval("""ip("0.33.10.0")"""))
+        assertEquals(3232238083f, eval("""ip("192.168.10.3")"""))
+        assertEquals(4294967041f, eval("""ip("255.255.255.1")"""))
+
+        assertEquals(1f, eval("""gt(ip("192.168.1.0"), ip("192.168.0.255"))"""))
+        assertEquals(1f, eval("""gte(ip("192.168.0.255"), ip("192.168.0.255"))"""))
+        assertEquals(1f, eval("""lt(ip("255.0.255.255"), ip("255.1.0.0"))"""))
+        assertEquals(1f, eval("""lt(ip("9.255.255.255"), ip("10.0.0.0"))"""))
+
+        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0")""") }
+        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.0.0")""") }
+        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.-1")""") }
+        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.256")""") }
+        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.a")""") }
+    }
+
+    @Test
+    fun cidr() {
+        assertEquals(0f, eval("""contains(cidr("254.200.222.210/23"), ip("254.200.224.0"))"""))
+        assertEquals(0f, eval("""contains(cidr("254.200.222.210/23"), ip("254.200.221.255"))"""))
+        assertEquals(0f, eval("""contains(cidr("254.200.222.210/23"), ip("254.200.200.10"))"""))
+        assertEquals(0f, eval("""contains(cidr("192.167.233.10/28"), ip("192.167.233.16"))"""))
+        assertEquals(0f, eval("""contains(cidr("192.167.233.10/28"), ip("192.167.232.255"))"""))
+        assertEquals(0f, eval("""contains(cidr("192.167.233.10/28"), ip("192.167.255.16"))"""))
+        assertEquals(0f, eval("""contains(cidr("192.167.233.11/32"), ip("192.167.233.12"))"""))
+
+        assertEquals(1f, eval("""contains(cidr("254.200.222.210/23"), ip("254.200.223.255"))"""))
+        assertEquals(1f, eval("""contains(cidr("254.200.222.210/23"), ip("254.200.222.0"))"""))
+        assertEquals(1f, eval("""contains(cidr("254.200.222.210/23"), ip("254.200.222.188"))"""))
+        assertEquals(1f, eval("""contains(cidr("192.167.233.10/28"), ip("192.167.233.15"))"""))
+        assertEquals(1f, eval("""contains(cidr("192.167.233.10/28"), ip("192.167.233.0"))"""))
+        assertEquals(1f, eval("""contains(cidr("192.167.233.10/28"), ip("192.167.233.6"))"""))
+        assertEquals(1f, eval("""contains(cidr("192.167.233.11/32"), ip("192.167.233.11"))"""))
+        assertEquals(1f, eval("""contains(cidr("0.0.0.0/0"), ip("0.0.0.0"))"""))
+        assertEquals(1f, eval("""contains(cidr("0.0.0.0/0"), ip("255.255.255.255"))"""))
+        assertEquals(1f, eval("""contains(cidr("0.0.0.0/0"), ip("192.168.44.41"))"""))
+        assertEquals(1f, eval("""contains(cidr("0.0.0.0/0"), ip("41.173.112.199"))"""))
+
+        assertEquals(0f, eval("""contains([cidr("254.200.222.210/23")], ip("254.200.222.25"))"""))
+        assertFailsWith<IllegalArgumentException> {
+            eval("""contains(cidr("254.200.222.210/23"))""")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            eval("""contains([cidr("254.200.222.210/23", "254.200.224.0")])""")
+        }
+    }
+
+    @Test
     fun unsupportedFunctions() {
         assertFailsWith<IllegalArgumentException> { eval("""log10(2)""") }
     }
@@ -290,7 +354,27 @@ class RuleEvalTest {
     fun composition() {
         assertEquals(0f, eval("""if(gte(datetime("2021-06-01"), datetime("2021-05-31")), 0, 1)"""))
         assertEquals(0f, eval("""log(if(gte(datetime("2021-06-01"), now()), 0, 1))"""))
+        assertEquals(
+            0f,
+            eval(
+                """
+                |contains(
+                |[datetime("2021-06-01"):datetime("2021-06-20")], 
+                |now())
+                |""".trimMargin()
+            )
+        )
         assertEquals(1f, eval("""if(gt(plus(now(), 1), div(now(), 1)), minus(2, 1), 0)"""))
+        assertEquals(
+            1f,
+            eval(
+                """
+                |contains(
+                |[datetime("2021-06-01"):datetime("2022-06-20")], 
+                |now())
+                |""".trimMargin()
+            )
+        )
         assertEquals(
             3 / 7f,
             eval(
