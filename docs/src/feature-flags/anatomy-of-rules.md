@@ -36,30 +36,31 @@ Results are always numerical. `true` and `false` are mapped to `1` and `0`, resp
 
 ## Functions
 
-| Name     | Type     | Syntax                                         | Description                                                                                              |
-|----------|----------|------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| isblank  | Info     | `isblank(value)`                               | Checks if the value is blank.                                                                            |
-| eq       | Operator | `eq(a, b)`                                     | Checks if `a` is equal to `b`.                                                                           |
-| gt       | Operator | `gt(a, b)`                                     | Checks if `a` is greater than `b`.                                                                       |
-| gte      | Operator | `gte(a, b)`                                    | Checks if `a` is greater than or equal to `b`.                                                           |
-| lt       | Operator | `lt(a, b)`                                     | Checks if `a` is less than `b`.                                                                          |
-| lte      | Operator | `lte(a, b)`                                    | Checks if `a` is less than or equal to `b`.                                                              |
-| now      | Date     | `now()`                                        | Returns the current date and time.                                                                       |
-| datetime | Date     | `datetime(value)`                              | Returns a date and time. `value` must follow ISO-8601's format date and time, or date.                   |
-| matches  | Lookup   | `matches(regex, value)`                        | Checks if `value` matches `regex`.                                                                       |
-| contains | Lookup   | `contains(list, value)`                        | Checks if `list` contains `value`.                                                                       |
-| not      | Logical  | `not(value)`                                   | Negates the result of `value`.                                                                           |
-| and      | Logical  | `and(a, b)`                                    | Checks if both `a` and `b` are true.                                                                     |
-| or       | Logical  | `or(a, b)`                                     | Checks if either `a` or `b` is true.                                                                     |
-| if       | Logical  | `if(condition, a, b)`                          | If `condition` is true, returns `a`. Otherwise, returns `b`.                                             |
-| plus     | Operator | `plus(a, b)`                                   | Adds `a` and `b`.                                                                                        |
-| minus    | Operator | `minus(a, b)`                                  | Subtracts `b` from `a`.                                                                                  |
-| times    | Operator | `times(a, b)`                                  | Multiplies `a` and `b`.                                                                                  |
-| div      | Operator | `div(a, b)`                                    | Divides `a` by `b`.                                                                                      |
-| rem      | Operator | `rem(a, b)`                                    | Returns the remainder of `a` divided by `b`.                                                             |
-| log      | Math     | `log(a, b)`                                    | Returns the logarithm of `a` to the base of `b`.                                                         |
-| ln       | Math     | `ln(value)`                                    | Returns the natural logarithm of `value`.                                                                |
-| pow      | Math     | `pow(a, b)`                                    | Returns `a` to the power of `b`.                                                                         |
-| exp      | Math     | `exp(value)`                                   | Returns `e` to the power of `value`.                                                                     |
-| map      | Math     | `map(instart, inend, outstart, outend, value)` | Maps `value` over the range `[instart, inend]` and returns the result in the range `[outstart, outend]`. |
+| Name        | Type     | Syntax                                         | Description                                                                                              |
+|-------------|----------|------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| isblank     | Info     | `isblank(value)`                               | Checks if the value is blank.                                                                            |
+| eq          | Operator | `eq(a, b)`                                     | Checks if `a` is equal to `b`.                                                                           |
+| gt          | Operator | `gt(a, b)`                                     | Checks if `a` is greater than `b`.                                                                       |
+| gte         | Operator | `gte(a, b)`                                    | Checks if `a` is greater than or equal to `b`.                                                           |
+| lt          | Operator | `lt(a, b)`                                     | Checks if `a` is less than `b`.                                                                          |
+| lte         | Operator | `lte(a, b)`                                    | Checks if `a` is less than or equal to `b`.                                                              |
+| now         | Date     | `now()`                                        | Returns the current date and time.                                                                       |
+| datetime    | Date     | `datetime(value)`                              | Returns a date and time. `value` must follow ISO-8601's format date and time, or date.                   |
+| matches     | Lookup   | `matches(regex, value)`                        | Checks if `value` matches `regex`.                                                                       |
+| ipv4matches | Lookup   | `ipv4matches(value)`                           | Check if `value` is a valid IPv4 address or subnet mask                                                  |
+| contains    | Lookup   | `contains(list, value)`                        | Checks if `list` contains `value`.                                                                       |
+| not         | Logical  | `not(value)`                                   | Negates the result of `value`.                                                                           |
+| and         | Logical  | `and(a, b)`                                    | Checks if both `a` and `b` are true.                                                                     |
+| or          | Logical  | `or(a, b)`                                     | Checks if either `a` or `b` is true.                                                                     |
+| if          | Logical  | `if(condition, a, b)`                          | If `condition` is true, returns `a`. Otherwise, returns `b`.                                             |
+| plus        | Operator | `plus(a, b)`                                   | Adds `a` and `b`.                                                                                        |
+| minus       | Operator | `minus(a, b)`                                  | Subtracts `b` from `a`.                                                                                  |
+| times       | Operator | `times(a, b)`                                  | Multiplies `a` and `b`.                                                                                  |
+| div         | Operator | `div(a, b)`                                    | Divides `a` by `b`.                                                                                      |
+| rem         | Operator | `rem(a, b)`                                    | Returns the remainder of `a` divided by `b`.                                                             |
+| log         | Math     | `log(a, b)`                                    | Returns the logarithm of `a` to the base of `b`.                                                         |
+| ln          | Math     | `ln(value)`                                    | Returns the natural logarithm of `value`.                                                                |
+| pow         | Math     | `pow(a, b)`                                    | Returns `a` to the power of `b`.                                                                         |
+| exp         | Math     | `exp(value)`                                   | Returns `e` to the power of `value`.                                                                     |
+| map         | Math     | `map(instart, inend, outstart, outend, value)` | Maps `value` over the range `[instart, inend]` and returns the result in the range `[outstart, outend]`. |
 
