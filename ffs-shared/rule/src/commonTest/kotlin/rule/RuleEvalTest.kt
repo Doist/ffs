@@ -282,6 +282,20 @@ class RuleEvalTest {
     }
 
     @Test
+    fun ipv4matches() {
+        assertEquals(0f, eval("""ipv4matches("257.255.255.255")"""))
+        assertEquals(0f, eval("""ipv4matches("0.0.0.257")"""))
+        assertEquals(0f, eval("""ipv4matches("192.168.0.0/33")"""))
+        assertEquals(0f, eval("""ipv4matches("192.168.0.0/08")"""))
+        assertEquals(1f, eval("""ipv4matches("192.168.1.0")"""))
+        assertEquals(1f, eval("""ipv4matches("192.168.0.0/16")"""))
+        assertEquals(1f, eval("""ipv4matches("192.168.0.0/8")"""))
+
+        assertFailsWith<IllegalArgumentException> { eval("""ipv4matches("1", "1")""") }
+        assertFailsWith<IllegalArgumentException> { eval("""ipv4matches(1)""") }
+    }
+
+    @Test
     fun unsupportedFunctions() {
         assertFailsWith<IllegalArgumentException> { eval("""log10(2)""") }
     }

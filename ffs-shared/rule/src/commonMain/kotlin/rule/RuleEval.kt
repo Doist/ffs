@@ -274,6 +274,15 @@ private sealed class RuleExpr<out T> {
         }
         //endregion
 
+        //region IP matching
+        val ipv4Regex = "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}" +
+            "(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/([0-9]|[12][0-9]|3[0-2]))?\$"
+        data class MatchesIpv4(val value: RuleExpr<String>) : FunctionExpr<Boolean>() {
+            override fun eval(env: JsonObject) =
+                ipv4Regex.toRegex().matches(value.castEval(env))
+        }
+        //endregion
+
         //region Arrays.
         data class Contains<T>(
             val list: RuleExpr<List<T>>,
@@ -456,6 +465,7 @@ private sealed class RuleExpr<out T> {
                 "now" -> FunctionExpr.Now
                 "datetime" -> FunctionExpr.Datetime(it.castNext())
                 "matches" -> FunctionExpr.Matches(it.castNext(), it.castNext())
+                "ipv4matches" -> FunctionExpr.MatchesIpv4(it.castNext())
                 "contains" -> FunctionExpr.Contains(it.castNext<List<*>>(), it.castNext())
                 "not" -> FunctionExpr.Not(it.castNext())
                 "and" -> {
