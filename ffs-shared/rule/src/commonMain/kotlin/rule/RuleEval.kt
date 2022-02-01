@@ -290,50 +290,6 @@ private sealed class RuleExpr<out T> {
         }
         //endregion
 
-        // region Lookup
-        data class Ip(val value: RuleExpr<String>) : FunctionExpr<Long>() {
-            override fun eval(env: JsonObject): Long {
-                val octets = value.castEval<String>(env).split('.').map { it.toUByte() }
-                if (octets.size != 4 || octets.any { it < 0u || it > 255u }) {
-                    throw IllegalArgumentException("invalid IPv4 format")
-                }
-
-                return calculateIpv4Value(octets)
-            }
-        }
-
-        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-        data class Cidr(val value: RuleExpr<String>) : FunctionExpr<Collection<Long>>() {
-            override fun eval(env: JsonObject): Collection<Long> {
-                val splittedCidr = value.castEval<String>(env).split('/')
-                val subnetMask = if (splittedCidr.size > 1) splittedCidr[1] else "32"
-                val octets = splittedCidr[0].split('.')
-
-                if (octets.size != 4) {
-                    throw IllegalArgumentException("invalid IPv4 format")
-                }
-
-                val mask = 0xFFFFFFFF shl (32 - subnetMask.toByte())
-                val subnet = arrayOf(
-                    (mask ushr 24).toUByte(),
-                    (mask shr 16 and 0xff).toUByte(),
-                    (mask shr 8 and 0xff).toUByte(),
-                    (mask and 0xff).toUByte()
-                )
-
-                val min = mutableListOf<UByte>(0u, 0u, 0u, 0u)
-                val max = mutableListOf<UByte>(0u, 0u, 0u, 0u)
-                octets.forEachIndexed { i, value ->
-                    val castedValue = value.toUByte()
-                    min[i] = castedValue and subnet[i]
-                    max[i] = castedValue or (subnet[i].inv())
-                }
-
-                return delegateRangeToCollection(calculateIpv4Value(min)..calculateIpv4Value(max))
-            }
-        }
-        // endregion.
-
         //region Arrays.
         data class Contains<T>(
             val list: RuleExpr<Collection<T>>,
@@ -502,6 +458,60 @@ private sealed class RuleExpr<out T> {
         //endregion
     }
 
+    sealed class IpExpr<T> : RuleExpr<T>() {
+        data class Ip(val value: RuleExpr<String>) : FunctionExpr<Long>() {
+            override fun eval(env: JsonObject): Long {
+                val octets = value.castEval<String>(env).split('.').map { it.toUByte() }
+                if (octets.size != 4) {
+                    throw IllegalArgumentException("invalid IPv4 format")
+                }
+
+                return calculateIpv4Value(octets)
+            }
+        }
+
+        data class Cidr(val value: RuleExpr<String>) : FunctionExpr<Collection<Long>>() {
+            override fun eval(env: JsonObject): Collection<Long> {
+                val splittedCidr = value.castEval<String>(env).split('/')
+                val subnetMask = if (splittedCidr.size > 1) splittedCidr[1].toByte() else 32
+                val octets = splittedCidr[0].split('.')
+
+                if (octets.size != 4) {
+                    throw IllegalArgumentException("invalid IPv4 format")
+                }
+
+                val mask = 0xFFFFFFFF shl (32 - subnetMask)
+                val subnet = arrayOf(
+                    (mask ushr 24).toUByte(),
+                    (mask shr 16 and 0xff).toUByte(),
+                    (mask shr 8 and 0xff).toUByte(),
+                    (mask and 0xff).toUByte()
+                )
+
+                val min = mutableListOf<UByte>(0u, 0u, 0u, 0u)
+                val max = mutableListOf<UByte>(0u, 0u, 0u, 0u)
+                octets.forEachIndexed { i, value ->
+                    val castedValue = value.toUByte()
+                    min[i] = castedValue and subnet[i]
+                    max[i] = castedValue or (subnet[i].inv())
+                }
+
+                return delegateRangeToCollection(calculateIpv4Value(min)..calculateIpv4Value(max))
+            }
+        }
+
+        companion object {
+            fun calculateIpv4Value(octets: List<UByte>): Long {
+                var result = octets[0].toLong()
+                octets.drop(1).forEach {
+                    result = (result shl 8) + it.toLong()
+                }
+
+                return result
+            }
+        }
+    }
+
     companion object {
         @Suppress("ComplexMethod", "FunctionName", "UNCHECKED_CAST")
         fun FunctionExpr(id: String, args: List<RuleExpr<*>>): FunctionExpr<*> {
@@ -545,8 +555,8 @@ private sealed class RuleExpr<out T> {
                 "map" -> FunctionExpr.Map(
                     it.castNext(), it.castNext(), it.castNext(), it.castNext(), it.castNext()
                 )
-                "ip" -> FunctionExpr.Ip(it.castNext())
-                "cidr" -> FunctionExpr.Cidr(it.castNext())
+                "ip" -> IpExpr.Ip(it.castNext())
+                "cidr" -> IpExpr.Cidr(it.castNext())
                 else -> throw IllegalArgumentException("Unknown function: $id")
             }
             if (it.hasNext()) {
@@ -581,8 +591,5 @@ private sealed class RuleExpr<out T> {
             override fun contains(value: Long) = range.contains(value)
             override fun iterator() = range.iterator()
         }
-
-        private fun calculateIpv4Value(octets: List<UByte>) =
-            octets.map { it.toLong() }.reduce { result, octet -> (result shl 8) + octet }
     }
 }
