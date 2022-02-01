@@ -1,5 +1,6 @@
 package doist.ffs.rule
 
+import com.ionspin.kotlin.bignum.integer.toBigInteger
 import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonElement
@@ -303,49 +304,94 @@ class RuleEvalTest {
     }
 
     @Test
-    fun ip() {
-        assertEquals(1f, eval("""gt(ip("192.168.1.0"), ip("192.168.0.255"))"""))
-        assertEquals(1f, eval("""gte(ip("192.168.0.255"), ip("192.168.0.255"))"""))
-        assertEquals(1f, eval("""lt(ip("255.0.255.255"), ip("255.1.0.0"))"""))
-        assertEquals(1f, eval("""lt(ip("9.255.255.255"), ip("10.0.0.0"))"""))
+    fun ipv4() {
+        assertEquals("3232235776".toBigInteger(), Ip.Numeric("192.168.1.0").value)
+        assertEquals("4294967295".toBigInteger(), Ip.Numeric("255.255.255.255").value)
+        assertEquals("0".toBigInteger(), Ip.Numeric("0.0.0.0").value)
+        assertEquals("16843009".toBigInteger(), Ip.Numeric("1.1.1.1").value)
 
-        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0")""") }
-        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.0.0")""") }
-        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.-1")""") }
-        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.256")""") }
-        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.a")""") }
+        assertFailsWith<IllegalArgumentException> { Ip.Numeric("10.0.0").value }
+        assertFailsWith<IllegalArgumentException> { Ip.Numeric("10.0.0.0.0").value }
+        assertFailsWith<IllegalArgumentException> { Ip.Numeric("10.0.0.-1").value }
+        assertFailsWith<IllegalArgumentException> { Ip.Numeric("10.0.0.a").value }
     }
 
     @Test
-    fun cidr() {
-        assertEquals(0f, eval("""contains(ip("254.200.224.0"), cidr("254.200.222.210/23"))"""))
-        assertEquals(0f, eval("""contains(ip("254.200.221.255"), cidr("254.200.222.210/23"))"""))
-        assertEquals(0f, eval("""contains(ip("254.200.200.10"), cidr("254.200.222.210/23"))"""))
-        assertEquals(0f, eval("""contains(ip("192.167.233.16"), cidr("192.167.233.10/28"))"""))
-        assertEquals(0f, eval("""contains(ip("192.167.232.255"), cidr("192.167.233.10/28"))"""))
-        assertEquals(0f, eval("""contains(ip("192.167.255.16"), cidr("192.167.233.10/28"))"""))
-        assertEquals(0f, eval("""contains(ip("192.167.233.12"), cidr("192.167.233.11/32"))"""))
-        assertEquals(0f, eval("""contains(ip("192.167.233.12"), cidr("192.167.233.11"))"""))
+    fun ipv4Comparison() {
+        val ip1 = Ip.Numeric("192.168.0.200")
+        val ip2 = Ip.Numeric("192.168.1.0")
+        val ip3 = Ip.Numeric("192.168.1.4")
 
-        assertEquals(1f, eval("""contains(ip("254.200.223.255"), cidr("254.200.222.210/23"))"""))
-        assertEquals(1f, eval("""contains(ip("254.200.222.0"), cidr("254.200.222.210/23"))"""))
-        assertEquals(1f, eval("""contains(ip("254.200.222.188"), cidr("254.200.222.210/23"))"""))
-        assertEquals(1f, eval("""contains(ip("192.167.233.15"), cidr("192.167.233.10/28"))"""))
-        assertEquals(1f, eval("""contains(ip("192.167.233.0"), cidr("192.167.233.10/28"))"""))
-        assertEquals(1f, eval("""contains(ip("192.167.233.6"), cidr("192.167.233.10/28"))"""))
-        assertEquals(1f, eval("""contains(ip("192.167.233.11"), cidr("192.167.233.11/32"))"""))
-        assertEquals(1f, eval("""contains(ip("192.167.233.11"), cidr("192.167.233.11"))"""))
-        assertEquals(1f, eval("""contains(ip("0.0.0.0"), cidr("0.0.0.0/0"))"""))
-        assertEquals(1f, eval("""contains(ip("255.255.255.255"), cidr("0.0.0.0/0"))"""))
-        assertEquals(1f, eval("""contains(ip("192.168.44.41"), cidr("0.0.0.0/0"))"""))
-        assertEquals(1f, eval("""contains(ip("41.173.112.199"), cidr("0.0.0.0/0"))"""))
+        assertEquals(false, ip1 > ip3)
+        assertEquals(true, ip1 < ip2)
+        assertEquals(true, ip2 < ip3)
+        assertEquals(true, ip2 == ip2)
+    }
 
-        assertEquals(0f, eval("""contains(ip("254.200.222.25"), [cidr("254.200.222.210/23")])"""))
-        assertFailsWith<IllegalArgumentException> {
-            eval("""contains(cidr("254.200.222.210/23"))""")
+    @Test
+    fun ipv6() {
+        assertEquals(
+            "0".toBigInteger(),
+            Ip.Numeric("0:0:0:0:0:0:0:0").value
+        )
+        assertEquals(
+            "18446744073709551615".toBigInteger(),
+            Ip.Numeric("0:0:0:0:ffff:ffff:ffff:ffff").value
+        )
+        assertEquals(
+            "340282366920938463463374607431768211455".toBigInteger(),
+            Ip.Numeric("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").value
+        )
+        assertEquals(
+            "340282366920938463463374325956791500800".toBigInteger(),
+            Ip.Numeric("ffff:ffff:ffff:ffff:ffff::").value
+        )
+        assertEquals(
+            "1095218888755".toBigInteger(),
+            Ip.Numeric("::ff:22:33").value
+        )
+        assertEquals(
+            "88269046595092069685019532815630387".toBigInteger(),
+            Ip.Numeric("11::ff:22:33").value
+        )
+    }
+
+    @Test
+    fun cidrv4() {
+        with(Ip.IpRange("254.200.222.210/23")) {
+            assertEquals("4274576896".toBigInteger(), start.value)
+            assertEquals("4274577407".toBigInteger(), endInclusive.value)
         }
-        assertFailsWith<IllegalArgumentException> {
-            eval("""contains("254.200.224.0")], [cidr("254.200.222.210/23")""")
+
+        with(Ip.IpRange("0.0.0.0/0")) {
+            assertEquals("0".toBigInteger(), start.value)
+            assertEquals("4294967295".toBigInteger(), endInclusive.value)
+        }
+
+        with(Ip.IpRange("254.200.222.210/32")) {
+            assertEquals("4274577106".toBigInteger(), start.value)
+            assertEquals("4274577106".toBigInteger(), endInclusive.value)
+        }
+    }
+
+    @Test
+    fun cidrv6() {
+        with(Ip.IpRange("0000:0000:0000:0000:0000:00ff:0022:0033/122")) {
+            assertEquals("1095218888704".toBigInteger(), start.value)
+            assertEquals("1095218888767".toBigInteger(), endInclusive.value)
+        }
+
+        with(Ip.IpRange("0000:0000:0000:0000:0000:00ff:0022:0033/0")) {
+            assertEquals("0".toBigInteger(), start.value)
+            assertEquals(
+                "340282366920938463463374607431768211455".toBigInteger(),
+                endInclusive.value
+            )
+        }
+
+        with(Ip.IpRange("0000:0000:0000:0000:0000:00ff:0022:0033/128")) {
+            assertEquals("1095218888755".toBigInteger(), start.value)
+            assertEquals("1095218888755".toBigInteger(), endInclusive.value)
         }
     }
 
@@ -356,6 +402,8 @@ class RuleEvalTest {
 
     @Test
     fun composition() {
+        assertEquals(1f, eval("""gte(ip("192.168.0.255"), ip("192.168.0.255"))"""))
+        assertEquals(1f, eval("""contains(ip("254.200.223.255"), cidr("254.200.222.210/23"))"""))
         assertEquals(0f, eval("""if(gte(datetime("2021-06-01"), datetime("2021-05-31")), 0, 1)"""))
         assertEquals(0f, eval("""log(if(gte(datetime("2021-06-01"), now()), 0, 1))"""))
         assertEquals(

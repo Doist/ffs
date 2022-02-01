@@ -7,6 +7,7 @@ kotlin {
                 implementation(libs.better.parse)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.murmurhash)
+                implementation(libs.ionspin.bignum)
             }
         }
     }
