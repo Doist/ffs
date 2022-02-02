@@ -113,8 +113,11 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
             RuleExpr.NumberExpr(value)
         }
     private val long = optional(minus) and digits map { (minus, int) ->
-        var value = int.text.toLong()
-        minus?.let { value -= value }
+        val value = if (minus != null) {
+            "-${int.text}".toLong()
+        } else {
+            int.text.toLong()
+        }
         RuleExpr.NumberExpr(value)
     }
     private val number = double or long
@@ -201,7 +204,7 @@ private sealed class RuleExpr<out T> {
         val to: RuleExpr<T>
     ) : RuleExpr<Collection<Long>>() {
         override fun eval(env: JsonObject) =
-            delegateRangeToCollection(LongRange(from.eval(env) as Long, to.eval(env) as Long))
+            wrapRangeInCollection(from.castEval<Long>(env)..to.castEval<Long>(env))
     }
 
     /**
@@ -466,7 +469,7 @@ private sealed class RuleExpr<out T> {
                     throw IllegalArgumentException("invalid IPv4 format")
                 }
 
-                return calculateIpv4Value(octets)
+                return sumOctets(octets)
             }
         }
 
@@ -496,12 +499,12 @@ private sealed class RuleExpr<out T> {
                     max[i] = castedValue or (subnet[i].inv())
                 }
 
-                return delegateRangeToCollection(calculateIpv4Value(min)..calculateIpv4Value(max))
+                return wrapRangeInCollection(sumOctets(min)..sumOctets(max))
             }
         }
 
         companion object {
-            fun calculateIpv4Value(octets: List<UByte>): Long {
+            fun sumOctets(octets: List<UByte>): Long {
                 var result = octets[0].toLong()
                 octets.drop(1).forEach {
                     result = (result shl 8) + it.toLong()
@@ -581,15 +584,19 @@ private sealed class RuleExpr<out T> {
         }
 
         @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-        private fun delegateRangeToCollection(
-            range: LongRange
-        ): Collection<Long> = object : ClosedRange<Long> by range, Collection<Long> {
-            override val size: Int get() = (endInclusive - start).toInt()
-            override fun containsAll(elements: Collection<Long>) = elements.all {
-                range.contains(it)
+        private fun wrapRangeInCollection(range: LongRange): Collection<Long> {
+            if (range.first > range.last) {
+                throw IllegalArgumentException("can't use inverted range")
             }
-            override fun contains(value: Long) = range.contains(value)
-            override fun iterator() = range.iterator()
+
+            return object : ClosedRange<Long> by range, Collection<Long> {
+                override val size: Int get() = (endInclusive - start).toInt()
+                override fun containsAll(elements: Collection<Long>) = elements.all {
+                    range.contains(it)
+                }
+                override fun contains(value: Long) = range.contains(value)
+                override fun iterator() = range.iterator()
+            }
         }
     }
 }
