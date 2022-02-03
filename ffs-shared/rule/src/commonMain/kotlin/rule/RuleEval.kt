@@ -113,11 +113,8 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
             RuleExpr.NumberExpr(value)
         }
     private val long = optional(minus) and digits map { (minus, int) ->
-        val value = if (minus != null) {
-            "-${int.text}".toLong()
-        } else {
-            int.text.toLong()
-        }
+        var value = int.text.toLong()
+        minus?.let { value = -value }
         RuleExpr.NumberExpr(value)
     }
     private val number = double or long

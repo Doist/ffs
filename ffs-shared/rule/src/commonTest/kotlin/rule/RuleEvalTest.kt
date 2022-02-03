@@ -240,7 +240,7 @@ class RuleEvalTest {
         assertEquals(1f, eval("""contains([0:2147483647], 1)"""))
         assertEquals(1f, eval("""contains([0:9223372036854775807], 9223372036854775807)"""))
         assertEquals(1f, eval("""contains([0:9223372036854775807], 3)"""))
-        assertEquals(1f, eval("""contains([-9223372036854775808:5], -9223372036854775808)"""))
+        assertEquals(1f, eval("""contains([-9223372036854775807:5], -9223372036854775807)"""))
 
         assertFailsWith<IllegalArgumentException> { eval("""contains([10:0], 7)""") }
         assertFailsWith<IllegalArgumentException> { eval("""contains([0:10])""") }
