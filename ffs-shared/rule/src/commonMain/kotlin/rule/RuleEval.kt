@@ -260,7 +260,7 @@ private sealed class RuleExpr<out T> {
         }
         //endregion
 
-        //region Dates.
+        //region Date.
         object Now : FunctionExpr<Long>() {
             override fun eval(env: JsonObject) = Clock.System.now().epochSeconds
         }
@@ -276,6 +276,50 @@ private sealed class RuleExpr<out T> {
                     value.toLocalDate().atStartOfDayIn(TimeZone.UTC)
                 }.getOrThrow()
                 return instant.epochSeconds
+            }
+        }
+        //endregion
+
+        //region IP Address.
+        sealed class IpExpr<T> : FunctionExpr<T>() {
+            data class Ip(val value: RuleExpr<String>) : FunctionExpr<Long>() {
+                override fun eval(env: JsonObject) =
+                    value.castEval<String>(env).toOctets().sumOctets()
+            }
+
+            data class Cidr(val value: RuleExpr<String>) : FunctionExpr<Collection<Long>>() {
+                override fun eval(env: JsonObject): Collection<Long> {
+                    val ipWidth = value.castEval<String>(env).split('/')
+                    val octets = ipWidth[0].toOctets()
+                    val width = ipWidth.getOrNull(1)?.toByte() ?: 32
+
+                    val mask = 0xFFFFFFFF shl (32 - width)
+                    val subnet =
+                        listOf(mask shr 24, mask shr 16, mask shr 8, mask).map { it.toUByte() }
+
+                    val min = mutableListOf<UByte>(0u, 0u, 0u, 0u)
+                    val max = mutableListOf<UByte>(0u, 0u, 0u, 0u)
+                    octets.forEachIndexed { i, value ->
+                        min[i] = value and subnet[i]
+                        max[i] = value or subnet[i].inv()
+                    }
+
+                    return wrapRangeInCollection(min.sumOctets()..max.sumOctets())
+                }
+            }
+
+            companion object {
+                private fun String.toOctets(): List<UByte> {
+                    val octets = split('.').map { it.toUByte() }
+                    if (octets.size != 4) {
+                        throw IllegalArgumentException("invalid IPv4 format")
+                    }
+                    return octets
+                }
+
+                private fun List<UByte>.sumOctets() = fold(0L) { acc, octet ->
+                    (acc shl 8) + octet.toLong()
+                }
             }
         }
         //endregion
@@ -456,50 +500,6 @@ private sealed class RuleExpr<out T> {
             }
         }
         //endregion
-
-        //region IP Address.
-        sealed class IpExpr<T> : FunctionExpr<T>() {
-            data class Ip(val value: RuleExpr<String>) : FunctionExpr<Long>() {
-                override fun eval(env: JsonObject) =
-                    value.castEval<String>(env).toOctets().sumOctets()
-            }
-
-            data class Cidr(val value: RuleExpr<String>) : FunctionExpr<Collection<Long>>() {
-                override fun eval(env: JsonObject): Collection<Long> {
-                    val ipWidth = value.castEval<String>(env).split('/')
-                    val octets = ipWidth[0].toOctets()
-                    val width = ipWidth.getOrNull(1)?.toByte() ?: 32
-
-                    val mask = 0xFFFFFFFF shl (32 - width)
-                    val subnet =
-                        listOf(mask shr 24, mask shr 16, mask shr 8, mask).map { it.toUByte() }
-
-                    val min = mutableListOf<UByte>(0u, 0u, 0u, 0u)
-                    val max = mutableListOf<UByte>(0u, 0u, 0u, 0u)
-                    octets.forEachIndexed { i, value ->
-                        min[i] = value and subnet[i]
-                        max[i] = value or subnet[i].inv()
-                    }
-
-                    return wrapRangeInCollection(min.sumOctets()..max.sumOctets())
-                }
-            }
-
-            companion object {
-                private fun String.toOctets(): List<UByte> {
-                    val octets = split('.').map { it.toUByte() }
-                    if (octets.size != 4) {
-                        throw IllegalArgumentException("invalid IPv4 format")
-                    }
-                    return octets
-                }
-
-                private fun List<UByte>.sumOctets() = fold(0L) { acc, octet ->
-                    (acc shl 8) + octet.toLong()
-                }
-            }
-        }
-        //endregion
     }
 
     companion object {
@@ -515,6 +515,8 @@ private sealed class RuleExpr<out T> {
                 "lte" -> FunctionExpr.Lte<Any>(it.castNext(), it.castNext())
                 "now" -> FunctionExpr.Now
                 "datetime" -> FunctionExpr.Datetime(it.castNext())
+                "ip" -> FunctionExpr.IpExpr.Ip(it.castNext())
+                "cidr" -> FunctionExpr.IpExpr.Cidr(it.castNext())
                 "matches" -> FunctionExpr.Matches(it.castNext(), it.castNext())
                 "contains" -> FunctionExpr.Contains(it.castNext<Collection<*>>(), it.castNext())
                 "not" -> FunctionExpr.Not(it.castNext())
@@ -545,8 +547,6 @@ private sealed class RuleExpr<out T> {
                 "map" -> FunctionExpr.Map(
                     it.castNext(), it.castNext(), it.castNext(), it.castNext(), it.castNext()
                 )
-                "ip" -> FunctionExpr.IpExpr.Ip(it.castNext())
-                "cidr" -> FunctionExpr.IpExpr.Cidr(it.castNext())
                 else -> throw IllegalArgumentException("Unknown function: $id")
             }
             if (it.hasNext()) {
