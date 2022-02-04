@@ -456,65 +456,55 @@ private sealed class RuleExpr<out T> {
             }
         }
         //endregion
-    }
 
-    sealed class IpExpr<T> : RuleExpr<T>() {
-        data class Ip(val value: RuleExpr<String>) : FunctionExpr<Long>() {
-            override fun eval(env: JsonObject): Long {
-                val octets = value.castEval<String>(env).split('.').map { it.toUByte() }
-                if (octets.size != 4) {
-                    throw IllegalArgumentException("invalid IPv4 format")
+        //region IP Address.
+        sealed class IpExpr<T> : FunctionExpr<T>() {
+            data class Ip(val value: RuleExpr<String>) : FunctionExpr<Long>() {
+                override fun eval(env: JsonObject) =
+                    value.castEval<String>(env).toOctets().sumOctets()
+            }
+
+            data class Cidr(val value: RuleExpr<String>) : FunctionExpr<Collection<Long>>() {
+                override fun eval(env: JsonObject): Collection<Long> {
+                    val ipWidth = value.castEval<String>(env).split('/')
+                    val octets = ipWidth[0].toOctets()
+                    val width = ipWidth.getOrNull(1)?.toByte() ?: 32
+
+                    val mask = 0xFFFFFFFF shl (32 - width)
+                    val subnet =
+                        listOf(mask shr 24, mask shr 16, mask shr 8, mask).map { it.toUByte() }
+
+                    val min = mutableListOf<UByte>(0u, 0u, 0u, 0u)
+                    val max = mutableListOf<UByte>(0u, 0u, 0u, 0u)
+                    octets.forEachIndexed { i, value ->
+                        min[i] = value and subnet[i]
+                        max[i] = value or subnet[i].inv()
+                    }
+
+                    return wrapRangeInCollection(min.sumOctets()..max.sumOctets())
+                }
+            }
+
+            companion object {
+                private fun String.toOctets(): List<UByte> {
+                    val octets = split('.').map { it.toUByte() }
+                    if (octets.size != 4) {
+                        throw IllegalArgumentException("invalid IPv4 format")
+                    }
+                    return octets
                 }
 
-                return sumOctets(octets)
+                private fun List<UByte>.sumOctets() = fold(0L) { acc, octet ->
+                    (acc shl 8) + octet.toLong()
+                }
             }
         }
-
-        data class Cidr(val value: RuleExpr<String>) : FunctionExpr<Collection<Long>>() {
-            override fun eval(env: JsonObject): Collection<Long> {
-                val splittedCidr = value.castEval<String>(env).split('/')
-                val subnetMask = if (splittedCidr.size > 1) splittedCidr[1].toByte() else 32
-                val octets = splittedCidr[0].split('.')
-
-                if (octets.size != 4) {
-                    throw IllegalArgumentException("invalid IPv4 format")
-                }
-
-                val mask = 0xFFFFFFFF shl (32 - subnetMask)
-                val subnet = arrayOf(
-                    (mask ushr 24).toUByte(),
-                    (mask shr 16 and 0xff).toUByte(),
-                    (mask shr 8 and 0xff).toUByte(),
-                    (mask and 0xff).toUByte()
-                )
-
-                val min = mutableListOf<UByte>(0u, 0u, 0u, 0u)
-                val max = mutableListOf<UByte>(0u, 0u, 0u, 0u)
-                octets.forEachIndexed { i, value ->
-                    val castedValue = value.toUByte()
-                    min[i] = castedValue and subnet[i]
-                    max[i] = castedValue or (subnet[i].inv())
-                }
-
-                return wrapRangeInCollection(sumOctets(min)..sumOctets(max))
-            }
-        }
-
-        companion object {
-            fun sumOctets(octets: List<UByte>): Long {
-                var result = octets[0].toLong()
-                octets.drop(1).forEach {
-                    result = (result shl 8) + it.toLong()
-                }
-
-                return result
-            }
-        }
+        //endregion
     }
 
     companion object {
         @Suppress("ComplexMethod", "FunctionName", "UNCHECKED_CAST")
-        fun FunctionExpr(id: String, args: List<RuleExpr<*>>): FunctionExpr<*> {
+        fun FunctionExpr(id: String, args: List<RuleExpr<*>>): RuleExpr.FunctionExpr<*> {
             val it = args.iterator()
             val functionExpr = when (id.lowercase()) {
                 "isblank" -> FunctionExpr.IsBlank(it.castNext())
@@ -555,8 +545,8 @@ private sealed class RuleExpr<out T> {
                 "map" -> FunctionExpr.Map(
                     it.castNext(), it.castNext(), it.castNext(), it.castNext(), it.castNext()
                 )
-                "ip" -> IpExpr.Ip(it.castNext())
-                "cidr" -> IpExpr.Cidr(it.castNext())
+                "ip" -> FunctionExpr.IpExpr.Ip(it.castNext())
+                "cidr" -> FunctionExpr.IpExpr.Cidr(it.castNext())
                 else -> throw IllegalArgumentException("Unknown function: $id")
             }
             if (it.hasNext()) {
