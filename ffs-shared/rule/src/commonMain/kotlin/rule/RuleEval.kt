@@ -221,8 +221,8 @@ private sealed class RuleExpr<out T> {
 
         //region Operators.
         data class Eq<T>(
-            val value1: RuleExpr<Any?>,
-            val value2: RuleExpr<Any?>
+            val value1: RuleExpr<T?>,
+            val value2: RuleExpr<T?>
         ) : FunctionExpr<Boolean>() {
             override fun eval(env: JsonObject) = value1.eval(env) == value2.eval(env)
         }
@@ -326,8 +326,8 @@ private sealed class RuleExpr<out T> {
 
         //region Text.
         data class Matches(
-            val regex: RuleExpr<String>,
-            val value: RuleExpr<String>
+            val value: RuleExpr<String>,
+            val regex: RuleExpr<String>
         ) : FunctionExpr<Boolean>() {
             override fun eval(env: JsonObject) =
                 regex.castEval<String>(env).toRegex().matches(value.castEval(env))
@@ -336,8 +336,8 @@ private sealed class RuleExpr<out T> {
 
         //region Arrays.
         data class Contains<T>(
+            val value: RuleExpr<T>,
             val list: RuleExpr<Collection<T>>,
-            val value: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
             override fun eval(env: JsonObject) =
                 list.castEval<Collection<Any>>(env).contains(value.castEval(env))
@@ -484,11 +484,11 @@ private sealed class RuleExpr<out T> {
         }
 
         data class Map(
+            val value: RuleExpr<Number>,
             val inputStart: RuleExpr<Number>,
             val inputEnd: RuleExpr<Number>,
             val outputStart: RuleExpr<Number>,
-            val outputEnd: RuleExpr<Number>,
-            val value: RuleExpr<Number>
+            val outputEnd: RuleExpr<Number>
         ) : FunctionExpr<Double>() {
             override fun eval(env: JsonObject): Double {
                 val inputStartResult = inputStart.castEval<Number>(env).toDouble()
