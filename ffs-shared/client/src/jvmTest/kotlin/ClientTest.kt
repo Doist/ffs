@@ -1,6 +1,7 @@
 package doist.ffs
 
 import doist.ffs.endpoints.AuthScheme
+import doist.ffs.env.ENV_DEVICE_IP_ADDRESS
 import doist.ffs.env.ENV_DEVICE_LOCALE
 import doist.ffs.env.ENV_DEVICE_NAME
 import doist.ffs.env.ENV_DEVICE_OS
@@ -66,6 +67,7 @@ class ClientTest {
             setDeviceName(DEVICE_NAME)
             setDeviceOs(DEVICE_OS)
             setDeviceLocale(DEVICE_LOCALE)
+            setDeviceIpAddress(DEVICE_IP_ADDRESS)
             putNumber(KEY_RANDOM_NUMBER, RANDOM_NUMBER)
             putBoolean(KEY_RANDOM_BOOLEAN, RANDOM_BOOLEAN)
             putListString(KEY_RANDOM_LIST, RANDOM_LIST)
@@ -78,6 +80,7 @@ class ClientTest {
         assertEquals(env[ENV_DEVICE_NAME], JsonPrimitive(DEVICE_NAME))
         assertEquals(env[ENV_DEVICE_OS], JsonPrimitive(DEVICE_OS))
         assertEquals(env[ENV_DEVICE_LOCALE], JsonPrimitive(DEVICE_LOCALE))
+        assertEquals(env[ENV_DEVICE_IP_ADDRESS], JsonPrimitive(DEVICE_IP_ADDRESS))
         assertEquals(env[KEY_RANDOM_NUMBER], JsonPrimitive(RANDOM_NUMBER))
         assertEquals(env[KEY_RANDOM_BOOLEAN], JsonPrimitive(RANDOM_BOOLEAN))
         assertEquals(env[KEY_RANDOM_LIST], JsonArray(RANDOM_LIST.map { JsonPrimitive(it) }))
@@ -115,6 +118,7 @@ class ClientTest {
         const val DEVICE_NAME = "Pixel 6 Pro"
         const val DEVICE_OS = "Android 12"
         const val DEVICE_LOCALE = "en-US"
+        const val DEVICE_IP_ADDRESS = "10.0.0.0"
 
         const val RANDOM_NUMBER = 42
         const val RANDOM_BOOLEAN = true

@@ -84,6 +84,7 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
 
     private val comma by literalToken(",")
     private val dot by literalToken(".")
+    private val colon by literalToken(":")
 
     private val minus by literalToken("-")
     private val digits by regexToken("\\d+")
@@ -112,8 +113,11 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
             RuleExpr.NumberExpr(value)
         }
     private val long = optional(minus) and digits map { (minus, int) ->
-        var value = int.text.toLong()
-        minus?.let { value -= value }
+        val value = if (minus != null) {
+            "-${int.text}".toLong()
+        } else {
+            int.text.toLong()
+        }
         RuleExpr.NumberExpr(value)
     }
     private val number = double or long
@@ -132,6 +136,13 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
             RuleExpr.ArrayExpr(it)
         }
 
+    private val range =
+        skip(lB) and
+            parser(RuleGrammar::rootParser) and skip(colon) and parser(RuleGrammar::rootParser) and
+            skip(rB) map { (min, max) ->
+            RuleExpr.RangeExpr(min, max)
+        }
+
     private val function =
         id and skip(lP) and separatedTerms(
             parser(RuleGrammar::rootParser),
@@ -143,7 +154,7 @@ private object RuleGrammar : Grammar<RuleExpr<*>>() {
     //endregion
 
     override val rootParser: Parser<RuleExpr<*>> =
-        boolean or number or string or envValue or array or function
+        boolean or number or string or envValue or array or range or function
 }
 
 /**
@@ -184,8 +195,16 @@ private sealed class RuleExpr<out T> {
         }
     }
 
-    data class ArrayExpr<out T>(val list: List<RuleExpr<T>>) : RuleExpr<List<T>>() {
-        override fun eval(env: JsonObject): List<T> = list.map { it.eval(env) }
+    data class ArrayExpr<out T>(val list: List<RuleExpr<T>>) : RuleExpr<Collection<T>>() {
+        override fun eval(env: JsonObject): Collection<T> = list.map { it.eval(env) }
+    }
+
+    data class RangeExpr<out T>(
+        val from: RuleExpr<T>,
+        val to: RuleExpr<T>
+    ) : RuleExpr<Collection<Long>>() {
+        override fun eval(env: JsonObject) =
+            wrapRangeInCollection(from.castEval<Long>(env)..to.castEval<Long>(env))
     }
 
     /**
@@ -197,7 +216,7 @@ private sealed class RuleExpr<out T> {
             override fun eval(env: JsonObject) = when (val result = value.eval(env)) {
                 null -> true
                 is String -> result.isBlank()
-                is List<*> -> result.isEmpty()
+                is Collection<*> -> result.isEmpty()
                 else -> false
             }
         }
@@ -276,11 +295,11 @@ private sealed class RuleExpr<out T> {
 
         //region Arrays.
         data class Contains<T>(
-            val list: RuleExpr<List<T>>,
+            val list: RuleExpr<Collection<T>>,
             val value: RuleExpr<T>
         ) : FunctionExpr<Boolean>() {
             override fun eval(env: JsonObject) =
-                list.castEval<List<Any>>(env).contains(value.castEval(env))
+                list.castEval<Collection<Any>>(env).contains(value.castEval(env))
         }
         //endregion
 
@@ -442,6 +461,60 @@ private sealed class RuleExpr<out T> {
         //endregion
     }
 
+    sealed class IpExpr<T> : RuleExpr<T>() {
+        data class Ip(val value: RuleExpr<String>) : FunctionExpr<Long>() {
+            override fun eval(env: JsonObject): Long {
+                val octets = value.castEval<String>(env).split('.').map { it.toUByte() }
+                if (octets.size != 4) {
+                    throw IllegalArgumentException("invalid IPv4 format")
+                }
+
+                return sumOctets(octets)
+            }
+        }
+
+        data class Cidr(val value: RuleExpr<String>) : FunctionExpr<Collection<Long>>() {
+            override fun eval(env: JsonObject): Collection<Long> {
+                val splittedCidr = value.castEval<String>(env).split('/')
+                val subnetMask = if (splittedCidr.size > 1) splittedCidr[1].toByte() else 32
+                val octets = splittedCidr[0].split('.')
+
+                if (octets.size != 4) {
+                    throw IllegalArgumentException("invalid IPv4 format")
+                }
+
+                val mask = 0xFFFFFFFF shl (32 - subnetMask)
+                val subnet = arrayOf(
+                    (mask ushr 24).toUByte(),
+                    (mask shr 16 and 0xff).toUByte(),
+                    (mask shr 8 and 0xff).toUByte(),
+                    (mask and 0xff).toUByte()
+                )
+
+                val min = mutableListOf<UByte>(0u, 0u, 0u, 0u)
+                val max = mutableListOf<UByte>(0u, 0u, 0u, 0u)
+                octets.forEachIndexed { i, value ->
+                    val castedValue = value.toUByte()
+                    min[i] = castedValue and subnet[i]
+                    max[i] = castedValue or (subnet[i].inv())
+                }
+
+                return wrapRangeInCollection(sumOctets(min)..sumOctets(max))
+            }
+        }
+
+        companion object {
+            fun sumOctets(octets: List<UByte>): Long {
+                var result = octets[0].toLong()
+                octets.drop(1).forEach {
+                    result = (result shl 8) + it.toLong()
+                }
+
+                return result
+            }
+        }
+    }
+
     companion object {
         @Suppress("ComplexMethod", "FunctionName", "UNCHECKED_CAST")
         fun FunctionExpr(id: String, args: List<RuleExpr<*>>): FunctionExpr<*> {
@@ -456,7 +529,7 @@ private sealed class RuleExpr<out T> {
                 "now" -> FunctionExpr.Now
                 "datetime" -> FunctionExpr.Datetime(it.castNext())
                 "matches" -> FunctionExpr.Matches(it.castNext(), it.castNext())
-                "contains" -> FunctionExpr.Contains(it.castNext<List<*>>(), it.castNext())
+                "contains" -> FunctionExpr.Contains(it.castNext<Collection<*>>(), it.castNext())
                 "not" -> FunctionExpr.Not(it.castNext())
                 "and" -> {
                     it.fastForward() // Skip the iterator since we're passing the whole list.
@@ -485,6 +558,8 @@ private sealed class RuleExpr<out T> {
                 "map" -> FunctionExpr.Map(
                     it.castNext(), it.castNext(), it.castNext(), it.castNext(), it.castNext()
                 )
+                "ip" -> IpExpr.Ip(it.castNext())
+                "cidr" -> IpExpr.Cidr(it.castNext())
                 else -> throw IllegalArgumentException("Unknown function: $id")
             }
             if (it.hasNext()) {
@@ -506,6 +581,22 @@ private sealed class RuleExpr<out T> {
 
         private fun Iterator<*>.fastForward() {
             while (hasNext()) next()
+        }
+
+        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+        private fun wrapRangeInCollection(range: LongRange): Collection<Long> {
+            if (range.first > range.last) {
+                throw IllegalArgumentException("can't use inverted range")
+            }
+
+            return object : ClosedRange<Long> by range, Collection<Long> {
+                override val size: Int get() = (endInclusive - start).toInt()
+                override fun containsAll(elements: Collection<Long>) = elements.all {
+                    range.contains(it)
+                }
+                override fun contains(value: Long) = range.contains(value)
+                override fun iterator() = range.iterator()
+            }
         }
     }
 }
