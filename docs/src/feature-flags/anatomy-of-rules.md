@@ -18,6 +18,7 @@ Let's take it up a notch, and look at more useful rules:
 
 - `#!js gte(now(), datetime("2038-01-19T04:14:07+01:00"))`: enabled after January 19, 2038, at 03:14:07 UTC.
 - `#!js matches("*@example.com", env["user.email"])`: enabled for emails ending in `@example.com`.
+- `#!js contains(cidr("192.104.36.0/24"), ip(env["user.ip"]))"`: enabled for devices in the 192.104.36.0 – 192.104.36.255 range.
 - `#!js map(datetime("2022-11-08"), datetime("2022-11-15"), 0, 1, now())`: gradual rollout between November 8 and November 16, 2022.
 - `#!js not(isblank(env["user.email"]))`: enabled for logged-in users (assuming their email is set when logging in).
 - `#!js pow(map(datetime("2021-11-08"), datetime("2021-11-15"), 0, 1, now()), 2)`: gradual rollout again, but exponential instead of linear over the week.
