@@ -6,9 +6,9 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":ffs-shared:endpoints"))
-                implementation(project(":ffs-shared:env"))
-                implementation(project(":ffs-shared:sse"))
+                implementation(projects.ffsShared.endpoints)
+                implementation(projects.ffsShared.env)
+                implementation(projects.ffsShared.sse)
                 implementation(libs.bundles.client.ktor)
                 api(libs.kotlinx.serialization.json)
             }

@@ -2,7 +2,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":ffs-shared:env"))
+                implementation(projects.ffsShared.env)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.better.parse)
                 implementation(libs.kotlinx.serialization.json)

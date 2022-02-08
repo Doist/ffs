@@ -6,11 +6,11 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":ffs-shared:db"))
-    implementation(project(":ffs-shared:endpoints"))
-    implementation(project(":ffs-shared:validators"))
-    implementation(project(":ffs-shared:rule"))
-    implementation(project(":ffs-shared:session-header"))
+    implementation(projects.ffsShared.db)
+    implementation(projects.ffsShared.endpoints)
+    implementation(projects.ffsShared.validators)
+    implementation(projects.ffsShared.rule)
+    implementation(projects.ffsShared.sessionHeader)
 
     implementation(libs.bundles.client.ktor)
     implementation(libs.bundles.client.react)

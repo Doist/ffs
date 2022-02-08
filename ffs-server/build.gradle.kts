@@ -12,13 +12,13 @@ plugins {
 sourceSets.create("benchmark")
 
 dependencies {
-    implementation(project(":ffs-shared:db"))
-    implementation(project(":ffs-shared:env"))
-    implementation(project(":ffs-shared:endpoints"))
-    implementation(project(":ffs-shared:rule"))
-    implementation(project(":ffs-shared:session-header"))
-    implementation(project(":ffs-shared:sse"))
-    implementation(project(":ffs-shared:validators"))
+    implementation(projects.ffsShared.db)
+    implementation(projects.ffsShared.env)
+    implementation(projects.ffsShared.endpoints)
+    implementation(projects.ffsShared.rule)
+    implementation(projects.ffsShared.sessionHeader)
+    implementation(projects.ffsShared.sse)
+    implementation(projects.ffsShared.validators)
 
     implementation(libs.bundles.server.ktor)
     implementation(libs.bundles.server.database)

@@ -14,7 +14,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":ffs-shared:client"))
+                implementation(projects.ffsShared.client)
             }
         }
 
