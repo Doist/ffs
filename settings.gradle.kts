@@ -17,5 +17,4 @@ include(":ffs-shared:session-header")
 include(":ffs-shared:sse")
 include(":ffs-shared:validators")
 
-enableFeaturePreview("VERSION_CATALOGS")
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
