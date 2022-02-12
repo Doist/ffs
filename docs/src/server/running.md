@@ -29,5 +29,5 @@ Build an image and run it:
 
 ```bash
 docker build -t ffs-server -f ffs-server/Dockerfile .
-docker run -p 8080:8080 my-application
+docker run -p 8080:8080 ffs-server
 ```

@@ -30,22 +30,23 @@ kotlin {
                 cssSupport.enabled = true
             }
             webpackTask {
-                setKtorHostPort()
+                setServerHostPort()
             }
             runTask {
-                setKtorHostPort()
+                setServerHostPort()
             }
         }
         binaries.executable()
     }
 }
 
-fun KotlinWebpack.setKtorHostPort() {
+fun KotlinWebpack.setServerHostPort() {
     val env = System.getenv()
-    val development = env["KTOR_DEVELOPMENT"]?.toBoolean()
-    val port = env["KTOR_DEPLOYMENT_PORT"]?.toIntOrNull()
-    if (development == true && port != null) {
-        args += listOf("--env", "host=localhost", "--env", "port=$port")
+    env["SERVER_HOST"]?.let { host ->
+        args += listOf("--env", "host=\"$host\"")
+    }
+    env["SERVER_PORT"]?.let { port ->
+        args += listOf("--env", "port=$port")
     }
     webpackConfigApplier {
         export = false

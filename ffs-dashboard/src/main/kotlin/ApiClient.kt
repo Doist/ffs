@@ -34,7 +34,9 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.DEFAULT_PORT
 import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
+import io.ktor.http.URLBuilder
 import io.ktor.http.Url
+import io.ktor.http.origin
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.browser.localStorage
 import kotlinx.coroutines.MainScope
@@ -69,7 +71,7 @@ private val client = HttpClient {
         json(json = json)
     }
     install(DefaultRequest) {
-        host = js("SERVER_HOST") as String? ?: "api.ffs.delivery/v1"
+        host = js("SERVER_HOST") as String? ?: URLBuilder.origin
         port = js("SERVER_PORT") as Int? ?: DEFAULT_PORT
     }
     install(HttpRequestRetry) {
