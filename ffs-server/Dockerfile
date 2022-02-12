@@ -1,7 +1,7 @@
 FROM eclipse-temurin:17 AS build
 COPY . /home/gradle/src
 WORKDIR /home/gradle/src
-RUN ./gradlew :ffs-server:shadowJar --info
+RUN ./gradlew :ffs-server:shadowJar
 
 FROM eclipse-temurin:17
 EXPOSE 8080:8080
