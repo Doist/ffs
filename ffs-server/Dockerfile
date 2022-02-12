@@ -1,5 +1,5 @@
 FROM eclipse-temurin:17 AS build
-COPY --chown=gradle:gradle . /home/gradle/src
+COPY . /home/gradle/src
 WORKDIR /home/gradle/src
 RUN ./gradlew :ffs-server:shadowJar --info
 
