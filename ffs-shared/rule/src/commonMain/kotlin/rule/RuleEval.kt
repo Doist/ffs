@@ -603,14 +603,22 @@ internal class Ip {
         }
 
         private fun calculateIpv6Range(segments: List<UShort>, width: Int) {
-            val mask = "1".repeat(width) + "0".repeat(128 - width)
-            val subnet = mask.chunked(16).map { it.toUShort(2) }
+            val min = arrayOf<UShort>(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
+            val max = arrayOf<UShort>(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
 
-            val min = arrayListOf<UShort>()
-            val max = arrayListOf<UShort>()
+            val fullSegments = width / 16
+            val remainder = width % 16
             segments.forEachIndexed { i, value ->
-                min.add(value and subnet[i])
-                max.add(value or subnet[i].inv())
+                val currentSubnetMask = if (i < fullSegments) {
+                    (0xFFFF).toUShort()
+                } else if (i == fullSegments) {
+                    (0xFFFF shl (16 - remainder)).toUShort()
+                } else {
+                    0u
+                }
+
+                min[i] = value and currentSubnetMask
+                max[i] = value or currentSubnetMask.inv()
             }
 
             this.min = Numeric(min.joinToString(":") { it.toString(16) })
@@ -620,10 +628,10 @@ internal class Ip {
         private fun calculateIpv4Range(octets: List<UShort>, width: Byte) {
             val mask = 0xFFFFFFFF shl (32 - width)
             val subnet =
-                listOf(mask shr 24, mask shr 16, mask shr 8, mask).map { it.toUShort() }
+                arrayOf(mask shr 24, mask shr 16, mask shr 8, mask).map { it.toUShort() }
 
-            val min = mutableListOf<UByte>(0u, 0u, 0u, 0u)
-            val max = mutableListOf<UByte>(0u, 0u, 0u, 0u)
+            val min = arrayOf<UByte>(0u, 0u, 0u, 0u)
+            val max = arrayOf<UByte>(0u, 0u, 0u, 0u)
             octets.forEachIndexed { i, value ->
                 min[i] = (value and subnet[i]).toUByte()
                 max[i] = (value or subnet[i].inv()).toUByte()
