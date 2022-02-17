@@ -8,7 +8,7 @@ Full documentation available at https://doist.github.io/ffs/.
 
 ## Project
 
-<img src="docs/src/assets/icon-192.png" alt="FFS logo" align="right" width="192" height="192">
+<img src="assets/icon-192.png" alt="FFS logo" align="right" width="192" height="192">
 
 FFS is built on Kotlin Multiplatform and made up of 4 major components:
 
