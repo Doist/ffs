@@ -20,7 +20,7 @@ import io.ktor.client.request.put
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
-import org.junit.jupiter.api.Test
+import org.junit.Test
 import routes.PATH_LATEST
 import kotlin.test.assertFailsWith
 

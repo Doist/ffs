@@ -1,7 +1,7 @@
 package doist.ffs.db
 
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
-import org.junit.jupiter.api.Test
+import org.junit.Test
 import kotlin.test.assertFails
 
 internal class UserTest {

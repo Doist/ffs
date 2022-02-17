@@ -40,7 +40,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import org.junit.jupiter.api.Test
+import org.junit.Test
 
 /**
  * Tests for server-sent events (SSE) based endpoints.

@@ -44,10 +44,6 @@ tasks {
         }
     }
 
-    test {
-        useJUnitPlatform()
-    }
-
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "11"
     }

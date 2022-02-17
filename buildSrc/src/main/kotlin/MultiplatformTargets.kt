@@ -1,4 +1,4 @@
-import org.gradle.kotlin.dsl.get
+
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsTargetDsl
 
@@ -11,9 +11,6 @@ fun KotlinMultiplatformExtension.enableMultiplatformTargets(
     jvm {
         compilations.all {
             kotlinOptions.jvmTarget = "1.8"
-        }
-        testRuns["test"].executionTask.configure {
-            useJUnitPlatform()
         }
     }
 
