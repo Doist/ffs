@@ -559,12 +559,8 @@ private sealed class RuleExpr<out T> {
                     range.contains(it)
                 }
                 override fun contains(value: T) = range.contains(value)
-                override val size: Int get() {
-                    TODO("Doesn't need this function")
-                }
-                override fun iterator(): Iterator<T> {
-                    TODO("Doesn't need this function")
-                }
+                override val size: Int get() { throw UnsupportedOperationException() }
+                override fun iterator(): Iterator<T> { throw UnsupportedOperationException() }
             }
         }
     }
