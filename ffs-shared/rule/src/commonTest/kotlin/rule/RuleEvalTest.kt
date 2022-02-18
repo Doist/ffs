@@ -389,7 +389,7 @@ class RuleEvalTest {
             )
         }
 
-        with(Ip.IpRange("0000:0000:0000:0000:0000:00ff:0022:0033/128")) {
+        with(Ip.IpRange("::00ff:0022:0033/128")) {
             assertEquals("1095218888755".toBigInteger(), start.value)
             assertEquals("1095218888755".toBigInteger(), endInclusive.value)
         }
@@ -404,6 +404,11 @@ class RuleEvalTest {
     fun composition() {
         assertEquals(1f, eval("""gte(ip("192.168.0.255"), ip("192.168.0.255"))"""))
         assertEquals(1f, eval("""contains(ip("254.200.223.255"), cidr("254.200.222.210/23"))"""))
+
+        assertEquals(0f, eval("""contains(ip("::00ff:0021:FFFF"), cidr("::ff:22:33/122"))"""))
+        assertEquals(1f, eval("""contains(ip("::ff:22:3C"), cidr("::ff:22:33/122"))"""))
+        assertEquals(1f, eval("""contains(ip("::ff:22:01"), cidr("::ff:22:33/122"))"""))
+
         assertEquals(0f, eval("""if(gte(datetime("2021-06-01"), datetime("2021-05-31")), 0, 1)"""))
         assertEquals(0f, eval("""log(if(gte(datetime("2021-06-01"), now()), 0, 1))"""))
         assertEquals(
