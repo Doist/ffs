@@ -1,6 +1,5 @@
 package doist.ffs.rule
 
-import com.ionspin.kotlin.bignum.integer.toBigInteger
 import doist.ffs.env.ENV_INTERNAL_ROLLOUT_ID
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonElement
@@ -305,22 +304,30 @@ class RuleEvalTest {
 
     @Test
     fun ipv4() {
-        assertEquals("3232235776".toBigInteger(), Ip.Numeric("192.168.1.0").value)
-        assertEquals("4294967295".toBigInteger(), Ip.Numeric("255.255.255.255").value)
-        assertEquals("0".toBigInteger(), Ip.Numeric("0.0.0.0").value)
-        assertEquals("16843009".toBigInteger(), Ip.Numeric("1.1.1.1").value)
+        assertEquals<List<Short>>(
+            listOf(192, 168, 1, 0),
+            Ip.Octets("192.168.1.0").map { it.toShort() }
+        )
+        assertEquals<List<Short>>(
+            listOf(255, 255, 255, 255),
+            Ip.Octets("255.255.255.255").map { it.toShort() }
+        )
+        assertEquals<List<Short>>(
+            listOf(0, 0, 0, 0),
+            Ip.Octets("0.0.0.0").map { it.toShort() }
+        )
 
-        assertFailsWith<IllegalArgumentException> { Ip.Numeric("10.0.0").value }
-        assertFailsWith<IllegalArgumentException> { Ip.Numeric("10.0.0.0.0").value }
-        assertFailsWith<IllegalArgumentException> { Ip.Numeric("10.0.0.-1").value }
-        assertFailsWith<IllegalArgumentException> { Ip.Numeric("10.0.0.a").value }
+        assertFailsWith<IllegalArgumentException> { Ip.Octets("10.0.0") }
+        assertFailsWith<IllegalArgumentException> { Ip.Octets("10.0.0.0.0") }
+        assertFailsWith<IllegalArgumentException> { Ip.Octets("10.0.0.-1") }
+        assertFailsWith<IllegalArgumentException> { Ip.Octets("10.0.0.a") }
     }
 
     @Test
     fun ipv4Comparison() {
-        val ip1 = Ip.Numeric("192.168.0.200")
-        val ip2 = Ip.Numeric("192.168.1.0")
-        val ip3 = Ip.Numeric("192.168.1.4")
+        val ip1 = Ip.Octets("192.168.0.200")
+        val ip2 = Ip.Octets("192.168.1.0")
+        val ip3 = Ip.Octets("192.168.1.4")
 
         assertEquals(false, ip1 > ip3)
         assertEquals(true, ip1 < ip2)
@@ -330,68 +337,111 @@ class RuleEvalTest {
 
     @Test
     fun ipv6() {
-        assertEquals(
-            "0".toBigInteger(),
-            Ip.Numeric("0:0:0:0:0:0:0:0").value
+        assertEquals<List<Short>>(
+            listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            Ip.Octets("0:0:0:0:0:0:0:0").map { it.toShort() }
         )
-        assertEquals(
-            "18446744073709551615".toBigInteger(),
-            Ip.Numeric("0:0:0:0:ffff:ffff:ffff:ffff").value
+        assertEquals<List<Short>>(
+            listOf(
+                0, 0, 0, 0, 0, 0, 0, 0,
+                255, 255, 255, 255, 255, 255, 255, 255
+            ),
+            Ip.Octets("0:0:0:0:ffff:ffff:ffff:ffff").map { it.toShort() }
         )
-        assertEquals(
-            "340282366920938463463374607431768211455".toBigInteger(),
-            Ip.Numeric("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").value
+        assertEquals<List<Short>>(
+            listOf(
+                255, 255, 255, 255, 255, 255, 255, 255,
+                255, 255, 255, 255, 255, 255, 255, 255
+            ),
+            Ip.Octets("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").map { it.toShort() }
         )
-        assertEquals(
-            "340282366920938463463374325956791500800".toBigInteger(),
-            Ip.Numeric("ffff:ffff:ffff:ffff:ffff::").value
+        assertEquals<List<Short>>(
+            listOf(
+                255, 255, 255, 255, 255, 255, 255, 255,
+                255, 255, 0, 0, 0, 0, 0, 0
+            ),
+            Ip.Octets("ffff:ffff:ffff:ffff:ffff::").map { it.toShort() }
         )
-        assertEquals(
-            "1095218888755".toBigInteger(),
-            Ip.Numeric("::ff:22:33").value
+        assertEquals<List<Short>>(
+            listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 51),
+            Ip.Octets("::ff:22:33").map { it.toShort() }
         )
-        assertEquals(
-            "88269046595092069685019532815630387".toBigInteger(),
-            Ip.Numeric("11::ff:22:33").value
+        assertEquals<List<Short>>(
+            listOf(0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 51),
+            Ip.Octets("11::ff:22:33").map { it.toShort() }
         )
     }
 
     @Test
     fun cidrv4() {
         with(Ip.IpRange("254.200.222.210/23")) {
-            assertEquals("4274576896".toBigInteger(), start.value)
-            assertEquals("4274577407".toBigInteger(), endInclusive.value)
+            assertEquals<List<Short>>(
+                listOf(254, 200, 222, 0),
+                start.map { it.toShort() }
+            )
+            assertEquals<List<Short>>(
+                listOf(254, 200, 223, 255),
+                endInclusive.map { it.toShort() }
+            )
         }
 
-        with(Ip.IpRange("0.0.0.0/0")) {
-            assertEquals("0".toBigInteger(), start.value)
-            assertEquals("4294967295".toBigInteger(), endInclusive.value)
+        with(Ip.IpRange("0.0.0.1/0")) {
+            assertEquals<List<Short>>(
+                listOf(0, 0, 0, 0),
+                start.map { it.toShort() }
+            )
+            assertEquals<List<Short>>(
+                listOf(255, 255, 255, 255),
+                endInclusive.map { it.toShort() }
+            )
         }
 
         with(Ip.IpRange("254.200.222.210/32")) {
-            assertEquals("4274577106".toBigInteger(), start.value)
-            assertEquals("4274577106".toBigInteger(), endInclusive.value)
+            assertEquals<List<Short>>(
+                listOf(254, 200, 222, 210),
+                start.map { it.toShort() }
+            )
+            assertEquals<List<Short>>(
+                listOf(254, 200, 222, 210),
+                endInclusive.map { it.toShort() }
+            )
         }
     }
 
     @Test
     fun cidrv6() {
         with(Ip.IpRange("0000:0000:0000:0000:0000:00ff:0022:0033/122")) {
-            assertEquals("1095218888704".toBigInteger(), start.value)
-            assertEquals("1095218888767".toBigInteger(), endInclusive.value)
-        }
-
-        with(Ip.IpRange("0000:0000:0000:0000:0000:00ff:0022:0033/0")) {
-            assertEquals("0".toBigInteger(), start.value)
-            assertEquals(
-                "340282366920938463463374607431768211455".toBigInteger(),
-                endInclusive.value
+            assertEquals<List<Short>>(
+                listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 0),
+                start.map { it.toShort() }
+            )
+            assertEquals<List<Short>>(
+                listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 63),
+                endInclusive.map { it.toShort() }
             )
         }
-
+        with(Ip.IpRange("0000:0000:0000:0000:0000:00ff:0022:0033/0")) {
+            assertEquals<List<Short>>(
+                listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+                start.map { it.toShort() }
+            )
+            assertEquals<List<Short>>(
+                listOf(
+                    255, 255, 255, 255, 255, 255, 255, 255,
+                    255, 255, 255, 255, 255, 255, 255, 255
+                ),
+                endInclusive.map { it.toShort() }
+            )
+        }
         with(Ip.IpRange("::00ff:0022:0033/128")) {
-            assertEquals("1095218888755".toBigInteger(), start.value)
-            assertEquals("1095218888755".toBigInteger(), endInclusive.value)
+            assertEquals<List<Short>>(
+                listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 51),
+                start.map { it.toShort() }
+            )
+            assertEquals<List<Short>>(
+                listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 51),
+                endInclusive.map { it.toShort() }
+            )
         }
     }
 

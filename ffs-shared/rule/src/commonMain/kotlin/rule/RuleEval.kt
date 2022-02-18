@@ -13,7 +13,6 @@ import com.github.h0tk3y.betterParse.grammar.parser
 import com.github.h0tk3y.betterParse.lexer.literalToken
 import com.github.h0tk3y.betterParse.lexer.regexToken
 import com.github.h0tk3y.betterParse.parser.Parser
-import com.ionspin.kotlin.bignum.integer.BigInteger
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -284,14 +283,14 @@ private sealed class RuleExpr<out T> {
 
         //region IP Address.
         sealed class IpExpr<T> : FunctionExpr<T>() {
-            data class IpFunc(val value: RuleExpr<String>) : FunctionExpr<Ip.Numeric>() {
-                override fun eval(env: JsonObject) = Ip.Numeric(value.castEval(env))
+            data class IpFunc(val value: RuleExpr<String>) : FunctionExpr<Ip.Octets>() {
+                override fun eval(env: JsonObject) = Ip.Octets(value.castEval(env))
             }
 
             data class CidrFunc(
                 val value: RuleExpr<String>
-            ) : FunctionExpr<Collection<Ip.Numeric>>() {
-                override fun eval(env: JsonObject): Collection<Ip.Numeric> {
+            ) : FunctionExpr<Collection<Ip.Octets>>() {
+                override fun eval(env: JsonObject): Collection<Ip.Octets> {
                     val ranges = Ip.IpRange(value.castEval(env))
 
                     return wrapRangeInCollection(ranges)
@@ -567,99 +566,100 @@ private sealed class RuleExpr<out T> {
 }
 
 internal class Ip {
-    internal data class Numeric(val ipString: String) : Comparable<Numeric> {
-        val value: BigInteger by lazy {
-            val segments = ipString.expandIpv6().toSegments()
-
-            if (segments.size > 4) {
-                segments.fold(BigInteger.fromInt(0)) { acc, seg -> (acc shl 16) + seg.toInt() }
-            } else {
-                segments.fold(BigInteger.fromInt(0)) { acc, octet -> (acc shl 8) + octet.toShort() }
+    internal data class Octets(
+        private val ipString: String = "",
+        private val segments: List<UByte> = emptyList(),
+        private val backing: MutableList<UByte> = mutableListOf()
+    ) : List<UByte> by backing, Comparable<Octets> {
+        init {
+            val parsedOctets = segments.ifEmpty {
+                ipString.expandIpv6().toOctets()
             }
+            backing.addAll(parsedOctets)
         }
 
-        override fun compareTo(other: Numeric) = value.compareTo(other.value)
+        override fun compareTo(other: Octets): Int {
+            if (other.size != this.size) {
+                return -1
+            }
+
+            var delta = 0u
+            for (i in other.indices) {
+                delta = this[i] - other[i]
+                if (delta != 0u) {
+                    break
+                }
+            }
+
+            return delta.toInt()
+        }
     }
 
-    internal data class IpRange(val cidr: String) : ClosedRange<Numeric> {
-        private lateinit var min: Numeric
-        private lateinit var max: Numeric
+    internal data class IpRange(val cidr: String) : ClosedRange<Octets> {
+        private lateinit var min: Octets
+        private lateinit var max: Octets
+
+        override val endInclusive: Octets
+            get() = max
+        override val start: Octets
+            get() = min
 
         init {
             val ipWidth = cidr.split('/')
-            val segments = ipWidth[0].expandIpv6().toSegments()
+            val segments = ipWidth[0].expandIpv6().toOctets()
 
-            if (segments.size > 4) {
-                val width = ipWidth.getOrNull(1)?.toInt() ?: 128
-                calculateIpv6Range(segments, width)
+            var width = if (segments.size > 4) {
+                ipWidth.getOrNull(1)?.toShort() ?: 128
             } else {
-                val width = ipWidth.getOrNull(1)?.toByte() ?: 32
-                calculateIpv4Range(segments, width)
+                ipWidth.getOrNull(1)?.toShort() ?: 32
             }
+
+            calculateIpRange(segments, width)
         }
 
-        private fun calculateIpv6Range(segments: List<UShort>, width: Int) {
-            val min = arrayOf<UShort>(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
-            val max = arrayOf<UShort>(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
-
-            val fullSegments = width / 16
-            val remainder = width % 16
-            segments.forEachIndexed { i, value ->
-                val currentSubnetMask = if (i < fullSegments) {
-                    (0xFFFF).toUShort()
-                } else if (i == fullSegments) {
-                    (0xFFFF shl (16 - remainder)).toUShort()
+        private fun calculateIpRange(octets: List<UByte>, width: Short) {
+            val min = mutableListOf<UByte>()
+            val max = mutableListOf<UByte>()
+            val fullOctets = width / 8
+            val remainder = width % 8
+            octets.forEachIndexed { i, value ->
+                val subnet: UByte = if (i < fullOctets) {
+                    (0xFF).toUByte()
+                } else if (i == fullOctets) {
+                    (0xFF shl (8 - remainder)).toUByte()
                 } else {
                     0u
                 }
 
-                min[i] = value and currentSubnetMask
-                max[i] = value or currentSubnetMask.inv()
+                min.add(value and subnet)
+                max.add((value or subnet.inv()))
             }
 
-            this.min = Numeric(min.joinToString(":") { it.toString(16) })
-            this.max = Numeric(max.joinToString(":") { it.toString(16) })
+            this.min = Octets(segments = min)
+            this.max = Octets(segments = max)
         }
-
-        private fun calculateIpv4Range(octets: List<UShort>, width: Byte) {
-            val mask = 0xFFFFFFFF shl (32 - width)
-            val subnet =
-                arrayOf(mask shr 24, mask shr 16, mask shr 8, mask).map { it.toUShort() }
-
-            val min = arrayOf<UByte>(0u, 0u, 0u, 0u)
-            val max = arrayOf<UByte>(0u, 0u, 0u, 0u)
-            octets.forEachIndexed { i, value ->
-                min[i] = (value and subnet[i]).toUByte()
-                max[i] = (value or subnet[i].inv()).toUByte()
-            }
-
-            this.min = Numeric(min.joinToString("."))
-            this.max = Numeric(max.joinToString("."))
-        }
-
-        override val endInclusive: Numeric
-            get() = max
-        override val start: Numeric
-            get() = min
     }
 
     companion object {
-        fun String.toSegments(): List<UShort> {
-            lateinit var segments: List<UShort>
+        fun String.toOctets(): List<UByte> {
+            lateinit var octets: List<UByte>
 
             if (contains('.')) {
-                segments = split('.').map { it.toUShort() }
-                if (segments.size != 4) {
+                octets = split('.').map { it.toUByte() }
+                if (octets.size != 4) {
                     throw IllegalArgumentException("invalid IPv4 format")
                 }
             } else {
-                segments = split(':').map { it.toUShort(16) }
-                if (segments.size != 8) {
+                octets = replace(":", "")
+                    .chunked(2)
+                    .map { it.toUByte(16) }
+
+                if (octets.size != 16) {
                     throw IllegalArgumentException("invalid IPv6 format")
                 }
             }
 
-            return segments
+            return octets
         }
 
         fun String.expandIpv6(): String {

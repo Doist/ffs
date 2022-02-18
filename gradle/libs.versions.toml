@@ -66,7 +66,6 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 kotlinx-murmurhash = { module = "com.goncalossilva:murmurhash", version.ref = "kotlinx-murmurhash" }
 kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "kotlinx-benchmark" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
-ionspin-bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum" }
 
 [bundles]
 server-ktor = ["ktor-server-core", "ktor-server-cio", "logback-classic", "ktor-server-resources", "ktor-serialization-kotlinx-json", "ktor-serialization-kotlinx-cbor", "ktor-server-content-negotiation", "ktor-server-call-logging", "ktor-server-cors", "ktor-server-default-headers", "ktor-server-compression", "ktor-server-auth", "ktor-server-status-pages", "ktor-server-sessions"]
