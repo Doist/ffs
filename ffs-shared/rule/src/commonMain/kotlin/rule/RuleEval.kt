@@ -667,22 +667,32 @@ internal class Ip {
         }
 
         fun String.expandIpv6(): String {
-            val compactColonIndex = indexOf("::")
-            if (compactColonIndex == -1) {
+            if (this.length == 39) {
                 return this
             }
 
-            val replacementString = if (compactColonIndex == 0 || compactColonIndex == length - 2) {
-                val replacementChunk = if (compactColonIndex == 0) "0:" else ":0"
+            var expandedString = this
+            val compactColonIndex = indexOf("::")
+            if (compactColonIndex != -1) {
+                val replaceBy = if (compactColonIndex == 0 || compactColonIndex == length - 2) {
+                    val replacementChunk = if (compactColonIndex == 0) "0000:" else ":0000"
 
-                replacementChunk.repeat(8 - (filter { it == ':' }.count() - 1))
-            } else {
-                val extendedSegments = filter { it == ':' }.count()
+                    replacementChunk.repeat(8 - (filter { it == ':' }.count() - 1))
+                } else {
+                    val extendedSegments = filter { it == ':' }.count()
 
-                ":" + "0:".repeat(8 - extendedSegments)
+                    ":" + "0000:".repeat(8 - extendedSegments)
+                }
+
+                expandedString = expandedString.replace("::", replaceBy)
             }
 
-            return replace("::", replacementString)
+            return expandedString
+                .split(":")
+                .map {
+                    it.padStart(4, '0')
+                }
+                .joinToString(":")
         }
     }
 }
