@@ -12,6 +12,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -304,18 +305,9 @@ class RuleEvalTest {
 
     @Test
     fun ipv4() {
-        assertEquals<List<Short>>(
-            listOf(192, 168, 1, 0),
-            Ip.Octets("192.168.1.0").map { it.toShort() }
-        )
-        assertEquals<List<Short>>(
-            listOf(255, 255, 255, 255),
-            Ip.Octets("255.255.255.255").map { it.toShort() }
-        )
-        assertEquals<List<Short>>(
-            listOf(0, 0, 0, 0),
-            Ip.Octets("0.0.0.0").map { it.toShort() }
-        )
+        assertContentEquals(listOf(192u, 168u, 1u, 0u), Ip.Octets("192.168.1.0"))
+        assertContentEquals(listOf(255u, 255u, 255u, 255u), Ip.Octets("255.255.255.255"))
+        assertContentEquals(listOf(0u, 0u, 0u, 0u), Ip.Octets("0.0.0.0"))
 
         assertFailsWith<IllegalArgumentException> { Ip.Octets("10.0.0") }
         assertFailsWith<IllegalArgumentException> { Ip.Octets("10.0.0.0.0") }
@@ -337,110 +329,92 @@ class RuleEvalTest {
 
     @Test
     fun ipv6() {
-        assertEquals<List<Short>>(
-            listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            Ip.Octets("0:0:0:0:0:0:0:0").map { it.toShort() }
+        assertContentEquals(
+            listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u),
+            Ip.Octets("0:0:0:0:0:0:0:0")
         )
-        assertEquals<List<Short>>(
+        assertContentEquals(
             listOf(
-                0, 0, 0, 0, 0, 0, 0, 0,
-                255, 255, 255, 255, 255, 255, 255, 255
+                0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+                255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u
             ),
-            Ip.Octets("0:0:0:0:ffff:ffff:ffff:ffff").map { it.toShort() }
+            Ip.Octets("0:0:0:0:ffff:ffff:ffff:ffff")
         )
-        assertEquals<List<Short>>(
+        assertContentEquals(
             listOf(
-                255, 255, 255, 255, 255, 255, 255, 255,
-                255, 255, 255, 255, 255, 255, 255, 255
+                255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u,
+                255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u
             ),
-            Ip.Octets("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").map { it.toShort() }
+            Ip.Octets("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
         )
-        assertEquals<List<Short>>(
+        assertContentEquals(
             listOf(
-                255, 255, 255, 255, 255, 255, 255, 255,
-                255, 255, 0, 0, 0, 0, 0, 0
+                255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u,
+                255u, 255u, 0u, 0u, 0u, 0u, 0u, 0u
             ),
-            Ip.Octets("ffff:ffff:ffff:ffff:ffff::").map { it.toShort() }
+            Ip.Octets("ffff:ffff:ffff:ffff:ffff::")
         )
-        assertEquals<List<Short>>(
-            listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 51),
-            Ip.Octets("::ff:22:33").map { it.toShort() }
+        assertContentEquals(
+            listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 51u),
+            Ip.Octets("::ff:22:33")
         )
-        assertEquals<List<Short>>(
-            listOf(0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 51),
-            Ip.Octets("11::ff:22:33").map { it.toShort() }
+        assertContentEquals(
+            listOf(0u, 17u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 51u),
+            Ip.Octets("11::ff:22:33")
         )
     }
 
     @Test
     fun cidrv4() {
         with(Ip.IpRange("254.200.222.210/23")) {
-            assertEquals<List<Short>>(
-                listOf(254, 200, 222, 0),
-                start.map { it.toShort() }
-            )
-            assertEquals<List<Short>>(
-                listOf(254, 200, 223, 255),
-                endInclusive.map { it.toShort() }
-            )
+            assertContentEquals(listOf(254u, 200u, 222u, 0u), start)
+            assertContentEquals(listOf(254u, 200u, 223u, 255u), endInclusive)
         }
 
         with(Ip.IpRange("0.0.0.1/0")) {
-            assertEquals<List<Short>>(
-                listOf(0, 0, 0, 0),
-                start.map { it.toShort() }
-            )
-            assertEquals<List<Short>>(
-                listOf(255, 255, 255, 255),
-                endInclusive.map { it.toShort() }
-            )
+            assertContentEquals(listOf(0u, 0u, 0u, 0u), start)
+            assertContentEquals(listOf(255u, 255u, 255u, 255u), endInclusive)
         }
 
         with(Ip.IpRange("254.200.222.210/32")) {
-            assertEquals<List<Short>>(
-                listOf(254, 200, 222, 210),
-                start.map { it.toShort() }
-            )
-            assertEquals<List<Short>>(
-                listOf(254, 200, 222, 210),
-                endInclusive.map { it.toShort() }
-            )
+            assertContentEquals(listOf(254u, 200u, 222u, 210u), start)
+            assertContentEquals(listOf(254u, 200u, 222u, 210u), endInclusive)
         }
     }
 
     @Test
     fun cidrv6() {
         with(Ip.IpRange("0000:0000:0000:0000:0000:00ff:0022:0033/122")) {
-            assertEquals<List<Short>>(
-                listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 0),
-                start.map { it.toShort() }
+            assertContentEquals(
+                listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 0u),
+                start
             )
-            assertEquals<List<Short>>(
-                listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 63),
-                endInclusive.map { it.toShort() }
+            assertContentEquals(
+                listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 63u),
+                endInclusive
             )
         }
         with(Ip.IpRange("0000:0000:0000:0000:0000:00ff:0022:0033/0")) {
-            assertEquals<List<Short>>(
-                listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-                start.map { it.toShort() }
+            assertContentEquals(
+                listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u),
+                start
             )
-            assertEquals<List<Short>>(
+            assertContentEquals(
                 listOf(
-                    255, 255, 255, 255, 255, 255, 255, 255,
-                    255, 255, 255, 255, 255, 255, 255, 255
+                    255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u,
+                    255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u
                 ),
-                endInclusive.map { it.toShort() }
+                endInclusive
             )
         }
         with(Ip.IpRange("::00ff:0022:0033/128")) {
-            assertEquals<List<Short>>(
-                listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 51),
-                start.map { it.toShort() }
+            assertContentEquals(
+                listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 51u),
+                start
             )
-            assertEquals<List<Short>>(
-                listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 34, 0, 51),
-                endInclusive.map { it.toShort() }
+            assertContentEquals(
+                listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 51u),
+                endInclusive
             )
         }
     }
