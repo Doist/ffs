@@ -545,7 +545,6 @@ private sealed class RuleExpr<out T> {
             while (hasNext()) next()
         }
 
-        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
         private fun <T : Comparable<T>> wrapRangeInCollection(
             range: ClosedRange<T>
         ): Collection<T> {

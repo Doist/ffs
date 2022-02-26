@@ -22,7 +22,6 @@ dokka = "1.6.10"
 mkdocs = "2.2.0"
 mkdocs-plugin-awesome-pages = "2.6.1"
 node = "16.13.2"
-bignum = "0.3.4"
 
 [libraries]
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
