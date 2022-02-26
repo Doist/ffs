@@ -572,7 +572,7 @@ internal class Ip {
     ) : List<UByte> by backing, Comparable<Octets> {
         init {
             val parsedOctets = segments.ifEmpty {
-                ipString.expandIpv6().toOctets()
+                ipString.tryToExpandIpv6().toOctets()
             }
             backing.addAll(parsedOctets)
         }
@@ -605,7 +605,7 @@ internal class Ip {
 
         init {
             val ipWidth = cidr.split('/')
-            val segments = ipWidth[0].expandIpv6().toOctets()
+            val segments = ipWidth[0].tryToExpandIpv6().toOctets()
 
             var width = if (segments.size > 4) {
                 ipWidth.getOrNull(1)?.toShort() ?: 128
@@ -661,10 +661,8 @@ internal class Ip {
             return octets
         }
 
-        fun String.expandIpv6(): String {
-            if (this.length == 39) {
-                return this
-            }
+        fun String.tryToExpandIpv6(): String {
+            if (this.length == 39 || this.contains('.')) return this
 
             var expandedString = this
             val compactColonIndex = indexOf("::")
@@ -682,12 +680,14 @@ internal class Ip {
                 expandedString = expandedString.replace("::", replaceBy)
             }
 
-            return expandedString
-                .split(":")
-                .map {
-                    it.padStart(4, '0')
-                }
-                .joinToString(":")
+            return if (expandedString.length == 39) {
+                expandedString
+            } else {
+                expandedString
+                    .split(":")
+                    .map { it.padStart(4, '0') }
+                    .joinToString(":")
+            }
         }
     }
 }
