@@ -47,8 +47,8 @@ Results are always numerical. `true` and `false` are mapped to `1` and `0`, resp
 | lte      | Operator   | `lte(a, b)`                                               | Checks if `a` is less than or equal to `b`.                                                                      |
 | now      | Date       | `now()`                                                   | Returns the seconds since epoch the current date and time.                                                       |
 | datetime | Date       | `datetime(value)`                                         | Returns the seconds since epoch for date and time. `value` must follow ISO-8601's format date and time, or date. |
-| ip       | IP Address | `ip(value)`                                               | Returns a numeric value for the IPv4 address.                                                                    |
-| cidr     | IP Address | `cidr(value)`                                             | Returns a numeric range for an IPv4 address range. `value` must follow CIDR notation.                            |
+| ip       | IP Address | `ip(value)`                                               | Returns a numeric value for the IPv4 or IPv6 address.                                                            |
+| cidr     | IP Address | `cidr(value)`                                             | Returns a numeric range for an IPv4 or IPv6 address range. `value` must follow CIDR notation.                    |
 | matches  | Lookup     | `matches(value, regex)`                                   | Checks if `value` matches `regex`.                                                                               |
 | contains | Lookup     | `contains(value, list)`<br>`contains(value, [start:end])` | Checks if `list` contains `value`. `list` can also be a range.                                                   |
 | not      | Logical    | `not(value)`                                              | Negates the result of `value`.                                                                                   |

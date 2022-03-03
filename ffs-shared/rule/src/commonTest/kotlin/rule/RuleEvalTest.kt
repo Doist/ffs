@@ -12,6 +12,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -303,49 +304,118 @@ class RuleEvalTest {
     }
 
     @Test
-    fun ip() {
-        assertEquals(1f, eval("""gt(ip("192.168.1.0"), ip("192.168.0.255"))"""))
-        assertEquals(1f, eval("""gte(ip("192.168.0.255"), ip("192.168.0.255"))"""))
-        assertEquals(1f, eval("""lt(ip("255.0.255.255"), ip("255.1.0.0"))"""))
-        assertEquals(1f, eval("""lt(ip("9.255.255.255"), ip("10.0.0.0"))"""))
+    fun ipv4() {
+        assertContentEquals(listOf(192u, 168u, 1u, 0u), Ip.Octets("192.168.1.0"))
+        assertContentEquals(listOf(255u, 255u, 255u, 255u), Ip.Octets("255.255.255.255"))
+        assertContentEquals(listOf(0u, 0u, 0u, 0u), Ip.Octets("0.0.0.0"))
 
-        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0")""") }
-        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.0.0")""") }
-        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.-1")""") }
-        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.256")""") }
-        assertFailsWith<IllegalArgumentException> { eval("""ip("10.0.0.a")""") }
+        assertFailsWith<IllegalArgumentException> { Ip.Octets("10.0.0") }
+        assertFailsWith<IllegalArgumentException> { Ip.Octets("10.0.0.0.0") }
+        assertFailsWith<IllegalArgumentException> { Ip.Octets("10.0.0.-1") }
+        assertFailsWith<IllegalArgumentException> { Ip.Octets("10.0.0.a") }
     }
 
     @Test
-    fun cidr() {
-        assertEquals(0f, eval("""contains(ip("254.200.224.0"), cidr("254.200.222.210/23"))"""))
-        assertEquals(0f, eval("""contains(ip("254.200.221.255"), cidr("254.200.222.210/23"))"""))
-        assertEquals(0f, eval("""contains(ip("254.200.200.10"), cidr("254.200.222.210/23"))"""))
-        assertEquals(0f, eval("""contains(ip("192.167.233.16"), cidr("192.167.233.10/28"))"""))
-        assertEquals(0f, eval("""contains(ip("192.167.232.255"), cidr("192.167.233.10/28"))"""))
-        assertEquals(0f, eval("""contains(ip("192.167.255.16"), cidr("192.167.233.10/28"))"""))
-        assertEquals(0f, eval("""contains(ip("192.167.233.12"), cidr("192.167.233.11/32"))"""))
-        assertEquals(0f, eval("""contains(ip("192.167.233.12"), cidr("192.167.233.11"))"""))
+    fun ipv4Comparison() {
+        val ip1 = Ip.Octets("192.168.0.200")
+        val ip2 = Ip.Octets("192.168.1.0")
+        val ip3 = Ip.Octets("192.168.1.4")
 
-        assertEquals(1f, eval("""contains(ip("254.200.223.255"), cidr("254.200.222.210/23"))"""))
-        assertEquals(1f, eval("""contains(ip("254.200.222.0"), cidr("254.200.222.210/23"))"""))
-        assertEquals(1f, eval("""contains(ip("254.200.222.188"), cidr("254.200.222.210/23"))"""))
-        assertEquals(1f, eval("""contains(ip("192.167.233.15"), cidr("192.167.233.10/28"))"""))
-        assertEquals(1f, eval("""contains(ip("192.167.233.0"), cidr("192.167.233.10/28"))"""))
-        assertEquals(1f, eval("""contains(ip("192.167.233.6"), cidr("192.167.233.10/28"))"""))
-        assertEquals(1f, eval("""contains(ip("192.167.233.11"), cidr("192.167.233.11/32"))"""))
-        assertEquals(1f, eval("""contains(ip("192.167.233.11"), cidr("192.167.233.11"))"""))
-        assertEquals(1f, eval("""contains(ip("0.0.0.0"), cidr("0.0.0.0/0"))"""))
-        assertEquals(1f, eval("""contains(ip("255.255.255.255"), cidr("0.0.0.0/0"))"""))
-        assertEquals(1f, eval("""contains(ip("192.168.44.41"), cidr("0.0.0.0/0"))"""))
-        assertEquals(1f, eval("""contains(ip("41.173.112.199"), cidr("0.0.0.0/0"))"""))
+        assertEquals(false, ip1 > ip3)
+        assertEquals(true, ip1 < ip2)
+        assertEquals(true, ip2 < ip3)
+        assertEquals(true, ip2 == ip2)
+    }
 
-        assertEquals(0f, eval("""contains(ip("254.200.222.25"), [cidr("254.200.222.210/23")])"""))
-        assertFailsWith<IllegalArgumentException> {
-            eval("""contains(cidr("254.200.222.210/23"))""")
+    @Test
+    fun ipv6() {
+        assertContentEquals(
+            listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u),
+            Ip.Octets("0:0:0:0:0:0:0:0")
+        )
+        assertContentEquals(
+            listOf(
+                0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+                255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u
+            ),
+            Ip.Octets("0:0:0:0:ffff:ffff:ffff:ffff")
+        )
+        assertContentEquals(
+            listOf(
+                255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u,
+                255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u
+            ),
+            Ip.Octets("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
+        )
+        assertContentEquals(
+            listOf(
+                255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u,
+                255u, 255u, 0u, 0u, 0u, 0u, 0u, 0u
+            ),
+            Ip.Octets("ffff:ffff:ffff:ffff:ffff::")
+        )
+        assertContentEquals(
+            listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 51u),
+            Ip.Octets("::ff:22:33")
+        )
+        assertContentEquals(
+            listOf(0u, 17u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 51u),
+            Ip.Octets("11::ff:22:33")
+        )
+    }
+
+    @Test
+    fun cidrv4() {
+        with(Ip.IpRange("254.200.222.210/23")) {
+            assertContentEquals(listOf(254u, 200u, 222u, 0u), start)
+            assertContentEquals(listOf(254u, 200u, 223u, 255u), endInclusive)
         }
-        assertFailsWith<IllegalArgumentException> {
-            eval("""contains("254.200.224.0")], [cidr("254.200.222.210/23")""")
+
+        with(Ip.IpRange("0.0.0.1/0")) {
+            assertContentEquals(listOf(0u, 0u, 0u, 0u), start)
+            assertContentEquals(listOf(255u, 255u, 255u, 255u), endInclusive)
+        }
+
+        with(Ip.IpRange("254.200.222.210/32")) {
+            assertContentEquals(listOf(254u, 200u, 222u, 210u), start)
+            assertContentEquals(listOf(254u, 200u, 222u, 210u), endInclusive)
+        }
+    }
+
+    @Test
+    fun cidrv6() {
+        with(Ip.IpRange("0000:0000:0000:0000:0000:00ff:0022:0033/122")) {
+            assertContentEquals(
+                listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 0u),
+                start
+            )
+            assertContentEquals(
+                listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 63u),
+                endInclusive
+            )
+        }
+        with(Ip.IpRange("0000:0000:0000:0000:0000:00ff:0022:0033/0")) {
+            assertContentEquals(
+                listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u),
+                start
+            )
+            assertContentEquals(
+                listOf(
+                    255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u,
+                    255u, 255u, 255u, 255u, 255u, 255u, 255u, 255u
+                ),
+                endInclusive
+            )
+        }
+        with(Ip.IpRange("::00ff:0022:0033/128")) {
+            assertContentEquals(
+                listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 51u),
+                start
+            )
+            assertContentEquals(
+                listOf(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 255u, 0u, 34u, 0u, 51u),
+                endInclusive
+            )
         }
     }
 
@@ -356,6 +426,13 @@ class RuleEvalTest {
 
     @Test
     fun composition() {
+        assertEquals(1f, eval("""gte(ip("192.168.0.255"), ip("192.168.0.255"))"""))
+        assertEquals(1f, eval("""contains(ip("254.200.223.255"), cidr("254.200.222.210/23"))"""))
+
+        assertEquals(0f, eval("""contains(ip("::00ff:0021:FFFF"), cidr("::ff:22:33/122"))"""))
+        assertEquals(1f, eval("""contains(ip("::ff:22:3C"), cidr("::ff:22:33/122"))"""))
+        assertEquals(1f, eval("""contains(ip("::ff:22:01"), cidr("::ff:22:33/122"))"""))
+
         assertEquals(0f, eval("""if(gte(datetime("2021-06-01"), datetime("2021-05-31")), 0, 1)"""))
         assertEquals(0f, eval("""log(if(gte(datetime("2021-06-01"), now()), 0, 1))"""))
         assertEquals(

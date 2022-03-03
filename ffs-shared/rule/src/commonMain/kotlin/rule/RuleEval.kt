@@ -196,6 +196,7 @@ private sealed class RuleExpr<out T> {
         override fun eval(env: JsonObject): Collection<T> = list.map { it.eval(env) }
     }
 
+    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
     data class RangeExpr<out T>(
         val from: RuleExpr<T>,
         val to: RuleExpr<T>
@@ -282,43 +283,17 @@ private sealed class RuleExpr<out T> {
 
         //region IP Address.
         sealed class IpExpr<T> : FunctionExpr<T>() {
-            data class Ip(val value: RuleExpr<String>) : FunctionExpr<Long>() {
-                override fun eval(env: JsonObject) =
-                    value.castEval<String>(env).toOctets().sumOctets()
+            data class IpFunc(val value: RuleExpr<String>) : FunctionExpr<Ip.Octets>() {
+                override fun eval(env: JsonObject) = Ip.Octets(value.castEval(env))
             }
 
-            data class Cidr(val value: RuleExpr<String>) : FunctionExpr<Collection<Long>>() {
-                override fun eval(env: JsonObject): Collection<Long> {
-                    val ipWidth = value.castEval<String>(env).split('/')
-                    val octets = ipWidth[0].toOctets()
-                    val width = ipWidth.getOrNull(1)?.toByte() ?: 32
+            data class CidrFunc(
+                val value: RuleExpr<String>
+            ) : FunctionExpr<Collection<Ip.Octets>>() {
+                override fun eval(env: JsonObject): Collection<Ip.Octets> {
+                    val ranges = Ip.IpRange(value.castEval(env))
 
-                    val mask = 0xFFFFFFFF shl (32 - width)
-                    val subnet =
-                        listOf(mask shr 24, mask shr 16, mask shr 8, mask).map { it.toUByte() }
-
-                    val min = mutableListOf<UByte>(0u, 0u, 0u, 0u)
-                    val max = mutableListOf<UByte>(0u, 0u, 0u, 0u)
-                    octets.forEachIndexed { i, value ->
-                        min[i] = value and subnet[i]
-                        max[i] = value or subnet[i].inv()
-                    }
-
-                    return wrapRangeInCollection(min.sumOctets()..max.sumOctets())
-                }
-            }
-
-            companion object {
-                private fun String.toOctets(): List<UByte> {
-                    val octets = split('.').map { it.toUByte() }
-                    if (octets.size != 4) {
-                        throw IllegalArgumentException("invalid IPv4 format")
-                    }
-                    return octets
-                }
-
-                private fun List<UByte>.sumOctets() = fold(0L) { acc, octet ->
-                    (acc shl 8) + octet.toLong()
+                    return wrapRangeInCollection(ranges)
                 }
             }
         }
@@ -515,8 +490,8 @@ private sealed class RuleExpr<out T> {
                 "lte" -> FunctionExpr.Lte<Any>(it.castNext(), it.castNext())
                 "now" -> FunctionExpr.Now
                 "datetime" -> FunctionExpr.Datetime(it.castNext())
-                "ip" -> FunctionExpr.IpExpr.Ip(it.castNext())
-                "cidr" -> FunctionExpr.IpExpr.Cidr(it.castNext())
+                "ip" -> FunctionExpr.IpExpr.IpFunc(it.castNext())
+                "cidr" -> FunctionExpr.IpExpr.CidrFunc(it.castNext())
                 "matches" -> FunctionExpr.Matches(it.castNext(), it.castNext())
                 "contains" -> FunctionExpr.Contains(it.castNext<Collection<*>>(), it.castNext())
                 "not" -> FunctionExpr.Not(it.castNext())
@@ -570,19 +545,148 @@ private sealed class RuleExpr<out T> {
             while (hasNext()) next()
         }
 
-        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
-        private fun wrapRangeInCollection(range: LongRange): Collection<Long> {
-            if (range.first > range.last) {
+        private fun <T : Comparable<T>> wrapRangeInCollection(
+            range: ClosedRange<T>
+        ): Collection<T> {
+            if (range.start > range.endInclusive) {
                 throw IllegalArgumentException("can't use inverted range")
             }
 
-            return object : ClosedRange<Long> by range, Collection<Long> {
-                override val size: Int get() = (endInclusive - start).toInt()
-                override fun containsAll(elements: Collection<Long>) = elements.all {
+            return object : ClosedRange<T> by range, Collection<T> {
+                override fun containsAll(elements: Collection<T>) = elements.all {
                     range.contains(it)
                 }
-                override fun contains(value: Long) = range.contains(value)
-                override fun iterator() = range.iterator()
+                override fun contains(value: T) = range.contains(value)
+                override val size: Int get() { throw UnsupportedOperationException() }
+                override fun iterator(): Iterator<T> { throw UnsupportedOperationException() }
+            }
+        }
+    }
+}
+
+internal class Ip {
+    internal data class Octets(
+        private val ipString: String = "",
+        private val segments: List<UByte> = emptyList(),
+        private val backing: MutableList<UByte> = mutableListOf()
+    ) : List<UByte> by backing, Comparable<Octets> {
+        init {
+            val parsedOctets = segments.ifEmpty {
+                ipString.tryToExpandIpv6().toOctets()
+            }
+            backing.addAll(parsedOctets)
+        }
+
+        override fun compareTo(other: Octets): Int {
+            if (other.size != this.size) {
+                return -1
+            }
+
+            var delta = 0u
+            for (i in other.indices) {
+                delta = this[i] - other[i]
+                if (delta != 0u) {
+                    break
+                }
+            }
+
+            return delta.toInt()
+        }
+    }
+
+    internal data class IpRange(val cidr: String) : ClosedRange<Octets> {
+        private lateinit var min: Octets
+        private lateinit var max: Octets
+
+        override val endInclusive: Octets
+            get() = max
+        override val start: Octets
+            get() = min
+
+        init {
+            val ipWidth = cidr.split('/')
+            val segments = ipWidth[0].tryToExpandIpv6().toOctets()
+
+            var width = if (segments.size > 4) {
+                ipWidth.getOrNull(1)?.toShort() ?: 128
+            } else {
+                ipWidth.getOrNull(1)?.toShort() ?: 32
+            }
+
+            calculateIpRange(segments, width)
+        }
+
+        private fun calculateIpRange(octets: List<UByte>, width: Short) {
+            val min = mutableListOf<UByte>()
+            val max = mutableListOf<UByte>()
+            val fullOctets = width / 8
+            val remainder = width % 8
+            octets.forEachIndexed { i, value ->
+                val subnet: UByte = if (i < fullOctets) {
+                    (0xFF).toUByte()
+                } else if (i == fullOctets) {
+                    (0xFF shl (8 - remainder)).toUByte()
+                } else {
+                    0u
+                }
+
+                min.add(value and subnet)
+                max.add((value or subnet.inv()))
+            }
+
+            this.min = Octets(segments = min)
+            this.max = Octets(segments = max)
+        }
+    }
+
+    companion object {
+        fun String.toOctets(): List<UByte> {
+            lateinit var octets: List<UByte>
+
+            if (contains('.')) {
+                octets = split('.').map { it.toUByte() }
+                if (octets.size != 4) {
+                    throw IllegalArgumentException("invalid IPv4 format")
+                }
+            } else {
+                octets = replace(":", "")
+                    .chunked(2)
+                    .map { it.toUByte(16) }
+
+                if (octets.size != 16) {
+                    throw IllegalArgumentException("invalid IPv6 format")
+                }
+            }
+
+            return octets
+        }
+
+        fun String.tryToExpandIpv6(): String {
+            if (this.length == 39 || this.contains('.')) return this
+
+            var expandedString = this
+            val compactColonIndex = indexOf("::")
+            if (compactColonIndex != -1) {
+                val replaceBy = if (compactColonIndex == 0 || compactColonIndex == length - 2) {
+                    val replacementChunk = if (compactColonIndex == 0) "0000:" else ":0000"
+
+                    replacementChunk.repeat(8 - (filter { it == ':' }.count() - 1))
+                } else {
+                    val extendedSegments = filter { it == ':' }.count()
+
+                    ":" + "0000:".repeat(8 - extendedSegments)
+                }
+
+                expandedString = expandedString.replace("::", replaceBy)
+            }
+
+            return if (expandedString.length == 39) {
+                expandedString
+            } else {
+                expandedString
+                    .split(":")
+                    .map { it.padStart(4, '0') }
+                    .joinToString(":")
             }
         }
     }
