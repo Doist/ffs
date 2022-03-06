@@ -549,16 +549,20 @@ private sealed class RuleExpr<out T> {
             range: ClosedRange<T>
         ): Collection<T> {
             if (range.start > range.endInclusive) {
-                throw IllegalArgumentException("can't use inverted range")
+                throw IllegalArgumentException("Inverted ranges are unsupported")
             }
 
             return object : ClosedRange<T> by range, Collection<T> {
+                override val size: Int get() = throw UnsupportedOperationException()
+
                 override fun containsAll(elements: Collection<T>) = elements.all {
                     range.contains(it)
                 }
+
+                @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
                 override fun contains(value: T) = range.contains(value)
-                override val size: Int get() { throw UnsupportedOperationException() }
-                override fun iterator(): Iterator<T> { throw UnsupportedOperationException() }
+
+                override fun iterator() = throw UnsupportedOperationException()
             }
         }
     }
