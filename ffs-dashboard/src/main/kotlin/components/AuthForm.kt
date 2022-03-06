@@ -1,7 +1,6 @@
 package doist.ffs.components
 
 import csstype.Auto.auto
-import csstype.Margin
 import doist.ffs.KEY_USER
 import doist.ffs.api
 import doist.ffs.components.reactist.Button
@@ -71,7 +70,7 @@ val AuthForm = FC<AuthFormProps> { props ->
             paddingBottom = "xxlarge"
             space = "large"
             style = jso {
-                margin = Margin(auto, auto)
+                margin = auto
             }
 
             if (props.register == true) {
