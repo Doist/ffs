@@ -158,8 +158,8 @@ abstract class Client<T> private constructor(private val config: BaseConfig) : C
             map[ENV_DEVICE_LOCALE] = JsonPrimitive(locale)
         }
 
-        override fun setDeviceIp(ip: String): Config = apply {
-            map[ENV_DEVICE_IP] = JsonPrimitive(ip)
+        override fun setDeviceIp(ipAddress: String): Config = apply {
+            map[ENV_DEVICE_IP] = JsonPrimitive(ipAddress)
         }
 
         override fun putString(key: String, value: String): Config = apply {
