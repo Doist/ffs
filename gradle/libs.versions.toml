@@ -2,7 +2,7 @@
 kotlin = "1.6.10"
 detekt = "1.19.0"
 ktor = "2.0.0-beta-1"
-logback = "1.2.10"
+logback = "1.2.11"
 hikari = "5.0.1"
 sqldelight = "1.5.3"
 bouncycastle = "1.70"
