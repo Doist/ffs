@@ -17,4 +17,4 @@ typealias HtmlInputProps = InputHTMLAttributes<HTMLInputElement>
 typealias HtmlButtonProps = ButtonHTMLAttributes<HTMLButtonElement>
 typealias HtmlAnchorProps = AnchorHTMLAttributes<HTMLAnchorElement>
 
-typealias IconElement = ReactElement
+typealias IconElement = ReactElement<*>

@@ -1,5 +1,6 @@
 package doist.ffs.components
 
+import csstype.Auto.auto
 import csstype.Margin
 import doist.ffs.KEY_USER
 import doist.ffs.api
@@ -14,8 +15,8 @@ import doist.ffs.register
 import doist.ffs.use
 import doist.ffs.validators.validateEmail
 import doist.ffs.validators.validatePassword
-import kotlinext.js.jso
 import kotlinx.browser.localStorage
+import kotlinx.js.jso
 import react.FC
 import react.Props
 import react.dom.html.ButtonType
@@ -70,7 +71,7 @@ val AuthForm = FC<AuthFormProps> { props ->
             paddingBottom = "xxlarge"
             space = "large"
             style = jso {
-                margin = Margin("auto")
+                margin = Margin(auto, auto)
             }
 
             if (props.register == true) {

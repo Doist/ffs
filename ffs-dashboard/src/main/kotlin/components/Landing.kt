@@ -6,8 +6,8 @@ import doist.ffs.components.reactist.Notice
 import doist.ffs.components.reactist.Text
 import doist.ffs.components.reactist.TextLink
 import doist.ffs.use
-import kotlinext.js.jso
 import kotlinx.browser.localStorage
+import kotlinx.js.jso
 import react.FC
 import react.Props
 import react.router.useNavigate

@@ -5,8 +5,8 @@ import doist.ffs.components.AuthForm
 import doist.ffs.components.Landing
 import doist.ffs.components.Project
 import doist.ffs.components.Root
-import kotlinext.js.jso
 import kotlinx.browser.document
+import kotlinx.js.jso
 import react.FC
 import react.Props
 import react.create

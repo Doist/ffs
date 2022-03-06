@@ -7,7 +7,6 @@ import org.w3c.dom.HTMLAnchorElement
 import react.FC
 import react.Props
 import react.PropsWithStyle
-import react.ReactElement
 import react.ReactNode
 import react.dom.aria.AriaAttributes
 import react.dom.html.AnchorHTMLAttributes
@@ -370,18 +369,6 @@ external interface TabPanelProps : StandardProps, HtmlDivProps {
 }
 
 external var TabPanel: FC<TabPanelProps> = definedExternally
-
-external interface TabAwareSlotProvided {
-    var selectedId: String?
-        get() = definedExternally
-        set(value) = definedExternally
-}
-
-external interface TabAwareSlotProps : Props {
-    var children: (provided: TabAwareSlotProvided) -> ReactElement?
-}
-
-external var TabAwareSlot: FC<TabAwareSlotProps> = definedExternally
 
 external interface NoticeProps : Props {
     var id: String?
