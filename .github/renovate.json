@@ -6,6 +6,12 @@
   ],
   "packageRules": [
     {
+      "groupName": "Kotlin dependencies",
+      "matchPackagePrefixes": [
+        "org.jetbrains.kotlin"
+      ]
+    },
+    {
       "automerge": true,
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"]
     }
