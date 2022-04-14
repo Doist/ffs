@@ -1,23 +1,8 @@
 {
   "extends": [
-    "config:base",
-    ":disableDependencyDashboard",
-    ":rebaseStalePrs"
+    "github>doist/renovate-config:kotlin-base"
   ],
   "packageRules": [
-    {
-      "groupName": "Kotlin dependencies",
-      "matchPackagePrefixes": [
-        "org.jetbrains.kotlin:",
-        "org.jetbrains.kotlin."
-      ]
-    },
-    {
-      "groupName": "Kotlin wrappers dependencies",
-      "matchPackagePrefixes": [
-        "org.jetbrains.kotlin-wrappers:"
-      ]
-    },
     {
       "automerge": true,
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"]
