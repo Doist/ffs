@@ -442,7 +442,7 @@ class RuleEvalTest {
                 |contains(
                 |now(),
                 |[datetime("2021-06-01"):datetime("2021-06-20")]) 
-                |""".trimMargin()
+                """.trimMargin()
             )
         )
         assertEquals(1f, eval("""if(gt(plus(now(), 1), div(now(), 1)), minus(2, 1), 0)"""))
@@ -453,7 +453,7 @@ class RuleEvalTest {
                 |contains(
                 |now(),
                 |[datetime("2021-06-01"):datetime("2022-06-20")])
-                |""".trimMargin()
+                """.trimMargin()
             )
         )
         assertEquals(
@@ -464,7 +464,7 @@ class RuleEvalTest {
                 |datetime("2021-11-11"),
                 |datetime("2021-11-08"), datetime("2021-11-15"),
                 |0, 1)
-                |""".trimMargin()
+                """.trimMargin()
             )
         )
     }
