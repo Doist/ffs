@@ -5,6 +5,15 @@
   ],
   "packageRules": [
     {
+      "groupName": "io.gitlab.arturbosch.detekt:*",
+      "matchPackageNames": [
+        "io.gitlab.arturbosch.detekt"
+      ],
+      "matchPackagePrefixes": [
+        "io.gitlab.arturbosch.detekt:"
+      ]
+    },
+    {
       "automerge": true,
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"]
     }
