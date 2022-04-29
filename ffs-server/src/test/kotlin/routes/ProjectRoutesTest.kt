@@ -11,7 +11,6 @@ import doist.ffs.endpoints.Projects.Companion.Tokens
 import doist.ffs.endpoints.Tokens
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
-import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
@@ -28,7 +27,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import routes.PATH_LATEST
 import kotlin.test.Test
-import kotlin.test.assertFailsWith
 
 class ProjectRoutesTest {
     @Test
@@ -64,12 +62,12 @@ class ProjectRoutesTest {
     @Test
     fun getNonexistentId() = testApplication {
         val client = createSessionClient()
-        assertFailsWith<ClientRequestException> {
-            client.client.get(Projects.ById(id = 42))
-        }
-        assertFailsWith<ClientRequestException> {
-            client.client.delete(Projects.ById(id = 42))
-        }
+
+        var response = client.client.get(Projects.ById(id = 42))
+        assert(response.status == HttpStatusCode.Forbidden)
+
+        response = client.client.delete(Projects.ById(id = 42))
+        assert(response.status == HttpStatusCode.Forbidden)
     }
 
     @Test
@@ -93,12 +91,12 @@ class ProjectRoutesTest {
         val organizationId = client.withOrganization()
         val projectId = client.withProject(organizationId)
         val project = client.client.get(Projects.ById(id = projectId)).bodyAsJson<Project>()
-        assertFailsWith<ClientRequestException> {
-            val id = client.withProject(organizationId)
-            client.client.put(Projects.ById(id = id)) {
-                setBodyForm(Projects.NAME to project.name)
-            }
+        val id = client.withProject(organizationId)
+
+        val response = client.client.put(Projects.ById(id = id)) {
+            setBodyForm(Projects.NAME to project.name)
         }
+        assert(response.status == HttpStatusCode.BadRequest)
     }
 
     @Test
@@ -108,9 +106,8 @@ class ProjectRoutesTest {
 
         client.client.delete(Projects.ById(id = id))
 
-        assertFailsWith<ClientRequestException> {
-            client.client.get(Projects.ById(id = id)).bodyAsJson<Project?>()
-        }
+        val response = client.client.get(Projects.ById(id = id))
+        assert(response.status == HttpStatusCode.Forbidden)
     }
 
     @Test
@@ -148,14 +145,13 @@ class ProjectRoutesTest {
         val id = client.withProject(client.withOrganization())
 
         Permission.values().filter { it != Permission.EVAL && it != Permission.READ }.forEach {
-            assertFailsWith<ClientRequestException> {
-                client.client.post(Projects.ById.Tokens(projectId = id)) {
-                    setBodyForm(
-                        Tokens.PERMISSION to it,
-                        Tokens.DESCRIPTION to it.name
-                    )
-                }
+            val response = client.client.post(Projects.ById.Tokens(projectId = id)) {
+                setBodyForm(
+                    Tokens.PERMISSION to it,
+                    Tokens.DESCRIPTION to it.name
+                )
             }
+            assert(response.status == HttpStatusCode.BadRequest)
         }
     }
 
@@ -235,22 +231,22 @@ class ProjectRoutesTest {
         val id = createSessionClient().run {
             withProject(withOrganization())
         }
-        assertFailsWith<ClientRequestException> {
-            client.get(Projects.ById(id = id))
+
+        var response = client.get(Projects.ById(id = id))
+        assert(response.status == HttpStatusCode.Unauthorized)
+
+        response = client.put(Projects.ById(id = id)) {
+            setBodyForm(Projects.NAME to "Test")
         }
-        assertFailsWith<ClientRequestException> {
-            client.put(Projects.ById(id = id)) {
-                setBodyForm(Projects.NAME to "Test")
-            }
+        assert(response.status == HttpStatusCode.Unauthorized)
+
+        response = client.delete(Projects.ById(id = id))
+        assert(response.status == HttpStatusCode.Unauthorized)
+
+        response = client.post(Projects.ById.Tokens(projectId = id)) {
+            setBodyForm(Tokens.PERMISSION to Permission.EVAL, Tokens.DESCRIPTION to "Eval")
         }
-        assertFailsWith<ClientRequestException> {
-            client.delete(Projects.ById(id = id))
-        }
-        assertFailsWith<ClientRequestException> {
-            client.post(Projects.ById.Tokens(projectId = id)) {
-                setBodyForm(Tokens.PERMISSION to Permission.EVAL, Tokens.DESCRIPTION to "Eval")
-            }
-        }
+        assert(response.status == HttpStatusCode.Unauthorized)
     }
 
     @Test

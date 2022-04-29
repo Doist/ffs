@@ -20,7 +20,7 @@ plugins {
     alias(libs.plugins.mkdocs)
 
     // Plugins for all subprojects.
-    alias(libs.plugins.kotlinx.kover)
+    //alias(libs.plugins.kotlinx.kover) // Broken due to Kotlin/kotlinx-kover#146.
     alias(libs.plugins.kotlin.power.assert) apply false // Applied below.
     alias(libs.plugins.detekt) apply false // Applied and configured below.
 

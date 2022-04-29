@@ -9,7 +9,6 @@ import doist.ffs.endpoints.Organizations.Companion.ById
 import doist.ffs.endpoints.Organizations.Companion.Projects
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
-import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
@@ -26,7 +25,6 @@ import io.ktor.server.testing.testApplication
 import routes.PATH_LATEST
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
 class OrganizationRoutesTest {
     @Test
@@ -62,12 +60,11 @@ class OrganizationRoutesTest {
         val client = createSessionClient()
 
         // Nonexistent id.
-        assertFailsWith<ClientRequestException> {
-            client.client.get(Organizations.ById(id = 42))
-        }
-        assertFailsWith<ClientRequestException> {
-            client.client.delete(Organizations.ById(id = 42))
-        }
+        var response = client.client.get(Organizations.ById(id = 42))
+        assert(response.status == HttpStatusCode.Forbidden)
+
+        response = client.client.delete(Organizations.ById(id = 42))
+        assert(response.status == HttpStatusCode.Forbidden)
     }
 
     @Test
@@ -118,12 +115,16 @@ class OrganizationRoutesTest {
     }
 
     @Test
-    fun updateUserMissingName() = testApplication {
+    fun updateUserMissingRole() = testApplication {
         val client = createSessionClient()
         val id = client.withOrganization()
-        assertFailsWith<ClientRequestException> {
-            client.client.put(Organizations.ById.Members.ById(id = id, userId = client.userId))
+
+        val response = client.client.put(
+            Organizations.ById.Members.ById(id = id, userId = client.userId)
+        ) {
+            setBodyForm()
         }
+        assert(response.status == HttpStatusCode.BadRequest)
     }
 
     @Test
@@ -146,9 +147,8 @@ class OrganizationRoutesTest {
 
         client.client.delete(Organizations.ById.Members.ById(id = id, userId = client.userId))
 
-        assertFailsWith<ClientRequestException> {
-            client.client.get(Organizations.ById(id = id)).bodyAsJson<Organization?>()
-        }
+        val response = client.client.get(Organizations.ById(id = id))
+        assert(response.status == HttpStatusCode.Forbidden)
     }
 
     @Test
@@ -157,26 +157,26 @@ class OrganizationRoutesTest {
             install(Resources)
             followRedirects = false
         }
-        assertFailsWith<ClientRequestException> {
-            client.post(Organizations()) {
-                setBodyForm(Organizations.NAME to "Test")
-            }
+
+        var response = client.post(Organizations()) {
+            setBodyForm(Organizations.NAME to "Test")
         }
-        assertFailsWith<ClientRequestException> {
-            client.get(Organizations())
-        }
+        assert(response.status == HttpStatusCode.Unauthorized)
+
+        response = client.get(Organizations())
+        assert(response.status == HttpStatusCode.Unauthorized)
+
         val id = createSessionClient().withOrganization()
-        assertFailsWith<ClientRequestException> {
-            client.get(Organizations.ById(id = id))
+        response = client.get(Organizations.ById(id = id))
+        assert(response.status == HttpStatusCode.Unauthorized)
+
+        response = client.put(Organizations.ById(id = id)) {
+            setBodyForm(Organizations.NAME to "Test")
         }
-        assertFailsWith<ClientRequestException> {
-            client.put(Organizations.ById(id = id)) {
-                setBodyForm(Organizations.NAME to "Test")
-            }
-        }
-        assertFailsWith<ClientRequestException> {
-            client.delete(Organizations.ById(id = id))
-        }
+        assert(response.status == HttpStatusCode.Unauthorized)
+
+        response = client.delete(Organizations.ById(id = id))
+        assert(response.status == HttpStatusCode.Unauthorized)
     }
 
     @Test

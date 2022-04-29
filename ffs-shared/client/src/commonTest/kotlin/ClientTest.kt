@@ -25,8 +25,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-// This can and should be multiplatform, but building fails due to a coroutines version mismatch.
-// See: https://youtrack.jetbrains.com/issue/KT-50222
 class ClientTest {
     class MockClient(liveUpdates: Boolean = true) :
         Client<Unit>(TOKEN, "https://doist.com", "/dummy", liveUpdates) {

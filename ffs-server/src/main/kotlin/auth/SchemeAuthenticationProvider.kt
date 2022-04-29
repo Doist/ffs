@@ -3,11 +3,10 @@ package doist.ffs.auth
 import io.ktor.http.auth.AuthScheme
 import io.ktor.http.auth.HttpAuthHeader
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.call
-import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.AuthenticationConfig
+import io.ktor.server.auth.AuthenticationContext
 import io.ktor.server.auth.AuthenticationFailedCause
 import io.ktor.server.auth.AuthenticationFunction
-import io.ktor.server.auth.AuthenticationPipeline
 import io.ktor.server.auth.AuthenticationProvider
 import io.ktor.server.auth.Credential
 import io.ktor.server.auth.Principal
@@ -28,19 +27,42 @@ data class SchemeCredential(val scheme: String, val token: String) : Credential
  * @property name is the name of the provider, or `null` for a default provider.
  */
 class SchemeAuthenticationProvider internal constructor(
-    configuration: Configuration
-) : AuthenticationProvider(configuration) {
-    internal val authenticationFunction = configuration.authenticationFunction
+    private val config: Config
+) : AuthenticationProvider(config) {
+    override suspend fun onAuthenticate(context: AuthenticationContext) {
+        val call = context.call
+        val credentials = call.request.schemeAuthenticationCredentials(config.scheme)
+        val principal = credentials?.let { config.authenticationFunction(call, it) }
+
+        val cause = when {
+            credentials == null -> AuthenticationFailedCause.NoCredentials
+            principal == null -> AuthenticationFailedCause.InvalidCredentials
+            else -> null
+        }
+
+        if (cause != null) {
+            @Suppress("NAME_SHADOWING")
+            context.challenge(KEY_SCHEME_AUTH, cause) { challenge, call ->
+                call.respond(UnauthorizedResponse())
+                challenge.complete()
+            }
+        }
+        if (principal != null) {
+            context.principal(principal)
+        }
+    }
 
     /**
      * Scheme auth configuration.
      */
-    class Configuration internal constructor(
-        name: String?
-    ) : AuthenticationProvider.Configuration(name) {
+    class Config internal constructor(
+        val scheme: String,
+        name: String? = null
+    ) : AuthenticationProvider.Config(name) {
         internal var authenticationFunction: AuthenticationFunction<SchemeCredential> = {
             throw NotImplementedError(
-                "scheme validate function missing. Use `scheme(...) { validate { ... } }` to fix."
+                "Scheme auth validate function is not specified. " +
+                    "Use `scheme(...) { validate { ... } }` to fix."
             )
         }
 
@@ -57,37 +79,14 @@ class SchemeAuthenticationProvider internal constructor(
 /**
  * Installs Scheme Authentication mechanism.
  */
-fun Authentication.Configuration.scheme(
+fun AuthenticationConfig.scheme(
     scheme: String,
     name: String? = null,
-    configure: SchemeAuthenticationProvider.Configuration.() -> Unit
+    configure: SchemeAuthenticationProvider.Config.() -> Unit
 ) {
     val provider = SchemeAuthenticationProvider(
-        SchemeAuthenticationProvider.Configuration(name).apply(configure)
+        SchemeAuthenticationProvider.Config(scheme, name).apply(configure)
     )
-    val authenticate = provider.authenticationFunction
-
-    provider.pipeline.intercept(AuthenticationPipeline.RequestAuthentication) { context ->
-        val credentials = call.request.schemeAuthenticationCredentials(scheme)
-        val principal = credentials?.let { authenticate(call, it) }
-
-        val cause = when {
-            credentials == null -> AuthenticationFailedCause.NoCredentials
-            principal == null -> AuthenticationFailedCause.InvalidCredentials
-            else -> null
-        }
-
-        if (cause != null) {
-            context.challenge(KEY_SCHEME_AUTH, cause) {
-                call.respond(UnauthorizedResponse())
-                it.complete()
-            }
-        }
-        if (principal != null) {
-            context.principal(principal)
-        }
-    }
-
     register(provider)
 }
 

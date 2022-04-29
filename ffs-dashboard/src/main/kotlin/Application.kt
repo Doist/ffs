@@ -11,14 +11,14 @@ import react.FC
 import react.Props
 import react.create
 import react.createElement
-import react.dom.render
+import react.dom.client.createRoot
 import react.router.Route
 import react.router.Routes
 import react.router.dom.BrowserRouter
 
 fun main() {
     kotlinext.js.require("@doist/reactist/styles/reactist.css")
-    render(root.create(), document.getElementById("root")!!)
+    createRoot(document.getElementById("root")!!).render(root.create())
 }
 
 val root = FC<Props> {

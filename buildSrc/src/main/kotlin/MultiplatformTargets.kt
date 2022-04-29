@@ -42,5 +42,5 @@ fun KotlinMultiplatformExtension.enableMultiplatformTargets(
     linuxX64()
     //linuxArm64()
 
-    mingwX64()
+    //mingwX64()
 }

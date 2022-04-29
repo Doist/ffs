@@ -28,18 +28,17 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.serialization
 import io.ktor.server.application.Application
-import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.session
 import io.ktor.server.cio.EngineMain
 import io.ktor.server.config.tryGetString
-import io.ktor.server.plugins.CORS
-import io.ktor.server.plugins.CallLogging
-import io.ktor.server.plugins.Compression
-import io.ktor.server.plugins.ContentNegotiation
-import io.ktor.server.plugins.DefaultHeaders
-import io.ktor.server.plugins.StatusPages
+import io.ktor.server.plugins.callloging.CallLogging
+import io.ktor.server.plugins.compression.Compression
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.cors.routing.CORS
+import io.ktor.server.plugins.defaultheaders.DefaultHeaders
+import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.resources.Resources
 import io.ktor.server.response.respond
 import io.ktor.server.routing.IgnoreTrailingSlash
@@ -80,8 +79,8 @@ fun Application.installCors() = install(CORS) {
     anyHost()
     // Allow headers that are expected but are not in the request safelist.
     // Ref: https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_request_header
-    header(HttpHeaders.Authorization)
-    header(HttpHeaders.LastEventID)
+    allowHeader(HttpHeaders.Authorization)
+    allowHeader(HttpHeaders.LastEventID)
     // Expose headers that are sent back but are not in the response safelist.
     // Ref: https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_response_header
     exposeHeader(HttpHeaders.Authorization)
@@ -96,7 +95,8 @@ fun Application.installContentNegotiation() = install(ContentNegotiation) {
 
 fun Application.installDatabase() = install(Database) {
     val hikariOptions = Properties().apply {
-        environment.config.keys()
+        val config = this@installDatabase.environment.config
+        config.keys()
             .filter { key ->
                 key.startsWith("hikari.")
             }
@@ -111,10 +111,11 @@ fun Application.installDatabase() = install(Database) {
 
 fun Application.installAuthentication() {
     install(Sessions) {
-        val signKey = environment.config.tryGetString("ktor.security.sessions.signKey")?.let {
+        val config = this@installAuthentication.environment.config
+        val signKey = config.tryGetString("ktor.security.sessions.signKey")?.let {
             hex(it)
         } ?: Random.nextBytes(HMAC_SECRET_KEY_SIZE)
-        val storage = environment.config.tryGetString("ktor.security.sessions.directory")?.let {
+        val storage = config.tryGetString("ktor.security.sessions.directory")?.let {
             directorySessionStorage(File(it))
         } ?: SessionStorageMemory()
 
@@ -138,6 +139,7 @@ fun Application.installAuthentication() {
     }
 
     install(Authentication) {
+        val database = this@installAuthentication.database
         session<Session>(name = "session") {
             validate { (id) ->
                 val userRoles = database.members.selectOrganizationIdProjectIdByUserId(

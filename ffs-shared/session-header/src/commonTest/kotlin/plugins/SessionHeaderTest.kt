@@ -12,8 +12,6 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-// This can and should be multiplatform, but building fails due to a coroutines version mismatch.
-// See: https://youtrack.jetbrains.com/issue/KT-50222
 class SessionHeaderTest {
     private val engine = MockEngine { data ->
         if (data.url.toString().endsWith("/auth")) {
