@@ -7,7 +7,6 @@ import doist.ffs.endpoints.Projects
 import doist.ffs.endpoints.Projects.Companion.Flags
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
-import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.get
@@ -22,7 +21,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import org.junit.Test
 import routes.PATH_LATEST
-import kotlin.test.assertFailsWith
 
 class FlagRoutesTest {
     @Test
@@ -50,14 +48,13 @@ class FlagRoutesTest {
         val client = createSessionClient()
         val projectId = client.withProject(client.withOrganization())
 
-        assertFailsWith<ClientRequestException> {
-            client.client.post(Projects.ById.Flags(projectId = projectId)) {
-                setBodyForm(
-                    Flags.NAME to "test",
-                    Flags.RULE to "("
-                )
-            }
+        val response = client.client.post(Projects.ById.Flags(projectId = projectId)) {
+            setBodyForm(
+                Flags.NAME to "test",
+                Flags.RULE to "("
+            )
         }
+        assert(response.status == HttpStatusCode.BadRequest)
     }
 
     @Test
@@ -98,11 +95,10 @@ class FlagRoutesTest {
         val client = createSessionClient()
         val id = client.withFlag(client.withProject(client.withOrganization()))
 
-        assertFailsWith<ClientRequestException> {
-            client.client.put(Flags.ById(id = id)) {
-                setBodyForm(Flags.RULE to "]")
-            }
+        val response = client.client.put(Flags.ById(id = id)) {
+            setBodyForm(Flags.RULE to "]")
         }
+        assert(response.status == HttpStatusCode.BadRequest)
     }
 
     @Test
@@ -131,17 +127,17 @@ class FlagRoutesTest {
         val id = createSessionClient().run {
             withFlag(withProject(withOrganization()))
         }
-        assertFailsWith<ClientRequestException> {
-            client.get(Flags.ById(id = id))
+
+        var response = client.get(Flags.ById(id = id))
+        assert(response.status == HttpStatusCode.Unauthorized)
+
+        response = client.put(Flags.ById(id = id)) {
+            setBodyForm(Flags.NAME to "test")
         }
-        assertFailsWith<ClientRequestException> {
-            client.put(Flags.ById(id = id)) {
-                setBodyForm(Flags.NAME to "test")
-            }
-        }
-        assertFailsWith<ClientRequestException> {
-            client.put(Flags.ById.Archive(id = id))
-        }
+        assert(response.status == HttpStatusCode.Unauthorized)
+
+        response = client.put(Flags.ById.Archive(id = id))
+        assert(response.status == HttpStatusCode.Unauthorized)
     }
 
     @Test

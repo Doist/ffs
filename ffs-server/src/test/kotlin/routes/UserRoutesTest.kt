@@ -5,7 +5,6 @@ import doist.ffs.endpoints.Users
 import doist.ffs.ext.bodyAsJson
 import doist.ffs.ext.setBodyForm
 import doist.ffs.plugins.SessionHeader
-import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.plugins.resources.delete
 import io.ktor.client.plugins.resources.href
@@ -19,7 +18,6 @@ import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import routes.PATH_LATEST
 import kotlin.test.Test
-import kotlin.test.assertFailsWith
 
 class UserRoutesTest {
     @Test
@@ -53,30 +51,28 @@ class UserRoutesTest {
     fun registerInvalidEmail() = testApplication {
         val client = createLocalClient()
 
-        assertFailsWith<ClientRequestException> {
-            client.post(Users.Register()) {
-                setBodyForm(
-                    Users.NAME to "Test",
-                    Users.EMAIL to "no-email",
-                    Users.PASSWORD to "password123"
-                )
-            }
+        val response = client.post(Users.Register()) {
+            setBodyForm(
+                Users.NAME to "Test",
+                Users.EMAIL to "no-email",
+                Users.PASSWORD to "password123"
+            )
         }
+        assert(response.status == HttpStatusCode.BadRequest)
     }
 
     @Test
     fun registerInvalidPassword() = testApplication {
         val client = createLocalClient()
 
-        assertFailsWith<ClientRequestException> {
-            client.post(Users.Register()) {
-                setBodyForm(
-                    Users.NAME to "Test",
-                    Users.EMAIL to "test@test.test",
-                    Users.PASSWORD to "1234567"
-                )
-            }
+        val response = client.post(Users.Register()) {
+            setBodyForm(
+                Users.NAME to "Test",
+                Users.EMAIL to "test@test.test",
+                Users.PASSWORD to "1234567"
+            )
         }
+        assert(response.status == HttpStatusCode.BadRequest)
     }
 
     @Test
@@ -137,11 +133,10 @@ class UserRoutesTest {
         }.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
 
         listOf("test@test.t", "test@127.0.0.1", "@test.test").forEach { email ->
-            assertFailsWith<ClientRequestException> {
-                client.put(Users.ById(id = id)) {
-                    setBodyForm("email" to email, Users.CURRENT_PASSWORD to "password123")
-                }
+            val response = client.put(Users.ById(id = id)) {
+                setBodyForm("email" to email, Users.CURRENT_PASSWORD to "password123")
             }
+            assert(response.status == HttpStatusCode.BadRequest)
         }
     }
 
@@ -156,32 +151,31 @@ class UserRoutesTest {
             )
         }.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
 
-        assertFailsWith<ClientRequestException> {
-            client.put(Users.ById(id = id)) {
-                setBodyForm(Users.EMAIL to "test@test.com")
-            }
+        var response = client.put(Users.ById(id = id)) {
+            setBodyForm(Users.EMAIL to "test@test.com")
         }
-        assertFailsWith<ClientRequestException> {
-            client.put(Users.ById(id = id)) {
-                setBodyForm(
-                    Users.EMAIL to "test@test.com",
-                    Users.CURRENT_PASSWORD to "wrongpassword"
-                )
-            }
+        assert(response.status == HttpStatusCode.Forbidden)
+
+        response = client.put(Users.ById(id = id)) {
+            setBodyForm(
+                Users.EMAIL to "test@test.com",
+                Users.CURRENT_PASSWORD to "wrongpassword"
+            )
         }
-        assertFailsWith<ClientRequestException> {
-            client.put(Users.ById(id = id)) {
-                setBodyForm(Users.PASSWORD to "newpassword")
-            }
+        assert(response.status == HttpStatusCode.Forbidden)
+
+        response = client.put(Users.ById(id = id)) {
+            setBodyForm(Users.PASSWORD to "newpassword")
         }
-        assertFailsWith<ClientRequestException> {
-            client.put(Users.ById(id = id)) {
-                setBodyForm(
-                    Users.PASSWORD to "newpassword",
-                    Users.CURRENT_PASSWORD to "wrongpassword"
-                )
-            }
+        assert(response.status == HttpStatusCode.Forbidden)
+
+        response = client.put(Users.ById(id = id)) {
+            setBodyForm(
+                Users.PASSWORD to "newpassword",
+                Users.CURRENT_PASSWORD to "wrongpassword"
+            )
         }
+        assert(response.status == HttpStatusCode.Forbidden)
     }
 
     @Test
@@ -195,17 +189,16 @@ class UserRoutesTest {
             )
         }.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
 
-        val deleteResponse = client.delete(Users.ById(id = id)) {
+        var response = client.delete(Users.ById(id = id)) {
             setBodyForm(Users.CURRENT_PASSWORD to "password123")
         }
-        assert(deleteResponse.status == HttpStatusCode.OK)
+        assert(response.status == HttpStatusCode.OK)
 
         // Ensure one can't login as a deleted user.
-        assertFailsWith<ClientRequestException> {
-            client.post(Users.Login()) {
-                setBodyForm(Users.EMAIL to "test@test.test", Users.PASSWORD to "password123")
-            }
+        response = client.post(Users.Login()) {
+            setBodyForm(Users.EMAIL to "test@test.test", Users.PASSWORD to "password123")
         }
+        assert(response.status == HttpStatusCode.Unauthorized)
     }
 
     @Test
@@ -219,11 +212,10 @@ class UserRoutesTest {
             )
         }.headers[HttpHeaders.Location]!!.substringAfterLast('/').toLong()
 
-        assertFailsWith<ClientRequestException> {
-            client.delete(Users.ById(id = id)) {
-                setBodyForm(Users.CURRENT_PASSWORD to "wrongpassword")
-            }
+        val response = client.delete(Users.ById(id = id)) {
+            setBodyForm(Users.CURRENT_PASSWORD to "wrongpassword")
         }
+        assert(response.status == HttpStatusCode.Forbidden)
     }
 
     @Test

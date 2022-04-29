@@ -2,50 +2,44 @@ package doist.ffs.plugins
 
 import com.squareup.sqldelight.sqlite.driver.JdbcDriver
 import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
+import doist.ffs.Database
 import doist.ffs.db.Database
-import io.ktor.events.Events
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.ApplicationPlugin
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.call
+import io.ktor.server.application.createApplicationPlugin
+import io.ktor.server.application.hooks.MonitoringEvent
 import io.ktor.server.application.log
-import io.ktor.server.application.plugin
 import io.ktor.util.AttributeKey
 import io.ktor.util.pipeline.PipelineContext
-import org.slf4j.Logger
+
+private val DatabaseProviderKey = AttributeKey<Database>("DatabaseProviderKey")
 
 /**
  * Plugin that opens a database connection on application start, and closes it on application stop.
  */
-class Database(log: Logger, monitor: Events, configuration: Configuration) {
-    var instance: doist.ffs.Database = Database(configuration.driver, log)
+val Database = createApplicationPlugin(
+    name = "Database",
+    createConfiguration = ::DatabaseConfiguration
+) {
+    application.attributes.put(
+        DatabaseProviderKey,
+        Database(pluginConfig.driver, application.log)
+    )
 
-    init {
-        monitor.subscribe(ApplicationStopped) {
-            configuration.driver.close()
-        }
-    }
-
-    class Configuration {
-        var driver: JdbcDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
-    }
-
-    companion object Plugin : ApplicationPlugin<Application, Configuration, Database> {
-        override val key = AttributeKey<Database>("Database")
-
-        override fun install(pipeline: Application, configure: Configuration.() -> Unit): Database {
-            return Database(
-                pipeline.log,
-                pipeline.environment.monitor,
-                Configuration().apply(configure)
-            )
-        }
+    on(MonitoringEvent(ApplicationStopped)) {
+        application.attributes.remove(DatabaseProviderKey)
     }
 }
 
-inline val Application.database: doist.ffs.Database
-    get() = plugin(Database).instance
+class DatabaseConfiguration {
+    var driver: JdbcDriver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+}
 
-inline val PipelineContext<*, ApplicationCall>.database: doist.ffs.Database
+val Application.database: Database
+    get() = attributes.getOrNull(DatabaseProviderKey)
+        ?: error("Database not installed or application not started")
+
+inline val PipelineContext<*, ApplicationCall>.database: Database
     get() = call.application.database
