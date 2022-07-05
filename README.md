@@ -1,3 +1,6 @@
+> **Warning**  
+> Not actively maintained. [Issues](/issues) paints a good picture of what's left to take FFS to 1.0.
+
 # FFS
 
 Feature flags solution that is fast, lean, and open-source.
