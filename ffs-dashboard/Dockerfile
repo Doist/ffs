@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17 AS build
+FROM eclipse-temurin:19 AS build
 ARG SERVER_HOST
 ARG SERVER_PORT
 ENV SERVER_HOST $SERVER_HOST
