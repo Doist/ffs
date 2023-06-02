@@ -1,7 +1,6 @@
 {
   "extends": [
-    "github>doist/renovate-config:kotlin-base",
-    ":rebaseStalePrs"
+    "github>doist/renovate-config:kotlin-base"
   ],
   "packageRules": [
     {
@@ -17,5 +16,5 @@
       "automerge": true,
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"]
     }
-  ]
+  ],
 }
